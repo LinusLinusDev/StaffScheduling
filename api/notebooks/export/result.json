@@ -29,11 +29,11 @@
         "preceding_context_days": 5,
         "following_context_days": 3
       },
-      "timeout_seconds": null,
+      "timeout_seconds": 300.0,
       "search_workers": null,
       "random_seed": null
     },
-    "wall_time_seconds": 0.11599993705749512,
+    "wall_time_seconds": 0.08899998664855957,
     "assignments": [
       {
         "employee_id": 6318,

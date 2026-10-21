@@ -7,8 +7,10 @@ services:
     env_file: .env
     environment:
       SECRETS_DIR: /run/secrets
+      GRB_LICENSE_FILE: /run/secrets/gurobi_license
     secrets:
       - db_password
+      - gurobi_license   
     ports:
       - "${BIND_ADDRESS:-127.0.0.1}:${API_PORT:-8000}:8000"
     volumes:
@@ -51,6 +53,8 @@ services:
 secrets:
   db_password:
     file: ${DB_PASSWORD_FILE:-./.secrets/db_password}
+  gurobi_license:   
+    file: ${GUROBI_LICENSE_FILE:-./.secrets/gurobi.lic}
 
 volumes:
   webapp-dependencies:

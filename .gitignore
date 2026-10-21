@@ -77,3 +77,4 @@ coverage/
 # Browser test artifacts
 playwright-report/
 test-results/
+api/notebooks/MILP_alt.ipynb

@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     db_trust_server_certificate: bool = False
 
     # Solver
+    solver_backend: Literal["cpsat", "gurobi"] = "cpsat"
     solver_max_time_seconds: float = Field(default=30, gt=0, allow_inf_nan=False)
     solver_num_search_workers: int | None = Field(default=None, ge=1)
     solver_random_seed: int | None = None

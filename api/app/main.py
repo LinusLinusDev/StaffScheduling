@@ -22,7 +22,11 @@ configure_logging(level=settings.log_level)
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     engine = create_db_engine(settings=settings)
     source = TimeOfficeService(engine)
-    solver = SolverService(settings)
+    if settings.solver_backend == "gurobi":
+        from app.solver.milp.service import GurobiSolverService   # nur laden, wenn gebraucht
+        solver = GurobiSolverService(settings)
+    else:
+        solver = SolverService(settings)
     app.state.planning_source = source
     app.state.review = Review()
     app.state.generation = Generation(
