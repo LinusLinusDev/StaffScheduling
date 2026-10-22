@@ -44,7 +44,9 @@ class GurobiSolverService:
             for shift in dataset.shifts:
                 S.append(shift.shift_id)
             S_n = [s.shift_id for s in dataset.shifts if s.type == ShiftType.NIGHT]
+            S_e = [s.shift_id for s in dataset.shifts if s.type == ShiftType.EARLY]
             D = dataset.planning_month.dates
+            D_s = [date for date in dataset.planning_month.dates if date.weekday() == 5]
             # Parameters
             R_min = {}
             for s in S:
@@ -57,6 +59,8 @@ class GurobiSolverService:
             # Decision variables
             assignment = schedule.addVars(I, S, D, U, vtype=GRB.BINARY,name="assignment")
             gap = schedule.addVars(S, D, U, L, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="gap")
+            n_beg = schedule.addVars(I, D, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_beg")
+            n_end = schedule.addVars(I, D, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_end")
             # Objective functions
             schedule.setObjectiveN(gap.sum(), index=0, priority=1, name="Min_Gaps")
             schedule.setObjectiveN(assignment.sum(), index=1, priority=0, name="Min_Assignments")
@@ -79,6 +83,26 @@ class GurobiSolverService:
                 for d in D[:-POLICY.max_consecutive_nights]:
                     window = [d+timedelta(days=i) for i in range(POLICY.max_consecutive_nights + 1)]
                     schedule.addConstr(assignment.sum(i,S_n,window,'*')<= POLICY.max_consecutive_nights)
+            # define beginning of nightshiftblock
+            schedule.addConstrs((n_beg[i,d] >= assignment.sum(i,S_n,d,'*') - assignment.sum(i,S_n,d-timedelta(days=1),'*') for i in I for d in D[1:]));
+            schedule.addConstrs((n_beg[i,d] <= assignment.sum(i,S_n,d,'*') for i in I for d in D))
+            schedule.addConstrs((n_beg[i,d] <= 1 - assignment.sum(i,S_n,d-timedelta(days=1),'*') for i in I for d in D[1:]));
+            # define end of nightshiftblock
+            schedule.addConstrs((n_end[i,d] >= assignment.sum(i,S_n,d,'*') - assignment.sum(i,S_n,d+timedelta(days=1),'*') for i in I for d in D[:-1]));
+            schedule.addConstrs((n_end[i,d] <= assignment.sum(i,S_n,d,'*') for i in I for d in D));
+            schedule.addConstrs((n_end[i,d] <= 1 - assignment.sum(i,S_n,d+timedelta(days=1),'*') for i in I for d in D[:-1]));
+            # no nightshift block starts and ends on the same day
+            schedule.addConstrs(n_beg[i,d]+n_end[i,d]<=1 for i in I for d in D);
+            # ensure recovery days after nightshift block
+            L_n = POLICY.night_recovery_minutes//1440
+            for i in I:
+                for d in D[:-L_n]:
+                    for j in range(1,L_n+1):
+                        schedule.addConstr(n_end[i, d] + assignment.sum(i, '*', d + timedelta(days=j), '*') <= 1)
+                    # no early shift after recovery days
+                    schedule.addConstr((n_end[i, d] + assignment.sum(i, S_e, d + timedelta(days=L_n+1), '*') <= 1))
+            # same shifts on weekends
+            schedule.addConstrs((assignment.sum(i, s, d, '*') == assignment.sum(i, s, d+timedelta(days=1),'*') for i in I for s in S for d in D_s));
             # solve
             schedule.setParam("TimeLimit", timeout)
             schedule.optimize()
