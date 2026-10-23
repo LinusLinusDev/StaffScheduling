@@ -51,6 +51,12 @@ class GurobiSolverService:
             if D_prev and D_prev[-1].weekday() == 5:
                 D_s.append(D_prev[-1])
             # Parameters
+            t = {}
+            for entry in dataset.monthly_work_accounts:
+                t[entry.employee_id] = entry.target_minutes
+            h = {}
+            for entry in dataset.shifts:
+                h[entry.shift_id] = entry.net_work_minutes
             L_n = POLICY.night_recovery_minutes//1440
             R_min = {}
             for s in S:
@@ -65,9 +71,11 @@ class GurobiSolverService:
             gap = schedule.addVars(S, D, U, L, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="gap")
             n_beg = schedule.addVars(I, D_prev[-1:] + D, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_beg")
             n_end = schedule.addVars(I, D_prev[-(L_n+1):] + D[:-1], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_end")
+            hour = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour")
+            hour_max = schedule.addVar(vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour_max")
             # Objective functions
             schedule.setObjectiveN(gap.sum(), index=0, priority=1, name="gaps")
-            schedule.setObjectiveN(assignment.sum(), index=1, priority=0, name="Min_Assignments")
+            schedule.setObjectiveN(hour_max, index=1, priority=0, name="balance_deviation_minutes")
             schedule.ModelSense = GRB.MINIMIZE
             # Constraints
             # one shift per day
@@ -86,6 +94,9 @@ class GurobiSolverService:
             # min demand
             for l in L:
                 schedule.addConstrs((assignment.sum(I_l[l], s, d, u) + gap[s, d, u, l] >= R_min[s, d, u, l] for s in S for d in D for u in U));
+            # define workhours
+            schedule.addConstrs(gp.quicksum(h[s] * assignment.sum(i,s,d,u) for s in S for d in D for u in U) - hour[i] == t[i] for i in I);
+            schedule.addConstrs(hour_max >= hour[i] for i in I);
             # max consecutive nights
             for i in I:
                 for d in D_prev[-POLICY.max_consecutive_nights:]+ D[:-POLICY.max_consecutive_nights]:
