@@ -61,7 +61,8 @@ class GurobiSolverService:
             for entry in dataset.context.duties:
                 past_shifts[(entry.employee_id,entry.date)] = entry.shift_id
             L_n = POLICY.night_recovery_minutes//1440
-            K_s = 10
+            K_s = 10 # max consecutive workdays
+            Dist_n = 7 # days between two nightshift blocks
             R_min = {}
             for s in S:
                 for d in D:
@@ -73,16 +74,17 @@ class GurobiSolverService:
             # Decision variables
             assignment = schedule.addVars(I, S, D_prev + D, U, vtype=GRB.BINARY,name="assignment")
             gap = schedule.addVars(S, D, U, L, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="gap")
-            n_beg = schedule.addVars(I, D_prev[-1:] + D, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_beg")
-            n_end = schedule.addVars(I, D_prev[-(L_n+1):] + D[:-1], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_end")
+            n_beg = schedule.addVars(I, D_prev[-Dist_n:] + D, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_beg")
+            n_end = schedule.addVars(I, D_prev[-Dist_n:] + D[:-1], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_end")
             hour = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour")
             hour_max = schedule.addVars(L, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour_max")
+            hour_min = schedule.addVars(L, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour_min")
             cons_s = schedule.addVars(I, S, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_s")
             cons_x = schedule.addVars(I, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_x")
             L_to_E = schedule.addVars(I,D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="L_to_E")
             # Objective functions
             schedule.setObjectiveN(gap.sum(), index=0, priority=3, name="gaps")
-            schedule.setObjectiveN(hour_max.sum(), index=1, priority=2, abstol=300, name="hour_max")
+            schedule.setObjectiveN(hour_max.sum() - hour_min.sum(), index=1, priority=2, abstol=300, name="hour_max")
             schedule.setObjectiveN(L_to_E.sum(), index=2, priority=1, name="Min_L_to_E")
             schedule.setObjectiveN(-(cons_s.sum() + 2*cons_x.sum()), index=3, priority=0, name="cons")
             schedule.ModelSense = GRB.MINIMIZE
@@ -114,8 +116,10 @@ class GurobiSolverService:
             for l in L:
                 if I_l[l]:
                     schedule.addConstrs(hour_max[l] >= hour[i] for i in I_l[l]);
+                    schedule.addConstrs(hour_min[l] <= hour[i] for i in I_l[l]);
                 else:
                     schedule.addConstr(hour_max[l] >= 0)
+                    schedule.addConstr(hour_min[l] <= 0)
             # define cons_s and cons_x
             schedule.addConstrs((cons_s[i,s,d] <= assignment.sum(i,s,d,'*') for i in I for s in S for d in D));
             schedule.addConstrs((cons_s[i,s,d] <= assignment.sum(i,s,d-timedelta(days=1),'*') for i in I for s in S for d in D));
@@ -152,6 +156,16 @@ class GurobiSolverService:
                     schedule.addConstr((n_end[i, d] + assignment.sum(i, S_id['F'], d + timedelta(days=L_n+1), '*') <= 1))
             # same shifts on weekends
             schedule.addConstrs((assignment.sum(i, s, d, '*') == assignment.sum(i, s, d+timedelta(days=1),'*') for i in I for s in S for d in D_s));
+            # max 3 weekends each
+            schedule.addConstrs((assignment.sum(i, '*', D_s, '*') <= 3 for i in I));
+            # min days between nightshift block
+            for i in I:
+                for d in D_prev[-Dist_n:] + D:
+                    forbidden_starts = [d+timedelta(days=j) for j in range(1, Dist_n + 1) if d+timedelta(days=j) in D_prev[-Dist_n:] + D]
+                    if forbidden_starts:
+                        schedule.addConstr(n_end[i, d] + n_beg.sum(i, forbidden_starts) <= 1)
+            # not two cons weekends
+            schedule.addConstrs(assignment.sum(i,'*',D_s[j],'*') + assignment.sum(i,'*',D_s[j+1],'*') <= 1 for i in I for j in range(len(D_s) - 1));
             # solve
             schedule.setParam("TimeLimit", timeout)
             schedule.Params.MIPGap = 0.03
