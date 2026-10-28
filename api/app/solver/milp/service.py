@@ -76,6 +76,31 @@ class GurobiSolverService:
             for entry in dataset.context.duties:
                 past_shifts[(entry.employee_id,entry.date)] = entry.shift_id
 
+            home_reward = 10
+            wish_reward = 30
+
+            pref = {(i,s,d,u):0 for i in I for s in S for d in D for u in U}
+            for entry in dataset.planning_unit_memberships:
+                if entry.is_home:
+                    for s in S:
+                        for d in D:
+                            pref[entry.employee_id,s,d,entry.planning_unit_id] += 10
+            for entry in dataset.wishes:
+                if entry.type == "free_day":
+                    for u in U:
+                        for s in S:
+                            pref[entry.employee_id,s,entry.date,u] -= wish_reward
+                elif entry.type == "free_shift":
+                    for u in U:
+                        pref[entry.employee_id,entry.shift_id,entry.date,u] -= wish_reward
+                elif entry.type == "preferred_day":
+                    for u in U:
+                        for s in S:
+                            pref[entry.employee_id,s,entry.date,u] += wish_reward
+                elif entry.type == "preferred_shift":
+                    for u in U:
+                        pref[entry.employee_id,entry.shift_id,entry.date,u] += wish_reward
+
             R_min = {}
             for s in S:
                 for d in D:
@@ -96,10 +121,11 @@ class GurobiSolverService:
             cons_x = schedule.addVars(I, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_x")
             L_to_E = schedule.addVars(I,D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="L_to_E")
             # Objective functions
-            schedule.setObjectiveN(gap.sum(), index=0, priority=3, name="gaps")
-            schedule.setObjectiveN(hour_max.sum() - hour_min.sum(), index=1, priority=2, abstol=300, name="hour_max")
-            schedule.setObjectiveN(L_to_E.sum(), index=2, priority=1, name="Min_L_to_E")
-            schedule.setObjectiveN(-(cons_s.sum() + 2*cons_x.sum()), index=3, priority=0, name="cons")
+            schedule.setObjectiveN(gap.sum(), index=0, priority=4, name="gaps")
+            schedule.setObjectiveN(hour_max.sum() - hour_min.sum(), index=1, priority=3, abstol=300, name="hour_max")
+            schedule.setObjectiveN(-gp.quicksum(pref[i,s,d,u]*assignment[i,s,d,u] for i in I for s in S for d in D for u in U), index=2, priority=2, name="wishes")
+            schedule.setObjectiveN(L_to_E.sum(), index=3, priority=1, name="Min_L_to_E")
+            schedule.setObjectiveN(-(cons_s.sum() + 2*cons_x.sum()), index=4, priority=0, name="cons")
             schedule.ModelSense = GRB.MINIMIZE
             # Constraints
             # one shift per day
