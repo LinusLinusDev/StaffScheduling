@@ -10,12 +10,14 @@ from app.domain import (
     Assignment,
     Availability,
     AvailabilityEntry,
+    AvailabilityType,
     DemandConfiguration,
     DemandPattern,
     EmployeeCalendar,
     EmployeeSummary,
     InvalidSelection,
     MonthlyDemand,
+    MonthlyWorkAccount,
     PlanningInspection,
     PlanningMonth,
     PlanningOptions,
@@ -30,11 +32,13 @@ from app.domain import (
     Shift,
     Wish,
     WishEntry,
+    WorkCredit,
     build_inspection,
     build_scheduling_dataset,
     expand_pattern,
     inspection_employee_ids,
     month_calendar,
+    public_holiday,
 )
 from app.timeoffice import project_tables, queries, roster
 from app.timeoffice.database import TimeOfficeConflict, TimeOfficeUnavailable
@@ -240,6 +244,8 @@ class TimeOfficeService:
         absences = queries.read_absences(connection, self._facts, employee_ids, start, end)
         accounts = queries.read_accounts(connection, self._facts, employee_ids, planning_month, absences)
         availability = project_tables.read_availability(connection, employee_ids, start, end)
+        # TEMPORARY: credits for vacation and training entered in the webapp; see _with_project_credits.
+        accounts = _with_project_credits(accounts, availability, planning_month)
 
         scope_memberships = tuple(row for row in memberships if row.employee_id in employee_ids)
         relevant_unit_ids = set(selected) | {row.planning_unit_id for row in scope_memberships}
@@ -329,3 +335,45 @@ class TimeOfficeService:
 
 def _month_of(day: date) -> PlanningMonth:
     return PlanningMonth(year=day.year, month=day.month)
+
+
+# Project availability that counts towards the monthly target like a TimeOffice-booked absence.
+PROJECT_CREDITED_TYPES = frozenset({AvailabilityType.VACATION, AvailabilityType.TRAINING})
+
+
+def _with_project_credits(
+    accounts: tuple[MonthlyWorkAccount, ...], availability: tuple[Availability, ...], month: PlanningMonth
+) -> tuple[MonthlyWorkAccount, ...]:
+    """The accounts with a credit for every vacation or training day entered in the webapp.
+
+    TEMPORARY WORKAROUND, to be removed as soon as there is a live TimeOffice connection whose
+    daily absence accounts hold these absences: credits then come from TimeOffice alone (ADR 0008),
+    and this function and its call in `_inspect` must go, or such days would be credited twice.
+
+    Until then, vacation and training entered as project availability block the day without
+    reducing the target, so the solver would plan the full target into the remaining days. Like
+    TimeOffice, it credits Monday to Friday dates that are no NRW public holiday, with the daily
+    target: the monthly target divided by the month's such dates. A date TimeOffice already
+    credits keeps its booking.
+    """
+    bookable = {day for day in month.dates if day.isoweekday() <= 5 and public_holiday(day) is None}
+    if not bookable:
+        return accounts
+    credited_types: dict[tuple[int, date], AvailabilityType] = {
+        (row.employee_id, row.date): row.availability_type
+        for row in availability
+        if not row.native_absence and row.availability_type in PROJECT_CREDITED_TYPES and row.date in bookable
+    }
+    result: list[MonthlyWorkAccount] = []
+    for account in accounts:
+        booked = {credit.date for credit in account.credit_details}
+        daily = round(account.target_minutes / len(bookable))
+        added = tuple(
+            WorkCredit(date=day, minutes=daily, kind="approved_absence", source=f"Project {kind.value} availability")
+            for (employee_id, day), kind in sorted(credited_types.items())
+            if employee_id == account.employee_id and day not in booked
+        )
+        if added:
+            account = account.model_copy(update={"credit_details": (*account.credit_details, *added)})
+        result.append(account)
+    return tuple(result)

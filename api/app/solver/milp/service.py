@@ -1,56 +1,71 @@
-from app.domain import SchedulingDataset
-from app.settings import Settings
-from app.solver.models import Solution
+import math
+from collections import Counter, defaultdict
 from datetime import timedelta
-from app.domain import StaffLevel
+
 import gurobipy as gp
 from gurobipy import GRB
-from app.solver.models import RunConfiguration, Solution, SolutionStatus, StageReport
+
 from app.domain import (
     POLICY,
-    SchedulingDataset,
     Assignment,
-    ShiftType,
+    AvailabilityType,
     Gap,
-    check_schedule
+    SchedulingDataset,
+    ShiftType,
+    StaffLevel,
+    check_schedule,
 )
+from app.domain.rules import BLOCKING_AVAILABILITY
+from app.settings import Settings
+from app.solver.models import RunConfiguration, Solution, SolutionStatus, StageReport
+
 
 class GurobiSolverService:
     def __init__(self, settings: Settings) -> None:
-        self._settings = settings        
+        self._settings = settings
 
     def solve(self, dataset: SchedulingDataset, timeout: float | None = None) -> Solution:
-        timeout = timeout if timeout is not None else self._settings.solver_max_time_seconds
-        with gp.Env() as env, gp.Model("schedule", env=env) as schedule:
+        settings = self._settings
+        timeout = timeout if timeout is not None else settings.solver_max_time_seconds
+        # log only when asked (SOLVER_LOG_SEARCH_PROGRESS); this also silences the license banner
+        env_params = {"OutputFlag": 1 if settings.solver_log_search_progress else 0}
+        with gp.Env(params=env_params) as env, gp.Model("schedule", env=env) as schedule:
             # Sets and Indices
-            U = []
-            for unit in dataset.planning_units:
-                U.append(unit.planning_unit_id)
+            U = [unit.planning_unit_id for unit in dataset.planning_units]
             L = [level.value for level in StaffLevel]
-            stations_of = {
-                e.employee_id: sorted({
-                    m.planning_unit_id
-                    for m in dataset.planning_unit_memberships
-                    if m.employee_id == e.employee_id and m.planning_unit_id in dataset.station_ids
-                })
-                for e in dataset.employees
-            }
 
             I = []
             I_l = {l:[] for l in L}
             for employee in dataset.employees:
                 I.append(employee.employee_id)
                 I_l[employee.staff_level].append(employee.employee_id)
-            S = []
-            S_id = {}
-            for shift in dataset.shifts:
-                S.append(shift.shift_id)
-                S_id[shift.code] = shift.shift_id
+            S = [shift.shift_id for shift in dataset.shifts]
+            # shifts by type, so rules hold for every shift of a type whatever its code
+            S_early = [s.shift_id for s in dataset.shifts if s.type == ShiftType.EARLY]
+            S_late = [s.shift_id for s in dataset.shifts if s.type == ShiftType.LATE]
+            S_night = [s.shift_id for s in dataset.shifts if s.type == ShiftType.NIGHT]
             D = list(dataset.planning_month.dates)
             D_prev = [dataset.context.covered_from + timedelta(days=i) for i in range((dataset.planning_month.dates[0] - dataset.context.covered_from).days)]
-            D_s = [date for date in dataset.planning_month.dates[:-1] if date.weekday() == 5]
+            D_set = set(D)
+            D_prev_set = set(D_prev)
+            # (employee, station, day) -> qualification the duty is credited as, from the membership active that day
+            level_at = {}
+            for m in dataset.planning_unit_memberships:
+                if m.planning_unit_id in dataset.station_ids:
+                    for d in D:
+                        if m.active_on(d):
+                            level_at.setdefault((m.employee_id, m.planning_unit_id, d), m.staff_level)
+            # who covers which demand: (station, day, qualification) -> employees
+            staff_for = defaultdict(list)
+            for (i, u, d), l in level_at.items():
+                staff_for[u, d, l].append(i)
+            # Saturdays whose Sunday lies in the month (for "same shift Sat/Sun")
+            D_s = [date for date in D[:-1] if date.weekday() == 5]
+            # all weekends that touch the month, in order (for "no two in a row")
+            W = [date for date in D if date.weekday() == 5]
             if D_prev and D_prev[-1].weekday() == 5:
                 D_s = D_prev[-1:] + D_s
+                W = D_prev[-1:] + W
             # Parameters
             t = {}
             credits = {}
@@ -65,26 +80,56 @@ class GurobiSolverService:
             K_s = 10
             Dist_n = 7
 
-            training = {i:[] for i in I}
-            absences = {i:{d:0 for d in D_prev[-Dist_n:] + D} for i in I}
+            training = defaultdict(set)
             for absence in dataset.availability:
                 if absence.availability_type == 'training':
-                    training[absence.employee_id].append(absence.date)
-                absences[absence.employee_id][absence.date] = 1
-            
+                    training[absence.employee_id].add(absence.date)
+            # blocking absences (vacation, free day, training, unavailable) and vacation days
+            blocked = {(a.employee_id, a.date) for a in dataset.availability if a.availability_type in BLOCKING_AVAILABILITY}
+            vacation = {(a.employee_id, a.date) for a in dataset.availability if a.availability_type == AvailabilityType.VACATION}
+
             past_shifts = {}
             for entry in dataset.context.duties:
                 past_shifts[(entry.employee_id,entry.date)] = entry.shift_id
 
-            home_reward = 10
+            # (employee, shift, day) that availability forbids
+            not_allowed = set()
+            # assign absences: available_only allows only its shifts, every other absence blocks the day
+            for absence in dataset.availability:
+                for s in S:
+                    if absence.availability_type != "available_only" or s not in absence.shift_ids:
+                        not_allowed.add((absence.employee_id, s, absence.date))
+            # no night shift before a blocked day (a night touches the next day)
+            # and no late shift on the day before vacation begins
+            for i in I:
+                for d in D[:-1]:
+                    next_day = d + timedelta(days=1)
+                    if (i, next_day) in blocked:
+                        for s in S_night:
+                            not_allowed.add((i, s, d))
+                    if (i, next_day) in vacation and (i, d) not in vacation:
+                        for s in S_late:
+                            not_allowed.add((i, s, d))
+
+            transfer_penalty = 10
             wish_reward = 30
 
-            pref = {(i,s,d,u):0 for i in I for s in S for d in D for u in U}
-            for entry in dataset.planning_unit_memberships:
-                if entry.is_home:
+            # (employee, shift, day, unit) -> preference score; entries not listed are 0
+            pref = defaultdict(int)
+            # home unit of every employee on every day, from the home membership active that day
+            home_of = {}
+            for m in dataset.planning_unit_memberships:
+                if m.is_home:
+                    for d in D:
+                        if m.active_on(d):
+                            home_of[m.employee_id, d] = m.planning_unit_id
+            # a duty at another station than the employee's home station costs transfer_penalty;
+            # jumpers (home is a pool) are free to work anywhere
+            for (i, u, d) in level_at:
+                home = home_of.get((i, d))
+                if home in dataset.station_ids and home != u:
                     for s in S:
-                        for d in D:
-                            pref[entry.employee_id,s,d,entry.planning_unit_id] += 10
+                        pref[i, s, d, u] -= transfer_penalty
             for entry in dataset.wishes:
                 if entry.type == "free_day":
                     for u in U:
@@ -101,75 +146,82 @@ class GurobiSolverService:
                     for u in U:
                         pref[entry.employee_id,entry.shift_id,entry.date,u] += wish_reward
 
-            R_min = {}
-            for s in S:
-                for d in D:
-                    for u in U:
-                        for l in L:
-                            R_min[s, d, u, l] = 0
-            for entry in dataset.demand_requirements:
-                R_min[entry.shift_id,entry.date,entry.planning_unit_id,entry.staff_level] = entry.required_count
+            # minimum demand: (shift, day, station, qualification) -> required count, only rows with demand
+            R_min = {(r.shift_id, r.date, r.planning_unit_id, r.staff_level): r.required_count for r in dataset.demand_requirements}
             # Decision variables
-            assignment = schedule.addVars(I, S, D_prev + D, U, vtype=GRB.BINARY,name="assignment")
-            gap = schedule.addVars(S, D, U, L, lb=0.0, vtype=GRB.CONTINUOUS, name="gap")
-            n_beg = schedule.addVars(I, D_prev[-Dist_n:] + D, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_beg")
-            n_end = schedule.addVars(I, D_prev[-Dist_n:] + D[:-1], vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_end")
+            # assignment only for duties that can happen: a station membership active that day (7b: allowed
+            # by availability); duties before the month are constants from past_shifts, not variables
+            assignment = schedule.addVars(
+                [(i, s, d, u) for (i, u, d) in level_at for s in S if (i, s, d) not in not_allowed],
+                vtype=GRB.BINARY, name="assignment")
+            gap = schedule.addVars(R_min.keys(), lb=0.0, vtype=GRB.CONTINUOUS, name="gap")
+            n_beg = schedule.addVars(I, D_prev[-1:] + D, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_beg")
+            # days on which the end of a night block matters: recovery and distance to the next block
+            D_end = D_prev[-max(Dist_n, L_n + 1):] + D[:-1]
+            n_end = schedule.addVars(I, D_end, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_end")
             hour = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour")
+            # minutes by which a balance leaves the band of ±POLICY.balance_tolerance_minutes
+            over = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=0.0, name="over")
             hour_max = schedule.addVars(L, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour_max")
             hour_min = schedule.addVars(L, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour_min")
             cons_s = schedule.addVars(I, S, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_s")
             cons_x = schedule.addVars(I, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_x")
             L_to_E = schedule.addVars(I,D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="L_to_E")
+
+            # Expressions, built once and looked up below instead of assignment.sum(...) with wildcards.
+            # x[i, s, d]: employee i works shift s on day d (sum over stations); before the month 0 or 1
+            by_duty = defaultdict(list)
+            for (i, s, d, u), var in assignment.items():
+                by_duty[i, s, d].append(var)
+            x = {key: gp.quicksum(variables) for key, variables in by_duty.items()}
+            for (i, d), s in past_shifts.items():
+                if d in D_prev_set:
+                    x[i, s, d] = gp.LinExpr(1)
+
+            def total(shifts, i, d):
+                return gp.quicksum(x[i, s, d] for s in shifts if (i, s, d) in x)
+
+            days = D_prev + D
+            # work: any duty; night, early, late: a duty of that type
+            work = {(i, d): total(S, i, d) for i in I for d in days}
+            night = {(i, d): total(S_night, i, d) for i in I for d in days}
+            early = {(i, d): total(S_early, i, d) for i in I for d in days}
+            late = {(i, d): total(S_late, i, d) for i in I for d in days}
+
+            def at(table, i, d):
+                """The expression of employee i on day d; 0 outside the month and its known past."""
+                return table[i, d] if (i, d) in table else gp.LinExpr()
+
+            def shift_on(i, s, d):
+                return x[i, s, d] if (i, s, d) in x else gp.LinExpr()
+
             # Objective functions
-            schedule.setObjectiveN(gap.sum(), index=0, priority=4, name="gaps")
-            schedule.setObjectiveN(hour_max.sum() - hour_min.sum(), index=1, priority=3, abstol=300, name="hour_max")
-            schedule.setObjectiveN(-gp.quicksum(pref[i,s,d,u]*assignment[i,s,d,u] for i in I for s in S for d in D for u in U), index=2, priority=2, name="wishes")
-            schedule.setObjectiveN(L_to_E.sum(), index=3, priority=1, name="Min_L_to_E")
-            schedule.setObjectiveN(-(cons_s.sum() + 2*cons_x.sum()), index=4, priority=0, name="cons")
+            # (name, expression, maximize), highest priority first
+            objectives = [
+                ("gaps", gap.sum(), False),
+                ("balance_violation", over.sum(), False),
+                ("wishes", gp.quicksum(score * assignment[key] for key, score in pref.items() if score and key in assignment), True),
+                ("Min_L_to_E", L_to_E.sum(), False),
+                ("cons", cons_s.sum() + 2*cons_x.sum(), True),
+            ]
+            for n, (name, expr, maximize) in enumerate(objectives):
+                schedule.setObjectiveN(-expr if maximize else expr, index=n, priority=len(objectives) - 1 - n, name=name)
             schedule.ModelSense = GRB.MINIMIZE
             # Constraints
             # one shift per day
-            schedule.addConstrs((assignment.sum(i, '*', d, '*') <= 1 for i in I for d in D));
-            # assign absences
-            for absence in dataset.availability:
-                if absence.availability_type == "available_only":
-                    for s in S:
-                        if s in absence.shift_ids:
-                            continue
-                        for u in U:
-                            assignment[absence.employee_id,s,absence.date,u].ub = 0.0
-                else:
-                    for s in S:
-                        for u in U:
-                            assignment[absence.employee_id,s,absence.date,u].ub = 0.0
-            # no night or late shift before vacation
-            for i in I:
-                for d in D[1:]:
-                    if absences[i][d] == 1 and absences[i][d-timedelta(days=1)] == 0:
-                        for u in U:
-                            assignment[i,S_id['N'],d-timedelta(days=1),u].ub = 0.0
-                            assignment[i,S_id['S'],d-timedelta(days=1),u].ub = 0.0
-            # assign duties
-            for i in I:
-                for d in D_prev:
-                    if (i,d) in past_shifts.keys():
-                        assignment[i, past_shifts[(i,d)],d,U[0]].lb = 1.0
-                    else:
-                        for s in S:
-                            for u in U:
-                                assignment[i, s,d, u].ub = 0.0
-            # only assign on allowed units
-            for i in I:
-                for u in U:
-                    if u not in stations_of[i]:
-                        for s in S:
-                            for d in D:
-                                assignment[i,s,d,u].ub = 0
-            # min demand
-            for l in L:
-                schedule.addConstrs((assignment.sum(I_l[l], s, d, u) + gap[s, d, u, l] >= R_min[s, d, u, l] for s in S for d in D for u in U));
+            schedule.addConstrs((work[i, d] <= 1 for i in I for d in D), name="one_shift")
+            # min demand, credited with the membership's qualification
+            schedule.addConstrs((gp.quicksum(assignment[i, s, d, u] for i in staff_for[u, d, l] if (i, s, d, u) in assignment) + gap[s, d, u, l] >= required
+                                 for (s, d, u, l), required in R_min.items()), name="demand")
             # define workhours
-            schedule.addConstrs(gp.quicksum(h[s] * assignment.sum(i,s,d,u) for s in S for d in D for u in U) + credits[i] - hour[i] == t[i] for i in I);
+            minutes = defaultdict(list)
+            for (i, s, d, u), var in assignment.items():
+                minutes[i].append(h[s] * var)
+            schedule.addConstrs((gp.quicksum(minutes[i]) + credits[i] - hour[i] == t[i] for i in I), name="workhours")
+            # balance band, soft: over[i] is the excess beyond ±tolerance
+            tolerance = POLICY.balance_tolerance_minutes
+            schedule.addConstrs((over[i] >= hour[i] - tolerance for i in I), name="over_up")
+            schedule.addConstrs((over[i] >= -hour[i] - tolerance for i in I), name="over_down")
             for l in L:
                 if I_l[l]:
                     schedule.addConstrs(hour_max[l] >= hour[i] for i in I_l[l]);
@@ -178,77 +230,58 @@ class GurobiSolverService:
                     schedule.addConstr(hour_max[l] >= 0)
                     schedule.addConstr(hour_min[l] <= 0)
             # define cons_s and cons_x
-            schedule.addConstrs((cons_s[i,s,d] <= assignment.sum(i,s,d,'*') for i in I for s in S for d in D));
-            schedule.addConstrs((cons_s[i,s,d] <= assignment.sum(i,s,d-timedelta(days=1),'*') for i in I for s in S for d in D));
-            schedule.addConstrs((cons_x[i,d] <= 1 - assignment.sum(i,'*',d,'*') for i in I for d in D));
-            schedule.addConstrs((cons_x[i,d] <= 1 - assignment.sum(i,'*',d-timedelta(days=1),'*') for i in I for d in D));
+            one_day = timedelta(days=1)
+            schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d) for i in I for s in S for d in D));
+            schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d - one_day) for i in I for s in S for d in D));
+            schedule.addConstrs((cons_x[i,d] <= 1 - work[i, d] for i in I for d in D));
+            schedule.addConstrs((cons_x[i,d] <= 1 - at(work, i, d - one_day) for i in I for d in D));
             # max consecutive workdays
             for i in I:
                 for d in D_prev[-K_s:] + D[:-K_s]:
-                    window = [d+timedelta(days=i) for i in range(K_s + 1)]
-                    fixed = len(set(window).intersection(set(training[i])))
-                    schedule.addConstr(assignment.sum(i, '*', window, '*') + fixed <= K_s)
+                    window = [d + timedelta(days=k) for k in range(K_s + 1)]
+                    fixed = len(training[i].intersection(window))
+                    schedule.addConstr(gp.quicksum(at(work, i, day) for day in window) + fixed <= K_s)
             # define L_to_E
-            schedule.addConstrs(L_to_E[i, d] >= assignment.sum(i, S_id['S'], d-timedelta(days=1),'*') + assignment.sum(i, S_id['F'], d,'*') - 1 for i in I for d in D);
+            schedule.addConstrs(L_to_E[i, d] >= at(late, i, d - one_day) + early[i, d] - 1 for i in I for d in D);
             # max consecutive nights
             for i in I:
                 for d in D_prev[-POLICY.max_consecutive_nights:]+ D[:-POLICY.max_consecutive_nights]:
-                    window = [d+timedelta(days=i) for i in range(POLICY.max_consecutive_nights + 1)]
-                    schedule.addConstr(assignment.sum(i,S_id['N'],window,'*')<= POLICY.max_consecutive_nights)
-            # define beginning of nightshiftblock
-            schedule.addConstrs((n_beg[i,d] >= assignment.sum(i,S_id['N'],d,'*') - assignment.sum(i,S_id['N'],d-timedelta(days=1),'*') for i in I for d in D_prev[-1:] + D));
-            schedule.addConstrs((n_beg[i,d] <= assignment.sum(i,S_id['N'],d,'*') for i in I for d in D_prev[-1:] + D))
-            schedule.addConstrs((n_beg[i,d] <= 1 - assignment.sum(i,S_id['N'],d-timedelta(days=1),'*') for i in I for d in D_prev[-1:] + D));
-            # define end of nightshiftblock
-            schedule.addConstrs((n_end[i,d] >= assignment.sum(i,S_id['N'],d,'*') - assignment.sum(i,S_id['N'],d+timedelta(days=1),'*') for i in I for d in D_prev[-(L_n+1):] + D[:-1]));
-            schedule.addConstrs((n_end[i,d] <= assignment.sum(i,S_id['N'],d,'*') for i in I for d in D_prev[-(L_n+1):] + D[:-1]));
-            schedule.addConstrs((n_end[i,d] <= 1 - assignment.sum(i,S_id['N'],d+timedelta(days=1),'*') for i in I for d in D_prev[-(L_n+1):] + D[:-1]));
+                    window = [d + timedelta(days=k) for k in range(POLICY.max_consecutive_nights + 1)]
+                    schedule.addConstr(gp.quicksum(at(night, i, day) for day in window) <= POLICY.max_consecutive_nights)
+            # define beginning and end of nightshiftblock; lower bounds suffice, because n_beg and n_end
+            # appear only in <= 1 constraints with positive sign and in no objective
+            schedule.addConstrs((n_beg[i,d] >= night[i, d] - at(night, i, d - one_day) for i in I for d in D_prev[-1:] + D));
+            schedule.addConstrs((n_end[i,d] >= night[i, d] - at(night, i, d + one_day) for i in I for d in D_end));
             # no nightshift block starts and ends on the same day
             schedule.addConstrs(n_beg[i,d]+n_end[i,d]<=1 for i in I for d in D_prev[-1:] + D[:-1]);
-            # ensure recovery days after nightshift block
+            # ensure recovery days after nightshift block (only month days: the past is never constrained against itself)
             for i in I:
                 for d in D_prev[-(L_n+1):] + D[:-1]:
                     for j in range(1,L_n+1):
-                        if d + timedelta(days=j) in D_prev[-L_n:] + D:
-                            schedule.addConstr(n_end[i, d] + assignment.sum(i, '*', d + timedelta(days=j), '*') <= 1)
+                        if d + timedelta(days=j) in D_set:
+                            schedule.addConstr(n_end[i, d] + work[i, d + timedelta(days=j)] <= 1)
                     # no early shift after recovery days
-                    schedule.addConstr((n_end[i, d] + assignment.sum(i, S_id['F'], d + timedelta(days=L_n+1), '*') <= 1))
+                    if d + timedelta(days=L_n+1) in D_set:
+                        schedule.addConstr(n_end[i, d] + early[i, d + timedelta(days=L_n+1)] <= 1)
             # same shifts on weekends
-            schedule.addConstrs((assignment.sum(i, s, d, '*') == assignment.sum(i, s, d+timedelta(days=1),'*') for i in I for s in S for d in D_s));
-            # max 3 weekends each
-            schedule.addConstrs((assignment.sum(i, '*', D_s, '*') <= 3 for i in I));
-            # min days between nightshift block
+            schedule.addConstrs((shift_on(i, s, d) == shift_on(i, s, d + one_day) for i in I for s in S for d in D_s));
+            # min days between nightshift block (only blocks starting in the month)
             for i in I:
                 for d in D_prev[-Dist_n:] + D:
-                    forbidden_starts = [d+timedelta(days=j) for j in range(1, Dist_n + 1) if d+timedelta(days=j) in D_prev[-Dist_n:] + D]
+                    forbidden_starts = [d+timedelta(days=j) for j in range(1, Dist_n + 1) if d+timedelta(days=j) in D_set]
                     if forbidden_starts:
-                        schedule.addConstr(n_end[i, d] + n_beg.sum(i, forbidden_starts) <= 1)
+                        schedule.addConstr(n_end[i, d] + gp.quicksum(n_beg[i, day] for day in forbidden_starts) <= 1)
             # not two cons weekends
-            schedule.addConstrs(assignment.sum(i,'*',D_s[j],'*') + assignment.sum(i,'*',D_s[j+1],'*') <= 1 for i in I for j in range(len(D_s) - 1));
+            schedule.addConstrs(work[i, W[j]] + work[i, W[j+1]] <= 1 for i in I for j in range(len(W) - 1));
             # solve
-            schedule.setParam("TimeLimit", timeout)
+            schedule.Params.TimeLimit = timeout
             schedule.Params.MIPGap = 0.03
+            if settings.solver_num_search_workers is not None:
+                schedule.Params.Threads = settings.solver_num_search_workers
+            if settings.solver_random_seed is not None:
+                schedule.Params.Seed = settings.solver_random_seed
             schedule.optimize()
-            # construct solution
-            assignments = tuple(
-                Assignment(employee_id=i, shift_id=s, date=d, planning_unit_id=u, staff_level=l)
-                for l in L for i in I_l[l] for s in S for d in D for u in U
-                if assignment[i, s, d, u].X > 0.5
-            )
-            gaps = tuple(
-                Gap(shift_id=s, date=d, planning_unit_id=u, staff_level=l, missing_count=int(var.X))
-                for (s,d,u,l), var in gap.items()
-                if int(var.X) > 0
-            )
-            stages = []
-            for i in range(schedule.NumObjPasses):
-                schedule.Params.ObjNumber = i
-                stages.append(StageReport(
-                    name=schedule.ObjNName,
-                    status=SolutionStatus.OPTIMAL if schedule.ObjPassNStatus==2 else SolutionStatus.FEASIBLE,
-                    value=int(schedule.ObjNVal),
-                    best_bound=int(schedule.ObjPassNObjBound)))
-            stages = tuple(stages)
+            # status first: without a solution Gurobi has no values to read
             if schedule.Status == GRB.OPTIMAL:
                 status = SolutionStatus.OPTIMAL
             elif schedule.Status in (GRB.INFEASIBLE, GRB.INF_OR_UNBD):
@@ -257,15 +290,54 @@ class GurobiSolverService:
                 status = SolutionStatus.FEASIBLE
             else:
                 status = SolutionStatus.UNKNOWN
-
-            found = status in (SolutionStatus.OPTIMAL, SolutionStatus.FEASIBLE)
+            configuration = RunConfiguration(policy=POLICY, timeout_seconds=timeout,
+                                             search_workers=settings.solver_num_search_workers,
+                                             random_seed=settings.solver_random_seed)
+            if schedule.SolCount == 0:
+                return Solution(status=status, configuration=configuration, wall_time_seconds=schedule.Runtime)
+            # construct solution: read all values at once
+            values = schedule.getAttr("X", assignment)
+            assignments = tuple(sorted(
+                (
+                    Assignment(employee_id=i, shift_id=s, date=d, planning_unit_id=u, staff_level=level_at[i, u, d])
+                    for (i, s, d, u), value in values.items()
+                    if value > 0.5
+                ),
+                key=lambda a: (a.date, a.planning_unit_id, a.shift_id, a.employee_id),
+            ))
+            # gaps exactly as the schedule check counts them: max(0, required - assigned) per demand row
+            covered = Counter(a.demand_key for a in assignments)
+            gaps = tuple(
+                Gap(planning_unit_id=r.planning_unit_id, date=r.date, shift_id=r.shift_id,
+                    staff_level=r.staff_level, missing_count=r.required_count - covered[r.demand_key])
+                for r in dataset.demand_requirements
+                if covered[r.demand_key] < r.required_count
+            )
+            stages = []
+            for n, (name, expr, maximize) in enumerate(objectives):
+                # one pass per objective, since all priorities differ
+                schedule.Params.ObjPassNumber = n
+                try:
+                    pass_status = schedule.ObjPassNStatus
+                    bound = schedule.ObjPassNObjBound
+                    bound = (-bound if maximize else bound) if math.isfinite(bound) else None
+                except (gp.GurobiError, AttributeError):  # the time ran out before this pass
+                    pass_status, bound = None, None
+                stages.append(StageReport(
+                    name=name,
+                    status=SolutionStatus.OPTIMAL if pass_status == GRB.OPTIMAL else SolutionStatus.FEASIBLE,
+                    value=sum(g.missing_count for g in gaps) if name == "gaps" else round(expr.getValue()),
+                    best_bound=bound,
+                ))
+            stages = tuple(stages)
+            if status == SolutionStatus.OPTIMAL and any(stage.status != SolutionStatus.OPTIMAL for stage in stages):
+                status = SolutionStatus.FEASIBLE
             return Solution(
                 status=status,
-                configuration=RunConfiguration(policy=POLICY, timeout_seconds=schedule.Params.TimeLimit,
-                                            search_workers=None, random_seed=None),
+                configuration=configuration,
                 wall_time_seconds=schedule.Runtime,
-                assignments=assignments if found else (),
-                gaps=gaps if found else (),
-                stages=stages if found else (),
-                check=check_schedule(dataset, assignments, gaps) if found else None,
+                assignments=assignments,
+                gaps=gaps,
+                stages=stages,
+                check=check_schedule(dataset, assignments, gaps),
             )

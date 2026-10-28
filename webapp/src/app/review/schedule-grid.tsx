@@ -141,9 +141,10 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
       ].join(", "),
     ]),
   );
-  // Staffing per station, shift and date: the required count, the filled slots (each qualification's staff up to its
-  // demand, as another qualification never fills it and a surplus never covers another's gap; the tooltip lists
-  // everyone), all assigned staff for cells without demand, and the gap: the slots missing per qualification.
+  // Staffing per station, shift and date: the required count, all assigned staff (shown where nothing is missing, so
+  // a surplus is visible as e.g. 3/2), the filled slots (each qualification's staff up to its demand, shown where
+  // slots are missing, as another qualification never fills it and a surplus never covers another's gap; the tooltip
+  // lists everyone), and the gap: the slots missing per qualification.
   const staffing = new Map<
     string,
     { required: number; assigned: number; credited: number; missing: number; levels: string[]; gaps: string[] }
@@ -325,7 +326,7 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
                                 cell?.missing && GAP_CELL,
                               )}
                             >
-                              {cell && `${cell.required ? cell.credited : cell.assigned}/${cell.required}`}
+                              {cell && `${cell.missing ? cell.credited : cell.assigned}/${cell.required}`}
                               {cell?.missing ? (
                                 <div className="text-[10px] leading-tight">
                                   −{cell.missing}
