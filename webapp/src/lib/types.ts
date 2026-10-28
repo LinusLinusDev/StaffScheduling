@@ -240,8 +240,8 @@ export interface Solution {
   stages: Stage[];
 }
 
-/** The objective tiers, highest priority first; each is a score of the check. */
-export type ObjectiveTier =
+/** The scores of the schedule check; the CP-SAT solver's objective tiers carry the same names. */
+export type ScoreName =
   | "gaps"
   | "health_events"
   | "station_transfers"
@@ -249,9 +249,13 @@ export type ObjectiveTier =
   | "balance_deviation_minutes"
   | "surplus_intermediate_duties";
 
+/** The objective tiers of both solvers: CP-SAT's are the check's scores, the Gurobi MILP adds its own. */
+export type ObjectiveTier =
+  ScoreName | "balance_violation" | "gap_spread" | "wishes" | "shift_balance" | "Min_L_to_E" | "cons";
+
 /**
- * One objective tier's stage: its value in the schedule (the check's score) and CP-SAT's proven bound, null when
- * the stage found no schedule in its time and kept the previous one.
+ * One objective tier's stage: its value in the schedule and the solver's proven bound, null when the stage found no
+ * schedule in its time and kept the previous one.
  */
 export interface Stage {
   name: ObjectiveTier;

@@ -10,20 +10,21 @@ import {
   missingInputs,
   formatDate,
   OBJECTIVE_LABELS,
+  SCORE_LABELS,
   formatHours,
   formatSearchTime,
   formatStage,
   monthLabel,
   solverStatusText,
 } from "@/lib/labels";
-import type { CheckStatus, ObjectiveTier, ScheduleCheck, ScheduleReview } from "@/lib/types";
+import type { CheckStatus, ScheduleCheck, ScheduleReview, ScoreName } from "@/lib/types";
 
 const SOURCES: Record<ScheduleReview["source"], string> = { generation: "Generiert", import: "Importiert" };
 const TIME = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" });
 const TONES: Record<CheckStatus, Tone> = { accepted: "success", rejected: "error", incomplete: "warning" };
 
 /** A tier's score, with the health events split into their terms and the balance also in hours. */
-function scoreText(scores: ScheduleCheck["scores"], tier: ObjectiveTier) {
+function scoreText(scores: ScheduleCheck["scores"], tier: ScoreName) {
   if (tier === "health_events")
     return (
       `${scores.health_events} (${scores.six_day_windows} Sechs-Tage-Folgen, ` +
@@ -124,15 +125,15 @@ export function ReviewSummary({ review, actions }: { review: ScheduleReview; act
                 ],
                 ["Startwert", configuration.random_seed === null ? "keiner" : String(configuration.random_seed)],
                 ...solution.stages.map((stage, index): [string, string] => [
-                  `Stufe ${index + 1}: ${OBJECTIVE_LABELS[stage.name]}`,
+                  `Stufe ${index + 1}: ${OBJECTIVE_LABELS[stage.name] ?? stage.name}`,
                   formatStage(stage),
                 ]),
               ]}
             />
             <Facts
               title="Bewertung"
-              facts={(Object.keys(OBJECTIVE_LABELS) as ObjectiveTier[]).map((tier) => [
-                OBJECTIVE_LABELS[tier],
+              facts={(Object.keys(SCORE_LABELS) as ScoreName[]).map((tier) => [
+                SCORE_LABELS[tier],
                 scoreText(check.scores, tier),
               ])}
             />

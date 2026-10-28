@@ -6,6 +6,7 @@ import type {
   ObjectiveTier,
   Rule,
   ScheduleCheck,
+  ScoreName,
   ShiftType,
   Solution,
   SolutionStatus,
@@ -69,14 +70,25 @@ export function solverStatusText(status: SolutionStatus) {
   return `${value} (${detail})`;
 }
 
-/** The objective tiers, highest priority first, named for the staff admin. */
-export const OBJECTIVE_LABELS: Record<ObjectiveTier, string> = {
+/** The schedule check's scores, named for the staff admin. */
+export const SCORE_LABELS: Record<ScoreName, string> = {
   gaps: "Lücken",
   health_events: "Gesundheitsereignisse",
   station_transfers: "Einsätze anderer Station",
   wish_cost: "Wunschkosten (Fairness)",
   balance_deviation_minutes: "Abweichung der Monatskonten (Minuten)",
   surplus_intermediate_duties: "Überzählige Zwischendienste",
+};
+
+/** The objective tiers of both solvers, named for the staff admin. */
+export const OBJECTIVE_LABELS: Record<ObjectiveTier, string> = {
+  ...SCORE_LABELS,
+  balance_violation: "Überschreitung des Monatssaldos über ±7:40 h (Minuten)",
+  gap_spread: "Verteilung der Lücken über die Tage",
+  wishes: "Wünsche und Einsätze auf der Stammstation",
+  shift_balance: "Verteilung der Überbesetzung auf die Schichten",
+  Min_L_to_E: "Wechsel vom Spät- in den Frühdienst",
+  cons: "Gleiche Schichten und freie Tage am Stück",
 };
 
 /** One stage's value and whether it is proven best, e.g. "870 (Schranke 0, nicht nachgewiesen)". */

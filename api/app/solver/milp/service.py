@@ -12,7 +12,6 @@ from app.domain import (
     Gap,
     SchedulingDataset,
     ShiftType,
-    StaffLevel,
     check_schedule,
 )
 from app.domain.rules import BLOCKING_AVAILABILITY
@@ -32,14 +31,8 @@ class GurobiSolverService:
         with gp.Env(params=env_params) as env, gp.Model("schedule", env=env) as schedule:
             # Sets and Indices
             U = [unit.planning_unit_id for unit in dataset.planning_units]
-            L = [level.value for level in StaffLevel]
-
-            I = []
-            I_l = {l:[] for l in L}
-            for employee in dataset.employees:
-                I.append(employee.employee_id)
-                I_l[employee.staff_level].append(employee.employee_id)
-            S = [shift.shift_id for shift in dataset.shifts]
+            I = [employee.employee_id for employee in dataset.employees]
+            S =[shift.shift_id for shift in dataset.shifts]
             # shifts by type, so rules hold for every shift of a type whatever its code
             S_early = [s.shift_id for s in dataset.shifts if s.type == ShiftType.EARLY]
             S_late = [s.shift_id for s in dataset.shifts if s.type == ShiftType.LATE]
@@ -162,11 +155,21 @@ class GurobiSolverService:
             hour = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour")
             # minutes by which a balance leaves the band of ±POLICY.balance_tolerance_minutes
             over = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=0.0, name="over")
-            hour_max = schedule.addVars(L, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour_max")
-            hour_min = schedule.addVars(L, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour_min")
             cons_s = schedule.addVars(I, S, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_s")
             cons_x = schedule.addVars(I, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_x")
             L_to_E = schedule.addVars(I,D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="L_to_E")
+            # shift balance: minimum demand per (station, shift, day) over all qualifications, and per (station, day)
+            required_usd = defaultdict(int)
+            for (s, d, u, l), required in R_min.items():
+                required_usd[u, s, d] += required
+            required_ud = defaultdict(int)
+            for (u, s, d), required in required_usd.items():
+                required_ud[u, d] += required
+            # dev[u, s, d]: how far the staff of shift s deviates from its share of the day's staff at station u
+            balance_keys = [(u, s, d) for (u, d) in required_ud for s in S]
+            dev = schedule.addVars(balance_keys, lb=0.0, vtype=GRB.CONTINUOUS, name="shift_dev")
+            # gap spread: gap_sq[u, d] >= (gaps of station u on day d)^2, so spreading gaps over days costs less
+            gap_sq = schedule.addVars(required_ud.keys(), lb=0.0, vtype=GRB.CONTINUOUS, name="gap_sq")
 
             # Expressions, built once and looked up below instead of assignment.sum(...) with wildcards.
             # x[i, s, d]: employee i works shift s on day d (sum over stations); before the month 0 or 1
@@ -200,8 +203,11 @@ class GurobiSolverService:
             objectives = [
                 ("gaps", gap.sum(), False),
                 ("balance_violation", over.sum(), False),
-                ("wishes", gp.quicksum(score * assignment[key] for key, score in pref.items() if score and key in assignment), True),
-                ("Min_L_to_E", L_to_E.sum(), False),
+                # relative to the day's demand: a gap weighs more on a day with less demand
+                ("gap_spread", gp.quicksum(gap_sq[u, d] / required for (u, d), required in required_ud.items()), False),
+                ("wishes",gp.quicksum(score * assignment[key] for key, score in pref.items() if score and key in assignment), True),
+                ("shift_balance", dev.sum(), False),
+                ("Min_L_to_E",L_to_E.sum(), False),
                 ("cons", cons_s.sum() + 2*cons_x.sum(), True),
             ]
             for n, (name, expr, maximize) in enumerate(objectives):
@@ -222,13 +228,26 @@ class GurobiSolverService:
             tolerance = POLICY.balance_tolerance_minutes
             schedule.addConstrs((over[i] >= hour[i] - tolerance for i in I), name="over_up")
             schedule.addConstrs((over[i] >= -hour[i] - tolerance for i in I), name="over_down")
-            for l in L:
-                if I_l[l]:
-                    schedule.addConstrs(hour_max[l] >= hour[i] for i in I_l[l]);
-                    schedule.addConstrs(hour_min[l] <= hour[i] for i in I_l[l]);
-                else:
-                    schedule.addConstr(hour_max[l] >= 0)
-                    schedule.addConstr(hour_min[l] <= 0)
+            # gap spread: gap_sq[u, d] >= G^2 for the gaps G of station u on day d. Gaps are whole numbers from 0 to
+            # the day's demand R, and the lines through (k, k^2) and (k+1, (k+1)^2) for k = 0 .. R-1 meet G^2 there.
+            gaps_of_day = defaultdict(list)
+            for (s, d, u, l), var in gap.items():
+                gaps_of_day[u, d].append(var)
+            for (u, d), required in required_ud.items():
+                day_gaps = gp.quicksum(gaps_of_day[u, d])
+                for k in range(required):
+                    schedule.addConstr(gap_sq[u, d] >= (2 * k + 1) * day_gaps - k * (k + 1), name=f"gap_sq[{u},{d},{k}]")
+            # shift balance: a station's staff of a day spread over its shifts in proportion to their minimum demand,
+            # dev >= |staff of the shift - share * staff of the day|
+            staffed = defaultdict(list)
+            for (i, s, d, u), var in assignment.items():
+                staffed[u, s, d].append(var)
+            for (u, s, d) in balance_keys:
+                share = required_usd[u, s, d] / required_ud[u, d]
+                day_total = gp.quicksum(var for s2 in S for var in staffed[u, s2, d])
+                deviation = gp.quicksum(staffed[u, s, d]) - share * day_total
+                schedule.addConstr(dev[u, s, d] >= deviation, name=f"shift_dev_up[{u},{s},{d}]")
+                schedule.addConstr(dev[u, s, d] >= -deviation, name=f"shift_dev_down[{u},{s},{d}]")
             # define cons_s and cons_x
             one_day = timedelta(days=1)
             schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d) for i in I for s in S for d in D));
@@ -280,6 +299,12 @@ class GurobiSolverService:
                 schedule.Params.Threads = settings.solver_num_search_workers
             if settings.solver_random_seed is not None:
                 schedule.Params.Seed = settings.solver_random_seed
+            # time limit of single stages as a share of the total time; the other stages run until the total limit
+            stage_time_share = {"gap_spread": 0.15, "shift_balance": 0.1, "Min_L_to_E": 0.2}
+            for n, (name, _, _) in enumerate(objectives):
+                if name in stage_time_share:
+                    # pass n is objective n, since the priorities fall with the index
+                    schedule.getMultiobjEnv(n).setParam("TimeLimit", stage_time_share[name] * timeout)
             schedule.optimize()
             # status first: without a solution Gurobi has no values to read
             if schedule.Status == GRB.OPTIMAL:
