@@ -50,7 +50,7 @@ class GurobiSolverService:
             D_prev = [dataset.context.covered_from + timedelta(days=i) for i in range((dataset.planning_month.dates[0] - dataset.context.covered_from).days)]
             D_s = [date for date in dataset.planning_month.dates[:-1] if date.weekday() == 5]
             if D_prev and D_prev[-1].weekday() == 5:
-                D_s.append(D_prev[-1])
+                D_s = D_prev[-1:] + D_s
             # Parameters
             t = {}
             credits = {}
@@ -143,12 +143,12 @@ class GurobiSolverService:
                         for u in U:
                             assignment[absence.employee_id,s,absence.date,u].ub = 0.0
             # no night or late shift before vacation
-                        for i in I:
-                            for d in D[1:]:
-                                if absences[i][d] == 1 and absences[i][d-timedelta(days=1)] == 0:
-                                    for u in U:
-                                        assignment[i,S_id['N'],d-timedelta(days=1),u].ub = 0.0
-                                        assignment[i,S_id['S'],d-timedelta(days=1),u].ub = 0.0
+            for i in I:
+                for d in D[1:]:
+                    if absences[i][d] == 1 and absences[i][d-timedelta(days=1)] == 0:
+                        for u in U:
+                            assignment[i,S_id['N'],d-timedelta(days=1),u].ub = 0.0
+                            assignment[i,S_id['S'],d-timedelta(days=1),u].ub = 0.0
             # assign duties
             for i in I:
                 for d in D_prev:
@@ -169,7 +169,7 @@ class GurobiSolverService:
             for l in L:
                 schedule.addConstrs((assignment.sum(I_l[l], s, d, u) + gap[s, d, u, l] >= R_min[s, d, u, l] for s in S for d in D for u in U));
             # define workhours
-            schedule.addConstrs(gp.quicksum(h[s] * assignment.sum(i,s,d,u) for s in S for d in D for u in U) - hour[i] == t[i] for i in I);
+            schedule.addConstrs(gp.quicksum(h[s] * assignment.sum(i,s,d,u) for s in S for d in D for u in U) + credits[i] - hour[i] == t[i] for i in I);
             for l in L:
                 if I_l[l]:
                     schedule.addConstrs(hour_max[l] >= hour[i] for i in I_l[l]);
