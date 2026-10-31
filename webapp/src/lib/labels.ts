@@ -85,6 +85,7 @@ export const OBJECTIVE_LABELS: Record<ObjectiveTier, string> = {
   ...SCORE_LABELS,
   balance_violation: "Überschreitung des Monatssaldos über ±7:40 h (Minuten)",
   gap_spread: "Verteilung der Lücken über die Tage",
+  staffing_spread: "Gleichmäßiger Besetzungsgrad über die Tage",
   wishes: "Wünsche und Einsätze auf der Stammstation",
   shift_balance: "Verteilung der Überbesetzung auf die Schichten",
   Min_L_to_E: "Wechsel vom Spät- in den Frühdienst",

@@ -251,7 +251,14 @@ export type ScoreName =
 
 /** The objective tiers of both solvers: CP-SAT's are the check's scores, the Gurobi MILP adds its own. */
 export type ObjectiveTier =
-  ScoreName | "balance_violation" | "gap_spread" | "wishes" | "shift_balance" | "Min_L_to_E" | "cons";
+  | ScoreName
+  | "balance_violation"
+  | "gap_spread"
+  | "staffing_spread"
+  | "wishes"
+  | "shift_balance"
+  | "Min_L_to_E"
+  | "cons";
 
 /**
  * One objective tier's stage: its value in the schedule and the solver's proven bound, null when the stage found no

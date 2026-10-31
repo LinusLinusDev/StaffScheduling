@@ -141,27 +141,24 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
       ].join(", "),
     ]),
   );
-  // Staffing per station, shift and date: the required count, all assigned staff (shown where nothing is missing, so
-  // a surplus is visible as e.g. 3/2), the filled slots (each qualification's staff up to its demand, shown where
-  // slots are missing, as another qualification never fills it and a surplus never covers another's gap; the tooltip
-  // lists everyone), and the gap: the slots missing per qualification.
+  // Staffing per station, shift and date: all assigned staff against the required count (Ist/Soll, e.g. 3/2 with a
+  // surplus), and the gap: the slots missing per qualification, marked apart because another qualification never
+  // fills them and a surplus never covers another's gap (e.g. 2/2 −1); the tooltip lists every qualification.
   const staffing = new Map<
     string,
-    { required: number; assigned: number; credited: number; missing: number; levels: string[]; gaps: string[] }
+    { required: number; assigned: number; missing: number; levels: string[]; gaps: string[] }
   >();
   for (const row of tables.coverage) {
     const at = staffingKey(row.planning_unit_id, row.shift_id, row.date);
     const cell = staffing.get(at) ?? {
       required: 0,
       assigned: 0,
-      credited: 0,
       missing: 0,
       levels: [],
       gaps: [],
     };
     cell.required += row.required_count;
     cell.assigned += row.assigned_count;
-    cell.credited += row.required_count - row.missing_count;
     cell.missing += row.missing_count;
     if (row.missing_count) cell.gaps.push(`${row.missing_count} ${row.qualifikation}`);
     cell.levels.push(`${row.qualifikation} ${row.assigned_count}/${row.required_count}`);
@@ -326,7 +323,7 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
                                 cell?.missing && GAP_CELL,
                               )}
                             >
-                              {cell && `${cell.missing ? cell.credited : cell.assigned}/${cell.required}`}
+                              {cell && `${cell.assigned}/${cell.required}`}
                               {cell?.missing ? (
                                 <div className="text-[10px] leading-tight">
                                   −{cell.missing}

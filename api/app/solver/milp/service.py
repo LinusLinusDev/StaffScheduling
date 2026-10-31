@@ -141,11 +141,17 @@ class GurobiSolverService:
 
             # minimum demand: (shift, day, station, qualification) -> required count, only rows with demand
             R_min = {(r.shift_id, r.date, r.planning_unit_id, r.staff_level): r.required_count for r in dataset.demand_requirements}
+            # (station, shift, qualification) with minimum demand on at least one day of the month; a shift without
+            # any demand for a qualification all month is not worked by it there (e.g. no intermediate shift on the
+            # station, or no night shift for trainees)
+            demanded = {(u, s, l) for (s, d, u, l) in R_min}
             # Decision variables
             # assignment only for duties that can happen: a station membership active that day (7b: allowed
-            # by availability); duties before the month are constants from past_shifts, not variables
+            # by availability), a shift that the station demands of the qualification the duty counts as;
+            # duties before the month are constants from past_shifts, not variables
             assignment = schedule.addVars(
-                [(i, s, d, u) for (i, u, d) in level_at for s in S if (i, s, d) not in not_allowed],
+                [(i, s, d, u) for (i, u, d), l in level_at.items() for s in S
+                 if (i, s, d) not in not_allowed and (u, s, l) in demanded],
                 vtype=GRB.BINARY, name="assignment")
             gap = schedule.addVars(R_min.keys(), lb=0.0, vtype=GRB.CONTINUOUS, name="gap")
             n_beg = schedule.addVars(I, D_prev[-1:] + D, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name="n_beg")
@@ -170,6 +176,13 @@ class GurobiSolverService:
             dev = schedule.addVars(balance_keys, lb=0.0, vtype=GRB.CONTINUOUS, name="shift_dev")
             # gap spread: gap_sq[u, d] >= (gaps of station u on day d)^2, so spreading gaps over days costs less
             gap_sq = schedule.addVars(required_ud.keys(), lb=0.0, vtype=GRB.CONTINUOUS, name="gap_sq")
+            # staffing spread: day_dev[u, d] >= |staff of the day - its share of the month's staff at station u|,
+            # for every day of the month at a station with demand (a day without demand has share 0)
+            required_u = defaultdict(int)
+            for (u, d), required in required_ud.items():
+                required_u[u] += required
+            day_keys = [(u, d) for u in required_u for d in D]
+            day_dev = schedule.addVars(day_keys, lb=0.0, vtype=GRB.CONTINUOUS, name="day_dev")
 
             # Expressions, built once and looked up below instead of assignment.sum(...) with wildcards.
             # x[i, s, d]: employee i works shift s on day d (sum over stations); before the month 0 or 1
@@ -205,13 +218,27 @@ class GurobiSolverService:
                 ("balance_violation", over.sum(), False),
                 # relative to the day's demand: a gap weighs more on a day with less demand
                 ("gap_spread", gp.quicksum(gap_sq[u, d] / required for (u, d), required in required_ud.items()), False),
+                ("staffing_spread", day_dev.sum(), False),
                 ("wishes",gp.quicksum(score * assignment[key] for key, score in pref.items() if score and key in assignment), True),
                 ("shift_balance", dev.sum(), False),
                 ("Min_L_to_E",L_to_E.sum(), False),
                 ("cons", cons_s.sum() + 2*cons_x.sum(), True),
             ]
+            # total slack of a stage above its optimum: half of it may be left when the stage stops early
+            # (MIPGapAbs), the other half the following stages may worsen it by (abstol); others stay fixed
+            stage_slack = {
+                # about 5 gaps moved from a day with one gap to another one (1+1 -> 2+0, 0.4 each at demand 5)
+                "gap_spread": 2,
+                # about one person more or less than the even share on one day per station and week
+                "staffing_spread": len(required_u) * len(D) / 7,
+                # about one person per station and week in another shift than its share; moving one person from
+                # one shift to another changes the deviation of both, so 2 per move
+                "shift_balance": 2 * len(required_u) * len(D) / 7,
+            }
+            abstol = {name: slack / 2 for name, slack in stage_slack.items()}
             for n, (name, expr, maximize) in enumerate(objectives):
-                schedule.setObjectiveN(-expr if maximize else expr, index=n, priority=len(objectives) - 1 - n, name=name)
+                schedule.setObjectiveN(-expr if maximize else expr, index=n, priority=len(objectives) - 1 - n,
+                                       abstol=abstol.get(name, 1e-6), name=name)
             schedule.ModelSense = GRB.MINIMIZE
             # Constraints
             # one shift per day
@@ -248,6 +275,15 @@ class GurobiSolverService:
                 deviation = gp.quicksum(staffed[u, s, d]) - share * day_total
                 schedule.addConstr(dev[u, s, d] >= deviation, name=f"shift_dev_up[{u},{s},{d}]")
                 schedule.addConstr(dev[u, s, d] >= -deviation, name=f"shift_dev_down[{u},{s},{d}]")
+            # staffing spread: a station's staff of the month spread over its days in proportion to their minimum
+            # demand, so over- and understaffing fall on all days alike; day_dev >= |staff of the day - share * month|
+            staff_of_day = {(u, d): gp.quicksum(var for s in S for var in staffed[u, s, d]) for (u, d) in day_keys}
+            staff_of_month = {u: gp.quicksum(staff_of_day[u, d] for d in D) for u in required_u}
+            for (u, d) in day_keys:
+                share = required_ud.get((u, d), 0) / required_u[u]
+                deviation = staff_of_day[u, d] - share * staff_of_month[u]
+                schedule.addConstr(day_dev[u, d] >= deviation, name=f"day_dev_up[{u},{d}]")
+                schedule.addConstr(day_dev[u, d] >= -deviation, name=f"day_dev_down[{u},{d}]")
             # define cons_s and cons_x
             one_day = timedelta(days=1)
             schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d) for i in I for s in S for d in D));
@@ -300,11 +336,17 @@ class GurobiSolverService:
             if settings.solver_random_seed is not None:
                 schedule.Params.Seed = settings.solver_random_seed
             # time limit of single stages as a share of the total time; the other stages run until the total limit
-            stage_time_share = {"gap_spread": 0.15, "shift_balance": 0.1, "Min_L_to_E": 0.2}
+            # shift_balance: its bound stays at 0 (shares are met exactly only with fractional staff), so it can never
+            # prove a whole-staff value and would run to the total limit; its good value is found early
+            stage_time_share = {"shift_balance": 0.1}  # e.g. {"gap_spread": 0.15, "Min_L_to_E": 0.2}
             for n, (name, _, _) in enumerate(objectives):
                 if name in stage_time_share:
                     # pass n is objective n, since the priorities fall with the index
                     schedule.getMultiobjEnv(n).setParam("TimeLimit", stage_time_share[name] * timeout)
+            # a stage with slack stops as soon as its value is proven within the other half of its slack
+            for n, (name, _, _) in enumerate(objectives):
+                if name in stage_slack:
+                    schedule.getMultiobjEnv(n).setParam("MIPGapAbs", stage_slack[name] / 2)
             schedule.optimize()
             # status first: without a solution Gurobi has no values to read
             if schedule.Status == GRB.OPTIMAL:
@@ -338,6 +380,29 @@ class GurobiSolverService:
                 for r in dataset.demand_requirements
                 if covered[r.demand_key] < r.required_count
             )
+            # stage values computed from the schedule itself where helper variables may lie above the true value
+            # (a tolerance lets the following stages loosen them)
+            missing_of_day = Counter()
+            for g in gaps:
+                missing_of_day[g.planning_unit_id, g.date] += g.missing_count
+            staff_count = Counter((a.planning_unit_id, a.date) for a in assignments)
+            shift_count = Counter((a.planning_unit_id, a.shift_id, a.date) for a in assignments)
+            shift_balance_value = sum(
+                abs(shift_count[u, s, d] - required_usd.get((u, s, d), 0) / required_ud[u, d] * staff_count[u, d])
+                for (u, s, d) in balance_keys
+            )
+            staffing_spread_value = 0.0
+            for u, required_month in required_u.items():
+                month_staff = sum(staff_count[u, d] for d in D)
+                staffing_spread_value += sum(
+                    abs(staff_count[u, d] - required_ud.get((u, d), 0) / required_month * month_staff) for d in D
+                )
+            plan_value = {
+                "gaps": sum(g.missing_count for g in gaps),
+                "gap_spread": round(sum(missing_of_day[u, d] ** 2 / r for (u, d), r in required_ud.items())),
+                "staffing_spread": round(staffing_spread_value),
+                "shift_balance": round(shift_balance_value),
+            }
             stages = []
             for n, (name, expr, maximize) in enumerate(objectives):
                 # one pass per objective, since all priorities differ
@@ -351,7 +416,7 @@ class GurobiSolverService:
                 stages.append(StageReport(
                     name=name,
                     status=SolutionStatus.OPTIMAL if pass_status == GRB.OPTIMAL else SolutionStatus.FEASIBLE,
-                    value=sum(g.missing_count for g in gaps) if name == "gaps" else round(expr.getValue()),
+                    value=plan_value[name] if name in plan_value else round(expr.getValue()),
                     best_bound=bound,
                 ))
             stages = tuple(stages)

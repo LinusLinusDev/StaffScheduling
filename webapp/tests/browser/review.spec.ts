@@ -81,11 +81,12 @@ test("a generated schedule is reviewed with its check, staffing and accounts, an
   await expect(grid.getByRole("rowheader", { name: /Example Jumper Three/ })).toBeVisible();
   await expect(grid.getByText("Besetzung Example Station North")).toBeVisible();
   // June 6 needs one professional in the early shift, the solver may assign more; June 5 stays short by its gap,
-  // also when the MFA works that early, which another qualification cannot fill.
+  // also when the MFA works that early, which another qualification cannot fill: the cell shows all assigned staff
+  // against the demand and marks the gap apart.
   await expect(grid.getByText(/^[1-9]\/1$/)).toHaveCount(1);
   const gapCell = grid.locator('td[title^="Lücke: 1 Fachkraft fehlt"]');
   // Screen readers hear which qualification is missing, which sighted users get by pointing.
-  await expect(gapCell).toHaveText("1/2−1, Lücke: 1 Fachkraft");
+  await expect(gapCell).toHaveText(/^[1-9]\/2−1, Lücke: 1 Fachkraft$/);
   await expect(gapCell).toHaveClass(/text-destructive/);
   // The jumper-pool MFA's duties at the station are transfers; the station employee works at home.
   const mfa = grid.getByRole("row", { name: /Example MFA One/ });
