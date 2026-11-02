@@ -338,7 +338,7 @@ class GurobiSolverService:
             # time limit of single stages as a share of the total time; the other stages run until the total limit
             # shift_balance: its bound stays at 0 (shares are met exactly only with fractional staff), so it can never
             # prove a whole-staff value and would run to the total limit; its good value is found early
-            stage_time_share = {"shift_balance": 0.1}  # e.g. {"gap_spread": 0.15, "Min_L_to_E": 0.2}
+            stage_time_share = {"shift_balance": 0.1, "staffing_spread": 0.15}  # e.g. {"gap_spread": 0.15, "Min_L_to_E": 0.2}
             for n, (name, _, _) in enumerate(objectives):
                 if name in stage_time_share:
                     # pass n is objective n, since the priorities fall with the index

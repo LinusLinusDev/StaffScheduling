@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { type MouseEvent, useState, useTransition } from "react";
 import { Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,21 +22,64 @@ function availabilityText(row: Availability, shifts: ShiftOption[]) {
   return [AVAILABILITY_LABELS[row.availability_type], codes, row.reason].filter(Boolean).join(" · ");
 }
 
+/**
+ * The entry every date shares, or none when they differ, so a form for several dates starts empty unless they agree.
+ * `content` picks what the entry says, without its date.
+ */
+function shared<T>(entries: (T | undefined)[], content: (entry: T) => unknown): T | undefined {
+  const [first, ...rest] = entries;
+  if (!first) return undefined;
+  const text = JSON.stringify(content(first));
+  return rest.every((entry) => entry && JSON.stringify(content(entry)) === text) ? first : undefined;
+}
+
+/** The selected dates as a title: one date, a gapless range, or a count with first and last date. */
+function selectionTitle(dates: string[], all: string[]) {
+  if (dates.length === 1) return formatDate(dates[0]);
+  const first = all.indexOf(dates[0]);
+  const range = all.indexOf(dates[dates.length - 1]) - first + 1 === dates.length;
+  const span = `${formatDate(dates[0])} – ${formatDate(dates[dates.length - 1])}`;
+  return range ? `${span} (${dates.length} Tage)` : `${dates.length} Tage zwischen ${span}`;
+}
+
 export function AvailabilityCalendar({ calendar }: { calendar: EmployeeCalendar }) {
   const days = calendar.calendar;
-  // The first day of the month is open for editing until another day is chosen.
-  const [selected, setSelected] = useState(days[0].date);
+  const order = days.map((day) => day.date);
+  // The first day of the month is open for editing until another day is chosen. Shift-click selects the range from
+  // the last clicked day, Ctrl/Cmd-click adds or removes single days; the forms then apply to every selected day.
+  const [selected, setSelected] = useState<string[]>([days[0].date]);
+  const [anchor, setAnchor] = useState(days[0].date);
   const absences = new Map(calendar.absences.map((row) => [row.date, row]));
   const availability = new Map(calendar.availability.map((row) => [row.date, row]));
   const wishes = new Map(calendar.wishes.map((row) => [row.date, row]));
   const shiftCode = (id: number | null) => calendar.shifts.find((shift) => shift.shift_id === id)?.code;
+  const isSelected = new Set(selected);
+
+  function choose(date: string, event: MouseEvent) {
+    if (event.shiftKey) {
+      const [from, to] = [order.indexOf(anchor), order.indexOf(date)].sort((a, b) => a - b);
+      setSelected(order.slice(from, to + 1));
+      return;
+    }
+    if (event.ctrlKey || event.metaKey) {
+      const next = isSelected.has(date) ? selected.filter((day) => day !== date) : [...selected, date];
+      // At least one day stays selected, so the forms always have a date.
+      if (next.length) setSelected(order.filter((day) => next.includes(day)));
+    } else {
+      setSelected([date]);
+    }
+    setAnchor(date);
+  }
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <Card>
         <CardHeader>
           <CardTitle>Monatskalender</CardTitle>
-          <CardDescription>Einen Tag wählen, um Einschränkung oder Wunsch zu bearbeiten.</CardDescription>
+          <CardDescription>
+            Einen Tag wählen, um Einschränkung oder Wunsch zu bearbeiten. Mit Umschalt-Klick einen Zeitraum wählen, mit
+            Strg-Klick einzelne Tage hinzufügen oder entfernen.
+          </CardDescription>
           <div className="flex flex-wrap gap-2 pt-1 text-xs">
             <Badge variant="secondary">Abwesenheit (TimeOffice)</Badge>
             <Badge className="bg-red-100 text-red-800">Einschränkung</Badge>
@@ -62,11 +105,11 @@ export function AvailabilityCalendar({ calendar }: { calendar: EmployeeCalendar 
                   key={date}
                   type="button"
                   aria-label={formatDate(date)}
-                  aria-pressed={selected === date}
-                  onClick={() => setSelected(date)}
+                  aria-pressed={isSelected.has(date)}
+                  onClick={(event) => choose(date, event)}
                   className={cn(
-                    "flex min-h-20 flex-col gap-0.5 rounded-md border p-1 text-left text-[11px] transition-colors hover:bg-muted",
-                    selected === date && "ring-2 ring-ring",
+                    "flex min-h-20 select-none flex-col gap-0.5 rounded-md border p-1 text-left text-[11px] transition-colors hover:bg-muted",
+                    isSelected.has(date) && "ring-2 ring-ring",
                     (weekday > 5 || public_holiday) && "bg-muted/40",
                   )}
                 >
@@ -96,26 +139,37 @@ export function AvailabilityCalendar({ calendar }: { calendar: EmployeeCalendar 
         </CardContent>
       </Card>
 
-      <Card key={selected}>
+      <Card key={selected.join(",")}>
         <CardHeader>
-          <CardTitle>{formatDate(selected)}</CardTitle>
-          {absences.has(selected) && (
+          <CardTitle>{selectionTitle(selected, order)}</CardTitle>
+          {selected.length === 1 && absences.has(selected[0]) && (
             <CardDescription>
-              Abwesenheit aus TimeOffice: {availabilityText(absences.get(selected)!, calendar.shifts)} (nur lesend)
+              Abwesenheit aus TimeOffice: {availabilityText(absences.get(selected[0])!, calendar.shifts)} (nur lesend)
             </CardDescription>
+          )}
+          {selected.length > 1 && (
+            <CardDescription>Speichern und Entfernen gelten für alle gewählten Tage.</CardDescription>
           )}
         </CardHeader>
         <CardContent className="space-y-6">
           <AvailabilityForm
             employeeId={calendar.employee_id}
-            date={selected}
-            saved={availability.get(selected)}
+            dates={selected}
+            saved={shared(
+              selected.map((date) => availability.get(date)),
+              (row) => [row.availability_type, row.shift_ids, row.reason],
+            )}
+            anySaved={selected.some((date) => availability.has(date))}
             shifts={calendar.shifts}
           />
           <WishForm
             employeeId={calendar.employee_id}
-            date={selected}
-            saved={wishes.get(selected)}
+            dates={selected}
+            saved={shared(
+              selected.map((date) => wishes.get(date)),
+              (row) => [row.type, row.shift_id],
+            )}
+            anySaved={selected.some((date) => wishes.has(date))}
             shifts={calendar.shifts}
           />
         </CardContent>
@@ -146,20 +200,24 @@ function SaveStatus({ result, success }: { result: WriteResult | null; success: 
     </p>
   ) : (
     <p role="alert" className="text-sm text-destructive">
-      {result.error} Eingaben wurden nicht gespeichert.
+      {result.error} Nicht gespeicherte Eingaben bleiben im Formular.
     </p>
   );
 }
 
 function AvailabilityForm({
   employeeId,
-  date,
+  dates,
   saved,
+  anySaved,
   shifts,
 }: {
   employeeId: number;
-  date: string;
+  dates: string[];
+  /** The entry all dates share, if they do. */
   saved?: Availability;
+  /** Whether any date has an entry, so there is something to remove. */
+  anySaved: boolean;
   shifts: ShiftOption[];
 }) {
   const [type, setType] = useState<AvailabilityType | typeof NONE>(saved?.availability_type ?? NONE);
@@ -171,7 +229,7 @@ function AvailabilityForm({
   function submit() {
     if (type === NONE) return;
     run(() =>
-      saveAvailability(employeeId, date, {
+      saveAvailability(employeeId, dates, {
         availability_type: type,
         shift_ids: type === "available_only" ? shiftIds : null,
         reason: reason.trim() || null,
@@ -223,14 +281,14 @@ function AvailabilityForm({
         <Button size="sm" onClick={submit} disabled={pending || type === NONE}>
           Einschränkung speichern
         </Button>
-        {saved && (
+        {anySaved && (
           <Button
             size="sm"
             variant="outline"
             disabled={pending}
             onClick={() =>
               run(
-                () => saveAvailability(employeeId, date, null),
+                () => saveAvailability(employeeId, dates, null),
                 () => setType(NONE),
               )
             }
@@ -246,13 +304,17 @@ function AvailabilityForm({
 
 function WishForm({
   employeeId,
-  date,
+  dates,
   saved,
+  anySaved,
   shifts,
 }: {
   employeeId: number;
-  date: string;
+  dates: string[];
+  /** The wish all dates share, if they do. */
   saved?: { type: WishType; shift_id: number | null };
+  /** Whether any date has a wish, so there is something to remove. */
+  anySaved: boolean;
   shifts: ShiftOption[];
 }) {
   const [type, setType] = useState<WishType | typeof NONE>(saved?.type ?? NONE);
@@ -263,7 +325,7 @@ function WishForm({
   function submit() {
     if (type === NONE) return;
     run(() =>
-      saveWish(employeeId, date, {
+      saveWish(employeeId, dates, {
         type,
         shift_id: needsShift && shiftId ? Number(shiftId) : null,
       }),
@@ -308,14 +370,14 @@ function WishForm({
         <Button size="sm" onClick={submit} disabled={pending || type === NONE}>
           Wunsch speichern
         </Button>
-        {saved && (
+        {anySaved && (
           <Button
             size="sm"
             variant="outline"
             disabled={pending}
             onClick={() =>
               run(
-                () => saveWish(employeeId, date, null),
+                () => saveWish(employeeId, dates, null),
                 () => setType(NONE),
               )
             }
