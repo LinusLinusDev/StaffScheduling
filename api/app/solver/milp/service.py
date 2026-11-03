@@ -162,7 +162,6 @@ class GurobiSolverService:
             # minutes by which a balance leaves the band of ±POLICY.balance_tolerance_minutes
             over = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=0.0, name="over")
             cons_s = schedule.addVars(I, S, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_s")
-            cons_x = schedule.addVars(I, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_x")
             L_to_E = schedule.addVars(I,D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="L_to_E")
             # shift balance: minimum demand per (station, shift, day) over all qualifications, and per (station, day)
             required_usd = defaultdict(int)
@@ -222,7 +221,7 @@ class GurobiSolverService:
                 ("wishes",gp.quicksum(score * assignment[key] for key, score in pref.items() if score and key in assignment), True),
                 ("shift_balance", dev.sum(), False),
                 ("Min_L_to_E",L_to_E.sum(), False),
-                ("cons", cons_s.sum() + 2*cons_x.sum(), True),
+                ("cons", cons_s.sum(), True),
             ]
             # total slack of a stage above its optimum: half of it may be left when the stage stops early
             # (MIPGapAbs), the other half the following stages may worsen it by (abstol); others stay fixed
@@ -284,12 +283,10 @@ class GurobiSolverService:
                 deviation = staff_of_day[u, d] - share * staff_of_month[u]
                 schedule.addConstr(day_dev[u, d] >= deviation, name=f"day_dev_up[{u},{d}]")
                 schedule.addConstr(day_dev[u, d] >= -deviation, name=f"day_dev_down[{u},{d}]")
-            # define cons_s and cons_x
+            # define cons_s and
             one_day = timedelta(days=1)
             schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d) for i in I for s in S for d in D));
             schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d - one_day) for i in I for s in S for d in D));
-            schedule.addConstrs((cons_x[i,d] <= 1 - work[i, d] for i in I for d in D));
-            schedule.addConstrs((cons_x[i,d] <= 1 - at(work, i, d - one_day) for i in I for d in D));
             # max consecutive workdays
             for i in I:
                 for d in D_prev[-K_s:] + D[:-K_s]:
