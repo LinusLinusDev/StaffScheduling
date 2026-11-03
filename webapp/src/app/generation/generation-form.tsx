@@ -22,7 +22,8 @@ export function GenerationForm({
   running: boolean;
   scope: React.ReactNode;
 }) {
-  const [timeoutSeconds, setTimeoutSeconds] = useState("30");
+  // A month of several stations needs minutes; the minimum stays for quick checks.
+  const [timeoutSeconds, setTimeoutSeconds] = useState("600");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 

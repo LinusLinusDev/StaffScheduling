@@ -9,15 +9,20 @@ import { AVAILABILITY_LABELS, SHIFT_TYPE_LABELS, WEEKDAYS } from "@/lib/labels";
 import type { Availability, DutyRow, ScheduleReview, ShiftType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-// Shift colors of the original schedule view; class names stay literal for Tailwind's scanner.
+// Shift colors of the practice partner's roster program, so a schedule reads the same in both; class names stay
+// literal for Tailwind's scanner.
 const SHIFT_COLORS: Record<ShiftType, string> = {
-  early: "bg-[#a8d51f] text-black",
-  intermediate: "bg-[#3a9ea1] text-white",
-  late: "bg-[#f69e17] text-black",
-  night: "bg-[#225e62] text-white",
+  early: "bg-[#d4d400] text-black",
+  intermediate: "bg-[#22e0e8] text-black",
+  late: "bg-[#ff8a00] text-black",
+  night: "bg-black text-white",
   management: "bg-[#bfbdfb] text-black",
   other: "bg-[#dadada] text-black",
 };
+// Weekends and public holidays in pink, as in the practice partner's program.
+const WEEKEND = "bg-[#fbd9fb] dark:bg-[#3d1f3d]";
+// A vacation without a duty reads in red, as in the practice partner's program.
+const VACATION_TEXT = "font-semibold text-red-600";
 const AVAILABILITY_SHORT: Record<Availability["availability_type"], string> = {
   unavailable: "–",
   vacation: "U",
@@ -175,13 +180,13 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
   const anyTransfer = tables.duties.some((row) => placement(row) === "transfer");
   const anyUnknown = tables.duties.some((row) => placement(row) === "unknown");
   // Keyed by text and meaning: a native absence `U` and a project vacation `U` are two entries.
-  const availabilityLegend = new Map<string, [string, string]>();
+  const availabilityLegend = new Map<string, [string, string, boolean]>();
   for (const [at, rows] of availability) {
     if (duties.has(at)) continue;
     const text = availabilityText(rows[0]);
     const type = AVAILABILITY_LABELS[rows[0].availability_type];
     const label = rows[0].native_absence ? `Abwesenheit in TimeOffice (${type})` : type;
-    availabilityLegend.set(`${text}|${label}`, [text, label]);
+    availabilityLegend.set(`${text}|${label}`, [text, label, rows[0].availability_type === "vacation"]);
   }
   const anyGap = [...staffing.values()].some((cell) => cell.missing > 0);
 
@@ -229,7 +234,7 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
                       className={cn(
                         "border-b border-l p-1 text-center font-medium",
                         "min-w-12",
-                        weekend(day) && "bg-muted",
+                        weekend(day) && WEEKEND,
                       )}
                     >
                       <div>{Number(day.date.slice(8))}</div>
@@ -263,7 +268,7 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
                           key={day.date}
                           className={cn(
                             "border-b border-l p-0.5 text-center",
-                            weekend(day) && "bg-muted",
+                            weekend(day) && WEEKEND,
                             finding && "ring-2 ring-inset ring-destructive",
                           )}
                         >
@@ -277,7 +282,9 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
                                     `${AVAILABILITY_LABELS[row.availability_type]}${row.reason ? ` (${row.reason})` : ""}`,
                                 )
                                 .join(", ")}
-                              className="text-muted-foreground"
+                              className={
+                                absent[0].availability_type === "vacation" ? VACATION_TEXT : "text-muted-foreground"
+                              }
                             >
                               {availabilityText(absent[0])}
                             </span>
@@ -319,7 +326,7 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
                               }
                               className={cn(
                                 "border-b border-l p-1 text-center tabular-nums",
-                                weekend(day) && "bg-muted",
+                                weekend(day) && WEEKEND,
                                 cell?.missing && GAP_CELL,
                               )}
                             >
@@ -372,9 +379,9 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
             )}
             {[...availabilityLegend]
               .sort(([a], [b]) => a.localeCompare(b, "de-DE"))
-              .map(([at, [text, label]]) => (
+              .map(([at, [text, label, vacation]]) => (
                 <span key={at}>
-                  <span className="font-medium text-foreground">{text}</span> {label}
+                  <span className={vacation ? VACATION_TEXT : "font-medium text-foreground"}>{text}</span> {label}
                 </span>
               ))}
             {findings.size > 0 && (
@@ -384,7 +391,7 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
               </span>
             )}
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-3 rounded border bg-muted" />
+              <span className={cn("inline-block size-3 rounded border", WEEKEND)} />
               Wochenende oder Feiertag
             </span>
             <span>Besetzung: eingeteilt/benötigt</span>
@@ -412,7 +419,8 @@ function DutyCell({ duty, station }: { duty: DutyRow; station?: string }) {
       title={dutyTitle(duty)}
       // An unknown origin keeps its tag in the right padding, so it never covers the shift code.
       className={cn(
-        "relative rounded px-1 py-0.5",
+        // Taller than its text, but still wider than high, like the boxes in the practice partner's program.
+        "relative rounded px-1 py-1.5",
         SHIFT_COLORS[duty.shift_type],
         kind === "unknown" && "pr-3",
         kind === "transfer" && TRANSFER_BORDER,
