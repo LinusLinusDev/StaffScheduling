@@ -125,9 +125,13 @@ class GurobiSolverService:
                         pref[i, s, d, u] -= transfer_penalty
             for entry in dataset.wishes:
                 if entry.type == "free_day":
+                    previous = entry.date - timedelta(days=1)
                     for u in U:
                         for s in S:
                             pref[entry.employee_id,s,entry.date,u] -= wish_reward
+                        # a night from the evening before reaches into the free day, as the schedule check counts it
+                        for s in S_night:
+                            pref[entry.employee_id,s,previous,u] -= wish_reward
                 elif entry.type == "free_shift":
                     for u in U:
                         pref[entry.employee_id,entry.shift_id,entry.date,u] -= wish_reward

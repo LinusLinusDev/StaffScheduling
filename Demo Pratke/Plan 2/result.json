@@ -6,7 +6,7 @@
   },
   "input": {
     "file": "input.json",
-    "sha256": "8dd293e1c1c97cf9ff54c4e21f76bbe8b1b9ebe5c589cf74d340f2bdb1ae89b8"
+    "sha256": "e995c1e7aef9983618b1ad6927b76d37401413449a70bf1e768cb8bd71b616a9"
   },
   "solution": {
     "status": "feasible",
@@ -29,11 +29,11 @@
         "preceding_context_days": 5,
         "following_context_days": 3
       },
-      "timeout_seconds": 900.0,
+      "timeout_seconds": 1800.0,
       "search_workers": null,
       "random_seed": null
     },
-    "wall_time_seconds": 900.2089760303497,
+    "wall_time_seconds": 3288.4140338897705,
     "assignments": [
       {
         "employee_id": 1203,
@@ -43,28 +43,28 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 4083,
+        "employee_id": 5844,
         "date": "2026-01-01",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 6318,
+        "employee_id": 6259,
         "date": "2026-01-01",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 7490,
+        "employee_id": 7006,
         "date": "2026-01-01",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8049,
+        "employee_id": 8048,
         "date": "2026-01-01",
         "planning_unit_id": 83,
         "shift_id": 1113,
@@ -85,24 +85,10 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 1224,
+        "employee_id": 7490,
         "date": "2026-01-01",
         "planning_unit_id": 83,
         "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-01",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1199,
-        "date": "2026-01-01",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
         "staff_level": "professional"
       },
       {
@@ -113,21 +99,35 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 8046,
+        "employee_id": 4083,
         "date": "2026-01-01",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 4101,
+        "employee_id": 6318,
+        "date": "2026-01-01",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1203,
         "date": "2026-01-02",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 6318,
+        "employee_id": 5844,
+        "date": "2026-01-02",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6259,
         "date": "2026-01-02",
         "planning_unit_id": 83,
         "shift_id": 1113,
@@ -141,25 +141,18 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 7490,
-        "date": "2026-01-02",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-02",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
         "employee_id": 8048,
         "date": "2026-01-02",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-02",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
       },
       {
         "employee_id": 8052,
@@ -169,45 +162,38 @@
         "staff_level": "trainee"
       },
       {
-        "employee_id": 8051,
+        "employee_id": 839,
         "date": "2026-01-02",
         "planning_unit_id": 83,
         "shift_id": 1453,
         "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-02",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-02",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-02",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-02",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
       },
       {
         "employee_id": 1199,
         "date": "2026-01-02",
         "planning_unit_id": 83,
-        "shift_id": 1690,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-02",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-02",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-02",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
         "staff_level": "professional"
       },
       {
@@ -218,2100 +204,2121 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 8046,
+        "employee_id": 4083,
         "date": "2026-01-02",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 843,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
         "employee_id": 6318,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-03",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 843,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-04",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6259,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7490,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8048,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-05",
+        "date": "2026-01-02",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
         "employee_id": 1224,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-05",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 835,
-        "date": "2026-01-06",
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6259,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7490,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
         "staff_level": "professional"
       },
       {
         "employee_id": 7006,
-        "date": "2026-01-06",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1200,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6259,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7490,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8048,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 839,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-07",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1200,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7490,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8048,
-        "date": "2026-01-08",
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8049,
-        "date": "2026-01-08",
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8051,
-        "date": "2026-01-08",
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "assistant"
       },
       {
         "employee_id": 8052,
-        "date": "2026-01-08",
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "trainee"
-      },
-      {
-        "employee_id": 839,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 6259,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-08",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 843,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1200,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8048,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 839,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-09",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 839,
-        "date": "2026-01-10",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1200,
-        "date": "2026-01-10",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-10",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-10",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8048,
-        "date": "2026-01-10",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-10",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
       },
       {
         "employee_id": 1199,
-        "date": "2026-01-10",
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 5844,
-        "date": "2026-01-10",
+        "employee_id": 1209,
+        "date": "2026-01-03",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8050,
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
         "employee_id": 6259,
-        "date": "2026-01-10",
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
         "employee_id": 6724,
-        "date": "2026-01-10",
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 7490,
-        "date": "2026-01-10",
+        "employee_id": 8048,
+        "date": "2026-01-03",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 839,
-        "date": "2026-01-11",
+        "employee_id": 1224,
+        "date": "2026-01-04",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-04",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-04",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-04",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "assistant"
       },
       {
-        "employee_id": 1200,
-        "date": "2026-01-11",
+        "employee_id": 8052,
+        "date": "2026-01-04",
         "planning_unit_id": 83,
         "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-04",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
         "staff_level": "professional"
       },
       {
         "employee_id": 1209,
-        "date": "2026-01-11",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-11",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8048,
-        "date": "2026-01-11",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-11",
+        "date": "2026-01-04",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 1199,
-        "date": "2026-01-11",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-11",
+        "employee_id": 8050,
+        "date": "2026-01-04",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
         "employee_id": 6259,
-        "date": "2026-01-11",
+        "date": "2026-01-04",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
         "employee_id": 6724,
-        "date": "2026-01-11",
+        "date": "2026-01-04",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 7490,
-        "date": "2026-01-11",
+        "employee_id": 8048,
+        "date": "2026-01-04",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 1200,
-        "date": "2026-01-12",
+        "employee_id": 1203,
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 1224,
-        "date": "2026-01-12",
+        "employee_id": 5844,
+        "date": "2026-01-05",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8046,
-        "date": "2026-01-12",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8047,
-        "date": "2026-01-12",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8049,
-        "date": "2026-01-12",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8051,
-        "date": "2026-01-12",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
         "employee_id": 8052,
-        "date": "2026-01-12",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "trainee"
       },
       {
-        "employee_id": 839,
-        "date": "2026-01-12",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-12",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-12",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-12",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-12",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1199,
-        "date": "2026-01-12",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-12",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7490,
-        "date": "2026-01-12",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
         "employee_id": 8051,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 843,
-        "date": "2026-01-13",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1453,
         "staff_level": "assistant"
       },
       {
         "employee_id": 1200,
-        "date": "2026-01-13",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 1203,
-        "date": "2026-01-13",
+        "employee_id": 1209,
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1199,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-13",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 4101,
-        "date": "2026-01-14",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
+        "shift_id": 1605,
         "staff_level": "professional"
       },
       {
         "employee_id": 8050,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 839,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1200,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-14",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
         "employee_id": 6259,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-14",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-14",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 839,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 6259,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7490,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1200,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-15",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 839,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1199,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
         "staff_level": "professional"
       },
       {
         "employee_id": 7006,
-        "date": "2026-01-16",
+        "date": "2026-01-05",
         "planning_unit_id": 83,
-        "shift_id": 1605,
+        "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8047,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1200,
-        "date": "2026-01-16",
+        "employee_id": 8048,
+        "date": "2026-01-05",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
         "employee_id": 1203,
-        "date": "2026-01-16",
+        "date": "2026-01-06",
         "planning_unit_id": 83,
-        "shift_id": 1690,
+        "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 1209,
-        "date": "2026-01-16",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-17",
+        "employee_id": 5844,
+        "date": "2026-01-06",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 6318,
-        "date": "2026-01-17",
+        "date": "2026-01-06",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8049,
-        "date": "2026-01-17",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-17",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-17",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-17",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-17",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-17",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1218,
-        "date": "2026-01-17",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-17",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1218,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-18",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1199,
-        "date": "2026-01-19",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-19",
+        "employee_id": 7490,
+        "date": "2026-01-06",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8046,
-        "date": "2026-01-19",
+        "date": "2026-01-06",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8047,
-        "date": "2026-01-19",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-19",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-19",
+        "date": "2026-01-06",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8052,
-        "date": "2026-01-19",
+        "date": "2026-01-06",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "trainee"
       },
       {
         "employee_id": 8051,
-        "date": "2026-01-19",
+        "date": "2026-01-06",
         "planning_unit_id": 83,
         "shift_id": 1453,
         "staff_level": "assistant"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-19",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
       },
       {
         "employee_id": 1200,
-        "date": "2026-01-19",
+        "date": "2026-01-06",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
         "employee_id": 1209,
-        "date": "2026-01-19",
+        "date": "2026-01-06",
         "planning_unit_id": 83,
         "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-19",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1218,
-        "date": "2026-01-19",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-19",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6259,
-        "date": "2026-01-19",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1199,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7490,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1200,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6259,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-20",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 843,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1199,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6724,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7490,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8046,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-21",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 843,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 4101,
-        "date": "2026-01-22",
+        "date": "2026-01-06",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-06",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-06",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-06",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-06",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-07",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 5844,
-        "date": "2026-01-22",
+        "date": "2026-01-07",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-07",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 7490,
-        "date": "2026-01-22",
+        "date": "2026-01-07",
         "planning_unit_id": 83,
         "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 839,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1199,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
         "staff_level": "professional"
       },
       {
         "employee_id": 8046,
-        "date": "2026-01-22",
+        "date": "2026-01-07",
         "planning_unit_id": 83,
-        "shift_id": 1605,
+        "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8047,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-22",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 839,
-        "date": "2026-01-23",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 918,
-        "date": "2026-01-23",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-23",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4083,
-        "date": "2026-01-23",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-23",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 5844,
-        "date": "2026-01-23",
+        "date": "2026-01-07",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8052,
-        "date": "2026-01-23",
+        "date": "2026-01-07",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "trainee"
       },
       {
         "employee_id": 8051,
-        "date": "2026-01-23",
+        "date": "2026-01-07",
         "planning_unit_id": 83,
         "shift_id": 1453,
         "staff_level": "assistant"
       },
       {
+        "employee_id": 1200,
+        "date": "2026-01-07",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-07",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4083,
+        "date": "2026-01-07",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-07",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
         "employee_id": 1199,
-        "date": "2026-01-23",
+        "date": "2026-01-07",
         "planning_unit_id": 83,
-        "shift_id": 1605,
+        "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 1203,
-        "date": "2026-01-23",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6259,
-        "date": "2026-01-23",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-23",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7490,
-        "date": "2026-01-23",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-23",
+        "employee_id": 1224,
+        "date": "2026-01-07",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
         "employee_id": 8049,
-        "date": "2026-01-23",
+        "date": "2026-01-07",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 839,
-        "date": "2026-01-24",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 843,
-        "date": "2026-01-24",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-24",
+        "employee_id": 918,
+        "date": "2026-01-08",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 5844,
-        "date": "2026-01-24",
+        "employee_id": 1203,
+        "date": "2026-01-08",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-08",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-08",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 8046,
-        "date": "2026-01-24",
+        "date": "2026-01-08",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
+        "employee_id": 8047,
+        "date": "2026-01-08",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8050,
+        "date": "2026-01-08",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-08",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-08",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
         "employee_id": 1200,
-        "date": "2026-01-24",
+        "date": "2026-01-08",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 6259,
-        "date": "2026-01-24",
+        "employee_id": 4083,
+        "date": "2026-01-08",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-08",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
         "employee_id": 8048,
-        "date": "2026-01-24",
+        "date": "2026-01-08",
         "planning_unit_id": 83,
         "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-08",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-08",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 843,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 4083,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1218,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-09",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 843,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4083,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1218,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-10",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 843,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4083,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1218,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-11",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6259,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 839,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 843,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4083,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-12",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6259,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8050,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 843,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4083,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-13",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8050,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 843,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-14",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8050,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 843,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-15",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8050,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 843,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6724,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-16",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 839,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8050,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6259,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6724,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-17",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 839,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8050,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6259,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6724,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-18",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 839,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6259,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-19",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 839,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-20",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 839,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-21",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 839,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 4083,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-22",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1203,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 839,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 4083,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1200,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1209,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
+        "date": "2026-01-23",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 843,
+        "date": "2026-01-24",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-24",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-24",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-24",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-24",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7490,
+        "date": "2026-01-24",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 835,
         "date": "2026-01-24",
         "planning_unit_id": 83,
-        "shift_id": 1690,
+        "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 7490,
+        "employee_id": 4083,
+        "date": "2026-01-24",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-24",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
         "date": "2026-01-24",
         "planning_unit_id": 83,
         "shift_id": 1690,
@@ -2325,11 +2332,11 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 839,
-        "date": "2026-01-25",
+        "employee_id": 8047,
+        "date": "2026-01-24",
         "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
+        "shift_id": 1690,
+        "staff_level": "professional"
       },
       {
         "employee_id": 843,
@@ -2339,7 +2346,21 @@
         "staff_level": "assistant"
       },
       {
-        "employee_id": 1209,
+        "employee_id": 918,
+        "date": "2026-01-25",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-25",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
         "date": "2026-01-25",
         "planning_unit_id": 83,
         "shift_id": 1113,
@@ -2353,42 +2374,35 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 8046,
+        "employee_id": 7490,
         "date": "2026-01-25",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 1200,
-        "date": "2026-01-25",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6259,
-        "date": "2026-01-25",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8048,
-        "date": "2026-01-25",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
         "employee_id": 835,
         "date": "2026-01-25",
         "planning_unit_id": 83,
-        "shift_id": 1690,
+        "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 7490,
+        "employee_id": 4083,
+        "date": "2026-01-25",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
+        "date": "2026-01-25",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 6318,
         "date": "2026-01-25",
         "planning_unit_id": 83,
         "shift_id": 1690,
@@ -2402,14 +2416,21 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 1203,
-        "date": "2026-01-26",
+        "employee_id": 8047,
+        "date": "2026-01-25",
         "planning_unit_id": 83,
-        "shift_id": 1113,
+        "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 1224,
+        "employee_id": 843,
+        "date": "2026-01-26",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 4101,
         "date": "2026-01-26",
         "planning_unit_id": 83,
         "shift_id": 1113,
@@ -2423,14 +2444,14 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 6724,
+        "employee_id": 7006,
         "date": "2026-01-26",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8050,
+        "employee_id": 7490,
         "date": "2026-01-26",
         "planning_unit_id": 83,
         "shift_id": 1113,
@@ -2465,14 +2486,14 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 4083,
+        "employee_id": 1224,
         "date": "2026-01-26",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 6318,
+        "employee_id": 8046,
         "date": "2026-01-26",
         "planning_unit_id": 83,
         "shift_id": 1605,
@@ -2486,21 +2507,21 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 7490,
+        "employee_id": 1203,
         "date": "2026-01-26",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8046,
+        "employee_id": 4083,
         "date": "2026-01-26",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8048,
+        "employee_id": 8047,
         "date": "2026-01-26",
         "planning_unit_id": 83,
         "shift_id": 1690,
@@ -2521,6 +2542,13 @@
         "staff_level": "professional"
       },
       {
+        "employee_id": 5844,
+        "date": "2026-01-27",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
         "employee_id": 7006,
         "date": "2026-01-27",
         "planning_unit_id": 83,
@@ -2528,14 +2556,7 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 8047,
-        "date": "2026-01-27",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
+        "employee_id": 7490,
         "date": "2026-01-27",
         "planning_unit_id": 83,
         "shift_id": 1113,
@@ -2556,11 +2577,18 @@
         "staff_level": "trainee"
       },
       {
-        "employee_id": 843,
+        "employee_id": 839,
         "date": "2026-01-27",
         "planning_unit_id": 83,
         "shift_id": 1453,
         "staff_level": "assistant"
+      },
+      {
+        "employee_id": 918,
+        "date": "2026-01-27",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
       },
       {
         "employee_id": 1200,
@@ -2570,14 +2598,7 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 1203,
-        "date": "2026-01-27",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
+        "employee_id": 1224,
         "date": "2026-01-27",
         "planning_unit_id": 83,
         "shift_id": 1605,
@@ -2591,7 +2612,14 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 5844,
+        "employee_id": 1203,
+        "date": "2026-01-27",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4083,
         "date": "2026-01-27",
         "planning_unit_id": 83,
         "shift_id": 1690,
@@ -2605,105 +2633,98 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 8048,
-        "date": "2026-01-27",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1199,
-        "date": "2026-01-28",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-28",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-28",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8047,
-        "date": "2026-01-28",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
-        "date": "2026-01-28",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8051,
-        "date": "2026-01-28",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 8052,
-        "date": "2026-01-28",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "trainee"
-      },
-      {
-        "employee_id": 843,
-        "date": "2026-01-28",
-        "planning_unit_id": 83,
-        "shift_id": 1453,
-        "staff_level": "assistant"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-28",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
         "employee_id": 1209,
         "date": "2026-01-28",
         "planning_unit_id": 83,
-        "shift_id": 1605,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 4101,
+        "date": "2026-01-28",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 5844,
+        "date": "2026-01-28",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
         "staff_level": "professional"
       },
       {
         "employee_id": 6259,
         "date": "2026-01-28",
         "planning_unit_id": 83,
-        "shift_id": 1605,
+        "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 6318,
+        "employee_id": 8048,
+        "date": "2026-01-28",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8051,
+        "date": "2026-01-28",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 8052,
+        "date": "2026-01-28",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 839,
+        "date": "2026-01-28",
+        "planning_unit_id": 83,
+        "shift_id": 1453,
+        "staff_level": "assistant"
+      },
+      {
+        "employee_id": 918,
         "date": "2026-01-28",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 4101,
+        "employee_id": 1200,
+        "date": "2026-01-28",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1224,
+        "date": "2026-01-28",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-28",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
         "date": "2026-01-28",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 5844,
+        "employee_id": 4083,
         "date": "2026-01-28",
         "planning_unit_id": 83,
         "shift_id": 1690,
@@ -2717,46 +2738,46 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 1224,
+        "employee_id": 1209,
         "date": "2026-01-29",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 4083,
+        "employee_id": 4101,
         "date": "2026-01-29",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 6724,
+        "employee_id": 6259,
         "date": "2026-01-29",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8047,
+        "employee_id": 6318,
         "date": "2026-01-29",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8049,
+        "employee_id": 8048,
         "date": "2026-01-29",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8050,
+        "employee_id": 8051,
         "date": "2026-01-29",
         "planning_unit_id": 83,
         "shift_id": 1113,
-        "staff_level": "professional"
+        "staff_level": "assistant"
       },
       {
         "employee_id": 8052,
@@ -2766,56 +2787,56 @@
         "staff_level": "trainee"
       },
       {
-        "employee_id": 843,
+        "employee_id": 839,
         "date": "2026-01-29",
         "planning_unit_id": 83,
         "shift_id": 1453,
         "staff_level": "assistant"
       },
       {
-        "employee_id": 1199,
-        "date": "2026-01-29",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1203,
-        "date": "2026-01-29",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1209,
-        "date": "2026-01-29",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 6318,
-        "date": "2026-01-29",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
         "employee_id": 1200,
         "date": "2026-01-29",
         "planning_unit_id": 83,
-        "shift_id": 1690,
+        "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 4101,
+        "employee_id": 1224,
+        "date": "2026-01-29",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-29",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-29",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
         "date": "2026-01-29",
         "planning_unit_id": 83,
         "shift_id": 1690,
         "staff_level": "professional"
       },
       {
-        "employee_id": 5844,
+        "employee_id": 7006,
+        "date": "2026-01-29",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8046,
         "date": "2026-01-29",
         "planning_unit_id": 83,
         "shift_id": 1690,
@@ -2829,39 +2850,39 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 1224,
+        "employee_id": 1209,
         "date": "2026-01-30",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 4083,
+        "employee_id": 4101,
         "date": "2026-01-30",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 7490,
+        "employee_id": 6259,
         "date": "2026-01-30",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8047,
+        "employee_id": 6318,
         "date": "2026-01-30",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8050,
+        "employee_id": 8051,
         "date": "2026-01-30",
         "planning_unit_id": 83,
         "shift_id": 1113,
-        "staff_level": "professional"
+        "staff_level": "assistant"
       },
       {
         "employee_id": 8052,
@@ -2871,7 +2892,7 @@
         "staff_level": "trainee"
       },
       {
-        "employee_id": 8051,
+        "employee_id": 839,
         "date": "2026-01-30",
         "planning_unit_id": 83,
         "shift_id": 1453,
@@ -2885,70 +2906,63 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 1209,
+        "employee_id": 1224,
         "date": "2026-01-30",
         "planning_unit_id": 83,
         "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8047,
+        "date": "2026-01-30",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8049,
+        "date": "2026-01-30",
+        "planning_unit_id": 83,
+        "shift_id": 1605,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 1199,
+        "date": "2026-01-30",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 7006,
+        "date": "2026-01-30",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
         "staff_level": "professional"
       },
       {
         "employee_id": 8048,
         "date": "2026-01-30",
         "planning_unit_id": 83,
-        "shift_id": 1605,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8049,
-        "date": "2026-01-30",
-        "planning_unit_id": 83,
-        "shift_id": 1605,
+        "shift_id": 1690,
         "staff_level": "professional"
       },
       {
         "employee_id": 1200,
-        "date": "2026-01-30",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 4101,
-        "date": "2026-01-30",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 7006,
-        "date": "2026-01-30",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 918,
         "date": "2026-01-31",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 4083,
+        "employee_id": 1209,
         "date": "2026-01-31",
         "planning_unit_id": 83,
         "shift_id": 1113,
         "staff_level": "professional"
       },
       {
-        "employee_id": 6318,
-        "date": "2026-01-31",
-        "planning_unit_id": 83,
-        "shift_id": 1113,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 8050,
+        "employee_id": 6259,
         "date": "2026-01-31",
         "planning_unit_id": 83,
         "shift_id": 1113,
@@ -2962,14 +2976,21 @@
         "staff_level": "assistant"
       },
       {
-        "employee_id": 6724,
+        "employee_id": 8052,
+        "date": "2026-01-31",
+        "planning_unit_id": 83,
+        "shift_id": 1113,
+        "staff_level": "trainee"
+      },
+      {
+        "employee_id": 1203,
         "date": "2026-01-31",
         "planning_unit_id": 83,
         "shift_id": 1605,
         "staff_level": "professional"
       },
       {
-        "employee_id": 8047,
+        "employee_id": 1224,
         "date": "2026-01-31",
         "planning_unit_id": 83,
         "shift_id": 1605,
@@ -2983,21 +3004,21 @@
         "staff_level": "professional"
       },
       {
-        "employee_id": 1199,
-        "date": "2026-01-31",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
-        "employee_id": 1224,
-        "date": "2026-01-31",
-        "planning_unit_id": 83,
-        "shift_id": 1690,
-        "staff_level": "professional"
-      },
-      {
         "employee_id": 7006,
+        "date": "2026-01-31",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8048,
+        "date": "2026-01-31",
+        "planning_unit_id": 83,
+        "shift_id": 1690,
+        "staff_level": "professional"
+      },
+      {
+        "employee_id": 8050,
         "date": "2026-01-31",
         "planning_unit_id": 83,
         "shift_id": 1690,
@@ -3040,7 +3061,7 @@
         "name": "shift_balance",
         "status": "feasible",
         "value": 31,
-        "best_bound": 0.0
+        "best_bound": 4.0909090909090775
       },
       {
         "name": "Min_L_to_E",
@@ -3051,8 +3072,8 @@
       {
         "name": "cons",
         "status": "feasible",
-        "value": 759,
-        "best_bound": 1052.0
+        "value": 305,
+        "best_bound": 391.0
       }
     ],
     "check": {
@@ -3092,14 +3113,14 @@
       ],
       "scores": {
         "gaps": 0,
-        "six_day_windows": 54,
-        "backward_transitions": 53,
-        "isolated_workdays": 29,
-        "back_to_back_weekends": 12,
+        "six_day_windows": 93,
+        "backward_transitions": 34,
+        "isolated_workdays": 7,
+        "back_to_back_weekends": 9,
         "station_transfers": 0,
         "wish_cost": 0,
-        "balance_deviation_minutes": 7480,
-        "surplus_intermediate_duties": 1
+        "balance_deviation_minutes": 5300,
+        "surplus_intermediate_duties": 3
       },
       "wishes": []
     },

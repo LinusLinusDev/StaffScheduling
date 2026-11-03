@@ -21,8 +21,9 @@ const SHIFT_COLORS: Record<ShiftType, string> = {
 };
 // Weekends and public holidays in pink, as in the practice partner's program.
 const WEEKEND = "bg-[#fbd9fb] dark:bg-[#3d1f3d]";
-// A vacation without a duty reads in red, as in the practice partner's program.
-const VACATION_TEXT = "font-semibold text-red-600";
+// Vacation, training and shift restrictions without a duty read in red, as in the practice partner's program.
+const RED_TEXT = "font-semibold text-red-600";
+const RED_TYPES = new Set<Availability["availability_type"]>(["vacation", "training", "available_only"]);
 const AVAILABILITY_SHORT: Record<Availability["availability_type"], string> = {
   unavailable: "–",
   vacation: "U",
@@ -33,9 +34,15 @@ const AVAILABILITY_SHORT: Record<Availability["availability_type"], string> = {
 
 const key = (employeeId: number, date: string) => `${employeeId}|${date}`;
 /** What an employee-date without a duty shows: a native absence's TimeOffice code (such as `U` or `SC`), else the
- * entry's short code; a project entry's free-text reason stays in the tooltip. */
-const availabilityText = (row: Availability) =>
-  row.native_absence && row.reason ? row.reason : AVAILABILITY_SHORT[row.availability_type];
+ * entry's short code, for a shift restriction with the allowed shifts (`nur F,Z,S`); a project entry's free-text
+ * reason stays in the tooltip. `shiftCodes` gives the codes of shift IDs in the order of the shift list. */
+function availabilityText(row: Availability, shiftCodes: (ids: number[]) => string[]) {
+  if (row.native_absence && row.reason) return row.reason;
+  const short = AVAILABILITY_SHORT[row.availability_type];
+  return row.availability_type === "available_only" && row.shift_ids
+    ? `${short} ${shiftCodes(row.shift_ids).join(",")}`
+    : short;
+}
 const staffingKey = (stationId: number, shiftId: number, date: string) => `${stationId}|${shiftId}|${date}`;
 /** `HH:MM` of an offset timestamp: its Europe/Berlin wall-clock time. */
 const clock = (timestamp: string) => timestamp.slice(11, 16);
@@ -116,6 +123,9 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
         .map((unit) => `${codes.get(unit.planning_unit_id)} = ${unit.display_name}`)
     : [];
   const duties = new Map(tables.duties.map((row) => [key(row.employee_id, row.date), row]));
+  // Shift codes of allowed shifts, in the order of the shift list (F, Z, S, N), whatever order they were entered in.
+  const shiftCodes = (ids: number[]) =>
+    review.shifts.filter((shift) => ids.includes(shift.shift_id)).map((shift) => shift.code);
   const availability = new Map<string, Availability[]>();
   for (const employee of tables.employees) {
     for (const row of employee.hard_availability) {
@@ -183,10 +193,10 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
   const availabilityLegend = new Map<string, [string, string, boolean]>();
   for (const [at, rows] of availability) {
     if (duties.has(at)) continue;
-    const text = availabilityText(rows[0]);
+    const text = availabilityText(rows[0], shiftCodes);
     const type = AVAILABILITY_LABELS[rows[0].availability_type];
     const label = rows[0].native_absence ? `Abwesenheit in TimeOffice (${type})` : type;
-    availabilityLegend.set(`${text}|${label}`, [text, label, rows[0].availability_type === "vacation"]);
+    availabilityLegend.set(`${text}|${label}`, [text, label, RED_TYPES.has(rows[0].availability_type)]);
   }
   const anyGap = [...staffing.values()].some((cell) => cell.missing > 0);
 
@@ -283,10 +293,10 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
                                 )
                                 .join(", ")}
                               className={
-                                absent[0].availability_type === "vacation" ? VACATION_TEXT : "text-muted-foreground"
+                                RED_TYPES.has(absent[0].availability_type) ? RED_TEXT : "text-muted-foreground"
                               }
                             >
-                              {availabilityText(absent[0])}
+                              {availabilityText(absent[0], shiftCodes)}
                             </span>
                           ) : null}
                         </td>
@@ -379,9 +389,9 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
             )}
             {[...availabilityLegend]
               .sort(([a], [b]) => a.localeCompare(b, "de-DE"))
-              .map(([at, [text, label, vacation]]) => (
+              .map(([at, [text, label, red]]) => (
                 <span key={at}>
-                  <span className={vacation ? VACATION_TEXT : "font-medium text-foreground"}>{text}</span> {label}
+                  <span className={red ? RED_TEXT : "font-medium text-foreground"}>{text}</span> {label}
                 </span>
               ))}
             {findings.size > 0 && (
