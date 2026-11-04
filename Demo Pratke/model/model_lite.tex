@@ -1,0 +1,88 @@
+\documentclass[11pt]{combiArticle}
+\usepackage{tikz,amsmath,amsfonts,latexsym}
+\usepackage{amssymb}
+\usetikzlibrary{shapes,arrows,calc}
+\usepackage{calc}
+\usepackage{parskip}
+\usepackage{enumitem}
+\setlist{itemsep=2pt, topsep=2pt, parsep=0pt}
+
+\definecolor{myblue}{RGB}{0, 84, 159}
+
+\lang{de}
+
+\begin{document}
+\course{Schichtplan Manager}
+\assistent{Linus Palm}
+\contact{palm@combi.rwth-aachen.de}
+\title{Modell -- Kurzfassung}
+\date{04. November 2026}
+\maketitle
+
+Der Schichtplan Manager erstellt für einen Monat und eine oder mehrere Stationen automatisch einen
+Dienstplan. Dabei hält er feste Regeln immer ein und verfolgt mehrere Ziele in einer festen Rangfolge.
+
+\section{Eingaben}
+
+\begin{itemize}
+  \item \textbf{Monat und Stationen}, für die geplant wird, sowie die \textbf{maximale Rechenzeit} (Vorgabe 10 Minuten).
+  \item \textbf{Mitarbeitende}: auf welchen Stationen sie in welchem Zeitraum arbeiten dürfen, mit welcher
+        Qualifikation (Fachkraft, Hilfskraft, Azubi, MFA) und welche davon ihre Stammstation ist.
+  \item \textbf{Sollzeit und Gutschriften} je Person; Urlaub und Fortbildung werden mit dem Tagessoll gutgeschrieben.
+  \item \textbf{Schichten} mit Uhrzeiten und anrechenbaren Stunden: Früh (F), Zwischen (Z), Spät (S), Nacht (N).
+  \item \textbf{Mindestbesetzung} je Station, Tag, Schicht und Qualifikation.
+  \item \textbf{Einschränkungen}: Urlaub, Fortbildung, freier Tag, nicht verfügbar, „nur bestimmte Schichten“.
+  \item \textbf{Wünsche}: freier Tag, bestimmte Schicht frei, Wunschtag oder Wunschschicht.
+  \item \textbf{Dienste der Tage vor dem Monat}, damit die Regeln auch über den Monatswechsel gelten.
+\end{itemize}
+
+\section{Feste Regeln}
+
+Jeder erstellte Dienstplan hält diese Regeln ein:
+\begin{itemize}
+  \item Höchstens \textbf{ein Dienst pro Person und Tag}, nur auf Stationen mit gültiger Zuordnung; der Dienst zählt
+        mit der dort hinterlegten Qualifikation.
+  \item \textbf{Einschränkungen} gelten immer. Vor einem Abwesenheitstag gibt es keinen Nachtdienst, am Tag vor
+        Urlaubsbeginn keinen Spätdienst.
+  \item Höchstens \textbf{10 Arbeitstage in Folge}; Fortbildungstage zählen mit.
+  \item \textbf{Nachtdienste} kommen in Blöcken von 2 bis 3 Nächten. Danach folgen 2 freie Tage und am dritten Tag
+        kein Frühdienst. Zwischen zwei Nachtblöcken liegen mindestens 7 Tage.
+  \item \textbf{Wochenenden}: Samstag und Sonntag dieselbe Schicht oder beide frei; nie zwei Wochenenden in Folge.
+  \item Dienste vor dem Monat werden \textbf{nicht verändert}, zählen aber bei allen Regeln mit.
+\end{itemize}
+
+Mindestbesetzung, Sollzeit und der Wechsel vom Spät- in den Frühdienst sind bewusst \emph{keine} festen
+Regeln, sondern Ziele. So entsteht auch bei Personalmangel ein Plan, und was fehlt, wird als Lücke ausgewiesen.
+
+\section{Ziele in ihrer Rangfolge}
+
+Die Ziele werden nacheinander verbessert. Ein späteres Ziel darf ein früheres nicht verschlechtern; nur bei den
+Zielen 3, 4 und 6 ist ein kleiner Spielraum erlaubt, damit die folgenden Ziele noch Wahlmöglichkeiten haben.
+\begin{enumerate}
+  \item \textbf{Möglichst wenige Lücken}, also unbesetzte Pflichtstellen.
+  \item \textbf{Sollzeit einhalten}: Am Monatsende liegt jede Person höchstens 7:40 Stunden über oder unter ihrem Soll.
+  \item \textbf{Lücken gleichmäßig verteilen}: Bleiben Lücken, fallen sie gemessen am Bedarf gleichmäßig auf die Tage.
+  \item \textbf{Gleichmäßig besetzte Tage}: Jeder Tag ist im gleichen Verhältnis zu seiner Mindestbesetzung besetzt.
+  \item \textbf{Wünsche erfüllen} und Einsätze außerhalb der Stammstation vermeiden (Springer sind davon ausgenommen).
+  \item \textbf{Gleichmäßig besetzte Schichten}: Zusätzliches Personal eines Tages verteilt sich im Verhältnis
+        der Mindestbesetzung auf die Schichten.
+  \item \textbf{Möglichst wenige Wechsel vom Spät- in den Frühdienst}.
+  \item \textbf{Möglichst oft dieselbe Schicht wie am Vortag}.
+\end{enumerate}
+
+Ist die Rechenzeit abgelaufen, wird der beste bis dahin gefundene Plan ausgegeben.
+
+\section{Ausgabe}
+
+\begin{itemize}
+  \item \textbf{Der Dienstplan}: für jede Person und jeden Tag Schicht, Station und Qualifikation.
+  \item \textbf{Besetzung und Lücken}: je Station, Tag und Schicht die Besetzung im Vergleich zur Mindestbesetzung
+        (Ist/Soll) und welche Pflichtstellen mit welcher Qualifikation offen bleiben.
+  \item \textbf{Monatskonten}: Soll, Gutschriften, geplante Stunden und Saldo je Person.
+  \item \textbf{Unabhängige Prüfung} des Plans gegen gesetzliche und betriebliche Regeln, z.\,B. 11 Stunden Ruhezeit
+        zwischen zwei Diensten. Ergebnis: \emph{angenommen}, \emph{abgelehnt} (mit Person, Datum und Regel) oder
+        \emph{unvollständig geprüft}. Nur ein angenommener Plan kann veröffentlicht werden.
+  \item \textbf{Kennzahlen} zu jedem Ziel und welche Wünsche erfüllt wurden.
+\end{itemize}
+
+\end{document}

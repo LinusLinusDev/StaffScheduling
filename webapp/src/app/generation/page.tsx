@@ -11,17 +11,18 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Dienstplan erstellen · Schichtplan Manager" };
 
+// What the Gurobi model (api/app/solver/milp/service.py) actually reads and enforces; keep in step with it.
 const USED = [
-  "Mitarbeiter und Zuordnungen",
-  "Monatskonten",
-  "Abwesenheiten",
-  "Einschränkungen",
-  "Wünsche",
-  "Mindestbesetzung",
-  "Arbeitszeit-, Pausen- und Ruheregeln",
-  "gesicherte Dienste vor und nach dem Monat",
+  "Mitarbeiter mit ihren Stationen, Qualifikationen und Stammstation",
+  "Mindestbesetzung je Station, Schicht und Qualifikation; was fehlt, wird als Lücke ausgewiesen",
+  "Urlaub, Fortbildung, freie Tage und Einschränkungen werden immer eingehalten",
+  "Monatskonten: Sollzeit und Gutschriften, Saldo möglichst innerhalb ±7:40 Std.",
+  "Wünsche und Einsatz auf der Stammstation, so weit möglich",
+  "Nachtdienste in Blöcken von 2–3 Nächten, danach 2 freie Tage",
+  "Höchstens 10 Arbeitstage am Stück und nie zwei Wochenenden in Folge",
+  "Gleichmäßige Besetzung über alle Tage und Schichten, möglichst wenige Spät-Früh-Wechsel",
+  "Dienste der Tage vor dem Monat, damit die Regeln auch am Monatswechsel gelten",
 ];
-const NOT_USED = ["bestehende Dienste im Dienstplan"];
 
 export default async function GenerationPage({ searchParams }: { searchParams: Promise<ScopeSearchParams> }) {
   const params = await searchParams;
@@ -65,15 +66,13 @@ export default async function GenerationPage({ searchParams }: { searchParams: P
                 </div>
               }
             />
-            <div className="grid gap-4 border-t pt-3 text-muted-foreground sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <p className="font-medium text-foreground">Berücksichtigt</p>
-                <BulletList items={USED} label="Berücksichtigt" />
-              </div>
-              <div className="space-y-1.5">
-                <p className="font-medium text-foreground">Nicht berücksichtigt</p>
-                <BulletList items={NOT_USED} label="Nicht berücksichtigt" />
-              </div>
+            <div className="space-y-1.5 border-t pt-3 text-muted-foreground">
+              <p className="font-medium text-foreground">Berücksichtigt</p>
+              <BulletList
+                items={USED}
+                label="Berücksichtigt"
+                className="sm:columns-2 sm:gap-x-8 [&>li]:break-inside-avoid"
+              />
             </div>
           </CardContent>
         </Card>

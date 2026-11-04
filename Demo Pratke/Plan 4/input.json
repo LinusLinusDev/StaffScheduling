@@ -3952,38 +3952,88 @@
         "reason": null,
         "shift_ids": null,
         "employee_id": 1199,
+        "date": "2026-01-12",
+        "native_absence": false
+      },
+      {
+        "availability_type": "training",
+        "reason": null,
+        "shift_ids": null,
+        "employee_id": 1199,
+        "date": "2026-01-13",
+        "native_absence": false
+      },
+      {
+        "availability_type": "training",
+        "reason": null,
+        "shift_ids": null,
+        "employee_id": 1199,
+        "date": "2026-01-14",
+        "native_absence": false
+      },
+      {
+        "availability_type": "training",
+        "reason": null,
+        "shift_ids": null,
+        "employee_id": 1199,
+        "date": "2026-01-15",
+        "native_absence": false
+      },
+      {
+        "availability_type": "training",
+        "reason": null,
+        "shift_ids": null,
+        "employee_id": 1199,
+        "date": "2026-01-16",
+        "native_absence": false
+      },
+      {
+        "availability_type": "available_only",
+        "reason": null,
+        "shift_ids": [
+          1113
+        ],
+        "employee_id": 6318,
         "date": "2026-01-05",
         "native_absence": false
       },
       {
-        "availability_type": "training",
+        "availability_type": "available_only",
         "reason": null,
-        "shift_ids": null,
-        "employee_id": 1199,
+        "shift_ids": [
+          1113
+        ],
+        "employee_id": 6318,
         "date": "2026-01-06",
         "native_absence": false
       },
       {
-        "availability_type": "training",
+        "availability_type": "available_only",
         "reason": null,
-        "shift_ids": null,
-        "employee_id": 1199,
+        "shift_ids": [
+          1113
+        ],
+        "employee_id": 6318,
         "date": "2026-01-07",
         "native_absence": false
       },
       {
-        "availability_type": "training",
+        "availability_type": "available_only",
         "reason": null,
-        "shift_ids": null,
-        "employee_id": 1199,
+        "shift_ids": [
+          1113
+        ],
+        "employee_id": 6318,
         "date": "2026-01-08",
         "native_absence": false
       },
       {
-        "availability_type": "training",
+        "availability_type": "available_only",
         "reason": null,
-        "shift_ids": null,
-        "employee_id": 1199,
+        "shift_ids": [
+          1113
+        ],
+        "employee_id": 6318,
         "date": "2026-01-09",
         "native_absence": false
       },
@@ -3991,63 +4041,7 @@
         "availability_type": "vacation",
         "reason": null,
         "shift_ids": null,
-        "employee_id": 8048,
-        "date": "2026-01-12",
-        "native_absence": false
-      },
-      {
-        "availability_type": "vacation",
-        "reason": null,
-        "shift_ids": null,
-        "employee_id": 8048,
-        "date": "2026-01-13",
-        "native_absence": false
-      },
-      {
-        "availability_type": "vacation",
-        "reason": null,
-        "shift_ids": null,
-        "employee_id": 8048,
-        "date": "2026-01-14",
-        "native_absence": false
-      },
-      {
-        "availability_type": "vacation",
-        "reason": null,
-        "shift_ids": null,
-        "employee_id": 8048,
-        "date": "2026-01-15",
-        "native_absence": false
-      },
-      {
-        "availability_type": "vacation",
-        "reason": null,
-        "shift_ids": null,
-        "employee_id": 8048,
-        "date": "2026-01-16",
-        "native_absence": false
-      },
-      {
-        "availability_type": "vacation",
-        "reason": null,
-        "shift_ids": null,
-        "employee_id": 8048,
-        "date": "2026-01-17",
-        "native_absence": false
-      },
-      {
-        "availability_type": "vacation",
-        "reason": null,
-        "shift_ids": null,
-        "employee_id": 8048,
-        "date": "2026-01-18",
-        "native_absence": false
-      },
-      {
-        "availability_type": "vacation",
-        "reason": null,
-        "shift_ids": null,
-        "employee_id": 8048,
+        "employee_id": 8050,
         "date": "2026-01-19",
         "native_absence": false
       },
@@ -4055,7 +4049,7 @@
         "availability_type": "vacation",
         "reason": null,
         "shift_ids": null,
-        "employee_id": 8048,
+        "employee_id": 8050,
         "date": "2026-01-20",
         "native_absence": false
       },
@@ -4063,7 +4057,7 @@
         "availability_type": "vacation",
         "reason": null,
         "shift_ids": null,
-        "employee_id": 8048,
+        "employee_id": 8050,
         "date": "2026-01-21",
         "native_absence": false
       },
@@ -4071,7 +4065,7 @@
         "availability_type": "vacation",
         "reason": null,
         "shift_ids": null,
-        "employee_id": 8048,
+        "employee_id": 8050,
         "date": "2026-01-22",
         "native_absence": false
       },
@@ -4079,58 +4073,64 @@
         "availability_type": "vacation",
         "reason": null,
         "shift_ids": null,
-        "employee_id": 8048,
+        "employee_id": 8050,
         "date": "2026-01-23",
         "native_absence": false
       },
       {
-        "availability_type": "available_only",
+        "availability_type": "vacation",
         "reason": null,
-        "shift_ids": [
-          1113
-        ],
-        "employee_id": 4101,
-        "date": "2026-01-12",
+        "shift_ids": null,
+        "employee_id": 8050,
+        "date": "2026-01-24",
         "native_absence": false
       },
       {
-        "availability_type": "available_only",
+        "availability_type": "vacation",
         "reason": null,
-        "shift_ids": [
-          1113
-        ],
-        "employee_id": 4101,
-        "date": "2026-01-13",
+        "shift_ids": null,
+        "employee_id": 8050,
+        "date": "2026-01-25",
         "native_absence": false
       },
       {
-        "availability_type": "available_only",
+        "availability_type": "vacation",
         "reason": null,
-        "shift_ids": [
-          1113
-        ],
-        "employee_id": 4101,
-        "date": "2026-01-14",
+        "shift_ids": null,
+        "employee_id": 8050,
+        "date": "2026-01-26",
         "native_absence": false
       },
       {
-        "availability_type": "available_only",
+        "availability_type": "vacation",
         "reason": null,
-        "shift_ids": [
-          1113
-        ],
-        "employee_id": 4101,
-        "date": "2026-01-15",
+        "shift_ids": null,
+        "employee_id": 8050,
+        "date": "2026-01-27",
         "native_absence": false
       },
       {
-        "availability_type": "available_only",
+        "availability_type": "vacation",
         "reason": null,
-        "shift_ids": [
-          1113
-        ],
-        "employee_id": 4101,
-        "date": "2026-01-16",
+        "shift_ids": null,
+        "employee_id": 8050,
+        "date": "2026-01-28",
+        "native_absence": false
+      },
+      {
+        "availability_type": "vacation",
+        "reason": null,
+        "shift_ids": null,
+        "employee_id": 8050,
+        "date": "2026-01-29",
+        "native_absence": false
+      },
+      {
+        "availability_type": "vacation",
+        "reason": null,
+        "shift_ids": null,
+        "employee_id": 8050,
+        "date": "2026-01-30",
         "native_absence": false
       }
     ],
@@ -4160,18 +4160,6 @@
         "date": "2026-01-21"
       },
       {
-        "type": "free_day",
-        "shift_id": null,
-        "employee_id": 1199,
-        "date": "2026-01-10"
-      },
-      {
-        "type": "free_day",
-        "shift_id": null,
-        "employee_id": 1199,
-        "date": "2026-01-11"
-      },
-      {
         "type": "preferred_day",
         "shift_id": null,
         "employee_id": 1231,
@@ -4190,6 +4178,18 @@
         "date": "2026-01-29"
       },
       {
+        "type": "preferred_shift",
+        "shift_id": 1113,
+        "employee_id": 4083,
+        "date": "2026-01-10"
+      },
+      {
+        "type": "preferred_shift",
+        "shift_id": 1113,
+        "employee_id": 4083,
+        "date": "2026-01-11"
+      },
+      {
         "type": "free_shift",
         "shift_id": 1690,
         "employee_id": 5866,
@@ -4202,40 +4202,64 @@
         "date": "2026-01-14"
       },
       {
+        "type": "free_day",
+        "shift_id": null,
+        "employee_id": 6259,
+        "date": "2026-01-05"
+      },
+      {
+        "type": "free_day",
+        "shift_id": null,
+        "employee_id": 6259,
+        "date": "2026-01-06"
+      },
+      {
+        "type": "free_day",
+        "shift_id": null,
+        "employee_id": 6259,
+        "date": "2026-01-07"
+      },
+      {
+        "type": "free_day",
+        "shift_id": null,
+        "employee_id": 6259,
+        "date": "2026-01-08"
+      },
+      {
+        "type": "free_day",
+        "shift_id": null,
+        "employee_id": 6259,
+        "date": "2026-01-09"
+      },
+      {
         "type": "preferred_shift",
-        "shift_id": 1605,
-        "employee_id": 6318,
-        "date": "2026-01-03"
+        "shift_id": 1690,
+        "employee_id": 8048,
+        "date": "2026-01-05"
       },
       {
         "type": "preferred_shift",
-        "shift_id": 1605,
-        "employee_id": 6318,
-        "date": "2026-01-04"
+        "shift_id": 1690,
+        "employee_id": 8048,
+        "date": "2026-01-06"
       },
       {
         "type": "free_day",
         "shift_id": null,
-        "employee_id": 8048,
-        "date": "2026-01-10"
+        "employee_id": 8050,
+        "date": "2026-01-17"
       },
       {
         "type": "free_day",
         "shift_id": null,
-        "employee_id": 8048,
-        "date": "2026-01-11"
+        "employee_id": 8050,
+        "date": "2026-01-18"
       },
       {
         "type": "free_day",
         "shift_id": null,
-        "employee_id": 8048,
-        "date": "2026-01-24"
-      },
-      {
-        "type": "free_day",
-        "shift_id": null,
-        "employee_id": 8048,
-        "date": "2026-01-25"
+        "employee_id": 8050,
+        "date": "2026-01-31"
       }
     ],
     "monthly_work_accounts": [
@@ -4275,31 +4299,31 @@
         "actual_minutes": null,
         "credit_details": [
           {
-            "date": "2026-01-05",
+            "date": "2026-01-12",
             "minutes": 462,
             "kind": "approved_absence",
             "source": "Project training availability"
           },
           {
-            "date": "2026-01-06",
+            "date": "2026-01-13",
             "minutes": 462,
             "kind": "approved_absence",
             "source": "Project training availability"
           },
           {
-            "date": "2026-01-07",
+            "date": "2026-01-14",
             "minutes": 462,
             "kind": "approved_absence",
             "source": "Project training availability"
           },
           {
-            "date": "2026-01-08",
+            "date": "2026-01-15",
             "minutes": 462,
             "kind": "approved_absence",
             "source": "Project training availability"
           },
           {
-            "date": "2026-01-09",
+            "date": "2026-01-16",
             "minutes": 462,
             "kind": "approved_absence",
             "source": "Project training availability"
@@ -4430,37 +4454,19 @@
         "employee_id": 8048,
         "target_minutes": 9702,
         "actual_minutes": null,
+        "credit_details": []
+      },
+      {
+        "employee_id": 8049,
+        "target_minutes": 9702,
+        "actual_minutes": null,
+        "credit_details": []
+      },
+      {
+        "employee_id": 8050,
+        "target_minutes": 9702,
+        "actual_minutes": null,
         "credit_details": [
-          {
-            "date": "2026-01-12",
-            "minutes": 462,
-            "kind": "approved_absence",
-            "source": "Project vacation availability"
-          },
-          {
-            "date": "2026-01-13",
-            "minutes": 462,
-            "kind": "approved_absence",
-            "source": "Project vacation availability"
-          },
-          {
-            "date": "2026-01-14",
-            "minutes": 462,
-            "kind": "approved_absence",
-            "source": "Project vacation availability"
-          },
-          {
-            "date": "2026-01-15",
-            "minutes": 462,
-            "kind": "approved_absence",
-            "source": "Project vacation availability"
-          },
-          {
-            "date": "2026-01-16",
-            "minutes": 462,
-            "kind": "approved_absence",
-            "source": "Project vacation availability"
-          },
           {
             "date": "2026-01-19",
             "minutes": 462,
@@ -4490,20 +4496,38 @@
             "minutes": 462,
             "kind": "approved_absence",
             "source": "Project vacation availability"
+          },
+          {
+            "date": "2026-01-26",
+            "minutes": 462,
+            "kind": "approved_absence",
+            "source": "Project vacation availability"
+          },
+          {
+            "date": "2026-01-27",
+            "minutes": 462,
+            "kind": "approved_absence",
+            "source": "Project vacation availability"
+          },
+          {
+            "date": "2026-01-28",
+            "minutes": 462,
+            "kind": "approved_absence",
+            "source": "Project vacation availability"
+          },
+          {
+            "date": "2026-01-29",
+            "minutes": 462,
+            "kind": "approved_absence",
+            "source": "Project vacation availability"
+          },
+          {
+            "date": "2026-01-30",
+            "minutes": 462,
+            "kind": "approved_absence",
+            "source": "Project vacation availability"
           }
         ]
-      },
-      {
-        "employee_id": 8049,
-        "target_minutes": 9702,
-        "actual_minutes": null,
-        "credit_details": []
-      },
-      {
-        "employee_id": 8050,
-        "target_minutes": 9702,
-        "actual_minutes": null,
-        "credit_details": []
       },
       {
         "employee_id": 8051,
