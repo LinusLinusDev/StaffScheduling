@@ -13,7 +13,6 @@ export const metadata: Metadata = { title: "Dienstplan erstellen · Schichtplan 
 
 // What the Gurobi model (api/app/solver/milp/service.py) actually reads and enforces; keep in step with it.
 const USED = [
-  "Mitarbeiter mit ihren Stationen, Qualifikationen und Stammstation",
   "Mindestbesetzung je Station, Schicht und Qualifikation; was fehlt, wird als Lücke ausgewiesen",
   "Urlaub, Fortbildung, freie Tage und Einschränkungen werden immer eingehalten",
   "Monatskonten: Sollzeit und Gutschriften, Saldo möglichst innerhalb ±7:40 Std.",
