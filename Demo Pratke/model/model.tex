@@ -402,24 +402,4 @@ wegen der Toleranzen \eqref{obj:lex} über ihrem echten Wert liegen. Der Schedul
 anschließend gegen alle harten Regeln des Projekts, darunter auch die 11-h-Ruhezeit, die das Modell nur weich
 behandelt \eqref{obj:ltoe}.
 
-%==========================================================================================================
-\section{Anleitung: App starten und beenden}
-
-\textbf{Starten}
-\begin{enumerate}
-  \item \textbf{Docker Desktop} öffnen und warten, bis Docker läuft. Sonst ist nichts zu tun.
-  \item \textbf{Visual Studio Code} starten und über \emph{Datei $\to$ Ordner öffnen} das Projekt mit dem
-        Stammverzeichnis \code{StaffScheduling} öffnen.
-  \item Ein Terminal öffnen (\emph{Terminal $\to$ Neues Terminal}).
-  \item \code{just run} eingeben und mit Enter bestätigen.
-  \item Warten, bis alle Ausgaben grün angezeigt werden. Beim ersten Start dauert das einige Minuten, weil die
-        Container gebaut werden. Warnungen ganz am Anfang, etwa dass \code{pnpm} oder \code{node} nicht gefunden
-        wurde, betreffen nur die lokale Entwicklung und können ignoriert werden.
-  \item Im Browser \code{http://localhost:3000} aufrufen. Fertig.
-\end{enumerate}
-
-\textbf{Beenden}
-
-Im selben Terminal \code{just stop} eingeben und mit Enter bestätigen.
-
 \end{document}
