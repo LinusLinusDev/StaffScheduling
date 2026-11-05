@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars -- DEMO: publishing and removal are switched off, their code
+   (ConfirmedAction, month, scope, kept) stays for switching them back on; drop this line then. */
 
 import { useState, useTransition } from "react";
 import { ChevronDown, Download, Upload } from "lucide-react";
@@ -10,7 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import type { PublicationResult } from "@/lib/types";
 import type { WriteResult } from "@/lib/write-result";
 import { cn } from "@/lib/utils";
-import { clearSchedule, importFiles, publishSchedule } from "./actions";
+// DEMO: publishSchedule and clearSchedule are switched off for now, see the two buttons in ReviewActions.
+import { importFiles /* , clearSchedule, publishSchedule */ } from "./actions";
 
 type Outcome = { ok: boolean; message: string } | null;
 
@@ -199,6 +202,9 @@ export function ReviewActions({
   return (
     <div role="group" aria-label="Veröffentlichung" className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
+        {/* DEMO: publishing is switched off for now; the button is shown but does nothing. To switch it back on,
+            restore this block and the publishSchedule import, remove the plain button below and un-skip the
+            tests in tests/browser/publication.spec.ts.
         {publishable && (
           <ConfirmedAction
             primary
@@ -211,9 +217,12 @@ export function ReviewActions({
             }
             onOutcome={setOutcome}
           />
-        )}
+        )} */}
+        {publishable && <Button>In TimeOffice veröffentlichen</Button>}
         {review && <DownloadMenu files={files} accepted={review.accepted} />}
         <ImportMenu onOpen={() => setOutcome(null)} />
+        {/* DEMO: removing published duties is switched off for now as well; the button is shown but does nothing.
+            To switch it back on, restore this block and the clearSchedule import and remove the plain button below.
         {ids.length > 0 && (
           <ConfirmedAction
             label="Veröffentlichte Dienste entfernen"
@@ -223,7 +232,8 @@ export function ReviewActions({
             success={(result) => `Entfernt: ${result.removed_duties} veröffentlichte Dienste.`}
             onOutcome={setOutcome}
           />
-        )}
+        )} */}
+        {ids.length > 0 && <Button variant="outline">Veröffentlichte Dienste entfernen</Button>}
       </div>
       {review && !publishable && (
         <p className="text-sm text-muted-foreground">

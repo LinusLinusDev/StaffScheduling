@@ -29,7 +29,8 @@ async function generate(page: Page, station: { id: string; name: string }) {
   await page.getByRole("link", { name: "Dienstplan prüfen" }).click();
 }
 
-test("an accepted schedule is published and cleared only after confirming the named scope", async ({ page }) => {
+// DEMO: publishing is switched off in review-actions.tsx; un-skip these three tests when it is switched back on.
+test.skip("an accepted schedule is published and cleared only after confirming the named scope", async ({ page }) => {
   await generate(page, { id: "101", name: "Example Station North" });
   const publication = card(page);
   const count = await dutyCount(page);
@@ -62,7 +63,7 @@ test("an accepted schedule is published and cleared only after confirming the na
   await expect(publication.getByRole("status")).toHaveText(`Entfernt: ${count} veröffentlichte Dienste.`);
 });
 
-test("a schedule replaced after loading the page is refused, not published", async ({ page }) => {
+test.skip("a schedule replaced after loading the page is refused, not published", async ({ page }) => {
   await page.goto("/review?month=2026-06&stations=101");
   const publication = card(page);
   await publication.getByRole("button", { name: "In TimeOffice veröffentlichen" }).click();
@@ -83,7 +84,7 @@ test("a schedule replaced after loading the page is refused, not published", asy
   await expect(publication.getByRole("status")).toHaveCount(0);
 });
 
-test("a failed publication says nothing changed, and nothing did", async ({ page }) => {
+test.skip("a failed publication says nothing changed, and nothing did", async ({ page }) => {
   await generate(page, { id: "101,102", name: "Example Station North, Example Station South" });
   const publication = card(page);
   await publication.getByRole("button", { name: "In TimeOffice veröffentlichen" }).click();
