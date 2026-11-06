@@ -13,6 +13,7 @@ from app.domain import (
     PublicationProblem,
     PublicationRejected,
     PublicationRequest,
+    ScheduleMetrics,
     SchedulingBaseModel,
     SchedulingDataset,
     Shift,
@@ -28,7 +29,7 @@ class ReviewSource(StrEnum):
 
 
 class ScheduleReview(SchedulingBaseModel):
-    """What the review page shows: the bundle's scope, solution and check, and its readable tables."""
+    """What the review page shows: the bundle's scope, solution and check, its readable tables and counts."""
 
     source: ReviewSource
     received_at: datetime
@@ -38,6 +39,7 @@ class ScheduleReview(SchedulingBaseModel):
     calendar: tuple[CalendarDay, ...]
     solution: Solution
     tables: ScheduleTables
+    metrics: ScheduleMetrics
 
     @property
     def station_ids(self) -> tuple[int, ...]:
@@ -102,6 +104,7 @@ class Review:
             calendar=bundle.input.calendar,
             solution=bundle.result.solution,
             tables=bundle.tables,
+            metrics=bundle.metrics,
         )
         self._current = (bundle, review)
         return review

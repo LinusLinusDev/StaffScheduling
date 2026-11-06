@@ -41,11 +41,13 @@ Publishing and removal change TimeOffice only after their confirmation button.
 
 The header selection may name another month or other stations. Then the page says so instead of showing the schedule as the selected one. **Zu diesem Umfang wechseln** selects the schedule's own scope. Without a schedule, the card offers import and removal only.
 
+**Kennzahlen** describe the schedule, whichever solver made it, and never judge a rule: gaps, the monthly balances (how many leave ±7:40 h and the largest deviation), granted wishes, duties outside the home station (jumper pool staff excluded) and early duties directly after a late duty, the trusted duty before the month included.
+
 The collapsed section **Technische Details** helps to diagnose a run; you do not need it to use the schedule. It shows:
 
 - the solver status, run time and limit, search threads and random seed;
 - one line per objective stage in solving order, from **Stufe 1: Lücken** to **Stufe 6: Überzählige Zwischendienste**, with its value and either _optimal_ or its proven bound (_Schranke_; a weak bound is not a broken rule);
-- the check's scores: gaps, health events (six-day runs, backward shift changes, isolated workdays, back-to-back worked weekends), station transfers, the wish cost, total account deviation and surplus intermediate duties;
+- for a CP-SAT run, the check's scores, which are its objective tiers: gaps, health events (six-day runs, backward shift changes, isolated workdays, back-to-back worked weekends), station transfers, the wish cost, total account deviation and surplus intermediate duties. A Gurobi run optimizes other objectives, so its stages stand alone;
 - obligations beyond the month that cannot be assessed here, such as the next month's start and annual free Sundays;
 - any solver diagnostics with their code and English message.
 

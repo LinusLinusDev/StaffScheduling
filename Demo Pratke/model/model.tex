@@ -40,7 +40,7 @@ stehen bei den Parametern; Werte, die aus TimeOffice bzw. der Webapp kommen, sin
   & d \in D = \{1,\dots,n\} && \text{Tage des Planungsmonats} \label{set:D}\\
   & d \in \Dm = \{1-m,\dots,0\},\quad \Db = \Dm \cup D && \text{Vortage mit bekannten Diensten, Planungshorizont} \label{set:Dm}\\
   & D^{Sa} \subseteq \{0,\dots,n-1\} && \text{Samstage, deren Sonntag im Monat liegt} \label{set:DSa}\\
-  & W = (w_1,\dots,w_{|W|}) \subseteq \{0,\dots,n\} && \text{alle Samstage, die den Monat berühren, aufsteigend} \label{set:W}\\
+  & W = (w_1,\dots,w_{|W|}) \subseteq \{-m,\dots,n\} && \text{Samstage der Wochenenden mit einem Tag in } \Db \label{set:W}\\
   & D^{end} = \{1-\max(\Delta^N, L^N+1),\dots,n-1\} && \text{Tage, an denen ein Nachtblock enden kann} \label{set:Dend}\\
   & K \subseteq S \times D \times U^{St} \times L && \text{Bedarfszeilen mit } r_{sdul} > 0 \label{set:K}\\
   & A \subseteq I \times S \times D \times U^{St} && \text{zulässige Dienste, siehe \eqref{eq:A}} \label{set:A}
@@ -56,7 +56,10 @@ Typs gilt, unabhängig vom Kürzel.
 (\code{D\_prev}) sind die Vortage, für die die tatsächlichen Dienste bekannt sind (in der Regel $m = 5$). Auf
 diesen Tagen gibt es keine Entscheidungsvariablen, die Dienste dort sind feste Werte, siehe \eqref{eq:X}.
 \eqref{set:DSa}, \eqref{set:W}: $D^{Sa}$ (\code{D\_s}) enthält die Samstage, deren Sonntag im Monat liegt;
-$W$ (\code{W}) alle Samstage des Monats. Ist der letzte Vortag ein Samstag, gehört er zu beiden Mengen.
+$W$ (\code{W}) jedes Wochenende, dessen Samstag oder Sonntag im Monat oder in den Vortagen liegt, durch seinen
+Samstag und aufsteigend; damit gehört das letzte Wochenende vor dem Monat dazu, gleich an welchem Wochentag der
+Monat beginnt.
+Ist der letzte Vortag ein Samstag, gehört er auch zu $D^{Sa}$.
 \eqref{set:Dend}: $D^{end}$ (\code{D\_end}) sind die Tage, für die ein Blockende in den Nachtregeln
 gebraucht wird.
 Allgemein gilt: Alle Tagesbereiche, die in die Vortage reichen (nicht-positive $d$), sind mit $\Dm$
@@ -75,7 +78,7 @@ geschnitten, umfassen also nur bekannte Vortage.
   & \lambda_{iud} \in L && \text{Qualifikation der an Tag } d \text{ gültigen Zugehörigkeit von } i \text{ zu } u \label{par:lambda}\\
   & y^{0}_{isd} \in \{0,1\},\ d \in \Dm && \text{fester Dienst } s \text{ von } i \text{ an Vortag } d \label{par:y0}\\
   & T_i \subseteq D && \text{Fortbildungstage von } i \label{par:T}\\
-  & B \subseteq I \times D,\quad V \subseteq B && \text{blockierte Tage, davon Urlaubstage} \label{par:B}\\
+  & B \subseteq I \times D^{+},\ V \subseteq B && \text{blockierte Tage, davon Urlaubstage} \label{par:B}\\
   & \operatorname{home}(i,d) \in U && \text{Stammeinheit von } i \text{ am Tag } d \label{par:home}
 \end{align}
 
@@ -98,7 +101,9 @@ Fortbildung, die in der Webapp eingetragen werden, wird vorübergehend das Tages
 nicht mit der der Person.
 \eqref{par:y0} (\code{past\_shifts}) sind die Dienste der Vortage aus dem Kontext.
 \eqref{par:T} (\code{training}), \eqref{par:B} (\code{blocked}, \code{vacation}): $B$ enthält alle Tage
-mit Urlaub, freiem Tag, Fortbildung oder „nicht verfügbar“, $V$ nur die Urlaubstage.
+mit Urlaub, freiem Tag, Fortbildung oder „nicht verfügbar“, $V$ nur die Urlaubstage. Beide umfassen auch den
+Tag $n+1$ nach dem Monat (\code{context.availability}), in den eine Nacht vom letzten Monatstag hineinreicht:
+$D^{+} = D \cup \{n+1\}$.
 \eqref{par:home} (\code{home\_of}) ist die Einheit der an $d$ gültigen Stammzugehörigkeit.
 \eqref{par:R}--\eqref{par:Iudl}: $R_{usd}$, $R_{ud}$, $R_u$ (\code{required\_usd}, \code{required\_ud},
 \code{required\_u}) sind der Bedarf je Schicht, Tag und Monat über alle Qualifikationen. $\mathcal{B}$
@@ -149,8 +154,8 @@ Schedule-Check.
 
 \begin{align}
   N^{V} &= \{(i,s,d) : \text{für } (i,d) \text{ ist eine Einschränkung eingetragen, die } s \text{ nicht erlaubt}\} \label{eq:NV}\\
-  N^{N} &= \{(i,s,d) : s \in S^{N},\ d < n,\ (i,d+1) \in B\} \label{eq:NN}\\
-  N^{S} &= \{(i,s,d) : s \in S^{S},\ d < n,\ (i,d+1) \in V,\ (i,d) \notin V\} \label{eq:NS}\\
+  N^{N} &= \{(i,s,d) : s \in S^{N},\ d \in D,\ (i,d+1) \in B\} \label{eq:NN}\\
+  N^{S} &= \{(i,s,d) : s \in S^{S},\ d \in D,\ (i,d+1) \in V,\ (i,d) \notin V\} \label{eq:NS}\\
   A &= \bigl\{(i,s,d,u) : u \in U^{St},\ \lambda_{iud} \text{ definiert},\
        (i,s,d) \notin N^{V} \cup N^{N} \cup N^{S},\ (u,s,\lambda_{iud}) \in \mathcal{B}\bigr\} \label{eq:A}
 \end{align}
@@ -160,8 +165,10 @@ Statt diese Regeln als Nebenbedingungen zu formulieren, werden verbotene Dienste
 angelegt (\code{not\_allowed}, Liste beim Anlegen von \code{assignment}).
 \eqref{eq:NV}: Urlaub, freier Tag, Fortbildung und „nicht verfügbar“ verbieten alle Schichten, „nur
 bestimmte Schichten“ verbietet die übrigen.
-\eqref{eq:NN}: Eine Nacht reicht in den Folgetag; vor einem blockierten Tag ist sie verboten.
-\eqref{eq:NS}: Am Tag vor Urlaubsbeginn gibt es keinen Spätdienst.
+\eqref{eq:NN}: Eine Nacht reicht in den Folgetag; vor einem blockierten Tag ist sie verboten, am letzten
+Monatstag also auch vor einer Abwesenheit am Ersten des Folgemonats.
+\eqref{eq:NS}: Am Tag vor Urlaubsbeginn gibt es keinen Spätdienst, auch wenn der Urlaub am Ersten des
+Folgemonats beginnt.
 \eqref{eq:A}: Ein Dienst ist nur auf einer Station möglich, zu der an diesem Tag eine gültige Zugehörigkeit
 besteht, und nur in einer Schicht, für die die Station mit dieser Qualifikation im Monat überhaupt Bedarf hat
 (z.\,B. kein Zwischendienst, wenn nie einer gefordert ist, keine Nächte für Azubis, wenn nie Azubi-Nachtbedarf
@@ -321,10 +328,12 @@ von $\pm\tau = \pm 460$ liegt. Im Optimum gilt $o_i = \max(0, |\eta_i| - \tau)$.
 \end{align}
 
 \textbf{Erklärung.}
-\eqref{con:gapsq} (\code{gap\_sq}): Lineare Darstellung von $q_{ud} \ge G_{ud}^2$. Die Geraden durch die
-Punkte $(k, k^2)$ und $(k+1, (k+1)^2)$ liegen unterhalb der Parabel und berühren sie in ganzzahligen Punkten;
-da die Lücken eines Tages ganzzahlig zwischen $0$ und $R_{ud}$ liegen, ist $q_{ud} = G_{ud}^2$ im Optimum
-exakt.
+\eqref{con:gapsq} (\code{gap\_sq}): Lineare Darstellung von $q_{ud} \ge G_{ud}^2$. Die rechte Seite ist für
+jedes $k$ die Sekante durch die Parabelpunkte $(k, k^2)$ und $(k+1, (k+1)^2)$. Zwischen $k$ und $k+1$ liegt sie
+über der Parabel, außerhalb darunter. Das Maximum aller Sekanten ist daher die stückweise lineare Interpolation
+von $G_{ud}^2$: überall mindestens $G_{ud}^2$ und in ganzzahligen Punkten genau $G_{ud}^2$. Da die Lücken eines
+Tages ganzzahlig zwischen $0$ und $R_{ud}$ liegen und $q_{ud}$ minimiert wird, ist $q_{ud} = G_{ud}^2$ im
+Optimum exakt.
 \eqref{con:daydev} (\code{day\_dev\_up}, \code{day\_dev\_down}): $\rho_{ud} \ge |P_{ud} - \frac{R_{ud}}{R_u}
 P_u|$, also die Abweichung der Tagesbesetzung von ihrem Anteil an der Monatsbesetzung. Ein Tag ohne Bedarf
 hat Anteil 0, jeder Dienst dort zählt als Abweichung.
@@ -381,15 +390,27 @@ Block beginnen; berücksichtigt werden nur Blockanfänge im Monat.
 
 \begin{align}
   & X_{isd} = X_{is,d+1} && \forall i \in I,\ s \in S,\ d \in D^{Sa} \label{con:weekend}\\
-  & Y_{i,w_k} + Y_{i,w_{k+1}} \le 1 && \forall i \in I,\ k = 1,\dots,|W|-1 \label{con:twoweekends}
+  & \Omega_{iw} = \begin{cases}
+      \max\bigl(Y_{iw},\, Y_{i,w+1}\bigr) & w+1 \in \Dm\\
+      Y_{iw} & w \in \Db,\ w+1 \notin \Dm\\
+      Y_{i,w+1} & \text{sonst}
+    \end{cases} && \text{(\code{weekend})} \label{eq:Omega}\\
+  & \Omega_{i,w_k} + \Omega_{i,w_{k+1}} \le 1 && \forall i \in I,\ k = 1,\dots,|W|-1 \text{ mit } w_{k+1} \ge 0
+    \label{con:twoweekends}
 \end{align}
 
 \textbf{Erklärung.}
 \eqref{con:weekend}: Samstag und Sonntag haben dieselbe Schicht, oder beide sind frei. Ist der letzte Vortag
 ein Samstag mit Dienst, erzwingt das denselben Dienst am Monatsersten.
-\eqref{con:twoweekends}: Keine zwei Wochenenden in Folge. Gearbeitet wird ein Wochenende, wenn am Samstag ein
-Dienst liegt; wegen \eqref{con:weekend} gilt das dann auch für den Sonntag. Daraus folgt zugleich, dass
-höchstens jedes zweite Wochenende gearbeitet wird.
+\eqref{eq:Omega}: $\Omega_{iw}$ gibt an, ob $i$ das Wochenende mit dem Samstag $w$ arbeitet. Gearbeitet ist es
+mit einem Dienst am Samstag oder Sonntag; eine Nacht vom Freitag allein lässt es frei. Im Monat haben Samstag
+und Sonntag dieselbe Schicht \eqref{con:weekend}, also entscheidet der Samstag. Ein Wochenende in den Vortagen
+ist bekannt, $\Omega$ dort also eine Konstante. Liegt der Samstag vor den bekannten Tagen (Monatsbeginn an einem
+Sonntag ohne Vortage), entscheidet der Sonntag.
+\eqref{con:twoweekends}: Keine zwei Wochenenden in Folge, auch nicht über den Monatswechsel. Geprüft werden nur
+Paare, deren späteres Wochenende den Monat berührt ($w_{k+1} \ge 0$, sein Sonntag liegt also im Monat); die
+Vergangenheit wird nie gegen sich selbst geprüft. Daraus
+folgt zugleich, dass höchstens jedes zweite Wochenende gearbeitet wird.
 
 %==========================================================================================================
 \section{Nach dem Lösen}

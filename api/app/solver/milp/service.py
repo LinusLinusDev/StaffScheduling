@@ -54,11 +54,11 @@ class GurobiSolverService:
                 staff_for[u, d, l].append(i)
             # Saturdays whose Sunday lies in the month (for "same shift Sat/Sun")
             D_s = [date for date in D[:-1] if date.weekday() == 5]
-            # all weekends that touch the month, in order (for "no two in a row")
-            W = [date for date in D if date.weekday() == 5]
             if D_prev and D_prev[-1].weekday() == 5:
                 D_s = D_prev[-1:] + D_s
-                W = D_prev[-1:] + W
+            # every weekend with its Saturday or Sunday in the month or the known days before it, by its Saturday in
+            # order (for "no two in a row"); so the weekend just before the month counts on any weekday of month start
+            W = sorted({d if d.weekday() == 5 else d - timedelta(days=1) for d in D_prev + D if d.weekday() >= 5})
             # Parameters
             t = {}
             credits = {}
@@ -77,9 +77,13 @@ class GurobiSolverService:
             for absence in dataset.availability:
                 if absence.availability_type == 'training':
                     training[absence.employee_id].add(absence.date)
-            # blocking absences (vacation, free day, training, unavailable) and vacation days
-            blocked = {(a.employee_id, a.date) for a in dataset.availability if a.availability_type in BLOCKING_AVAILABILITY}
-            vacation = {(a.employee_id, a.date) for a in dataset.availability if a.availability_type == AvailabilityType.VACATION}
+            # blocking absences (vacation, free day, training, unavailable) and vacation days, also on the date after
+            # the month (context availability), which a night of the month's last date reaches
+            known_availability = (*dataset.availability, *dataset.context.availability)
+            blocked = {(a.employee_id, a.date) for a in known_availability
+                       if a.availability_type in BLOCKING_AVAILABILITY}
+            vacation = {(a.employee_id, a.date) for a in known_availability
+                        if a.availability_type == AvailabilityType.VACATION}
 
             past_shifts = {}
             for entry in dataset.context.duties:
@@ -93,9 +97,9 @@ class GurobiSolverService:
                     if absence.availability_type != "available_only" or s not in absence.shift_ids:
                         not_allowed.add((absence.employee_id, s, absence.date))
             # no night shift before a blocked day (a night touches the next day)
-            # and no late shift on the day before vacation begins
+            # and no late shift on the day before vacation begins; on the last date the next day is the context's
             for i in I:
-                for d in D[:-1]:
+                for d in D:
                     next_day = d + timedelta(days=1)
                     if (i, next_day) in blocked:
                         for s in S_night:
@@ -327,8 +331,23 @@ class GurobiSolverService:
                     forbidden_starts = [d+timedelta(days=j) for j in range(1, Dist_n + 1) if d+timedelta(days=j) in D_set]
                     if forbidden_starts:
                         schedule.addConstr(n_end[i, d] + gp.quicksum(n_beg[i, day] for day in forbidden_starts) <= 1)
-            # not two cons weekends
-            schedule.addConstrs(work[i, W[j]] + work[i, W[j+1]] <= 1 for i in I for j in range(len(W) - 1));
+            # not two weekends in a row. A weekend is worked with a duty on its Saturday or Sunday; a Friday night
+            # alone leaves it free. In the month both days carry the same shift (D_s), so the Saturday tells; a weekend
+            # before the month is known from the past duties, so a constant.
+            def weekend(i, saturday):
+                sunday = saturday + one_day
+                if sunday in D_prev_set:
+                    return gp.LinExpr(int((i, saturday) in past_shifts or (i, sunday) in past_shifts))
+                if saturday in D_set or saturday in D_prev_set:
+                    return at(work, i, saturday)
+                # the Saturday lies before the known days: a month starting on a Sunday without past duties
+                return at(work, i, sunday)
+
+            # only pairs whose later weekend touches the month: the past is never constrained against itself
+            for earlier, later in zip(W, W[1:], strict=False):
+                if later in D_set or later + one_day in D_set:
+                    schedule.addConstrs((weekend(i, earlier) + weekend(i, later) <= 1 for i in I),
+                                        name=f"two_weekends[{later}]")
             # solve
             schedule.Params.TimeLimit = timeout
             schedule.Params.MIPGap = 0.03

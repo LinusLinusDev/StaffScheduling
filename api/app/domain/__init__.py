@@ -37,6 +37,7 @@ from app.domain.inspection import (
     build_inspection,
     inspection_employee_ids,
 )
+from app.domain.metrics import ScheduleMetrics, schedule_metrics
 from app.domain.monthly_work_account import MonthlyWorkAccount, WorkCredit
 from app.domain.planning_month import PlanningMonth
 from app.domain.planning_unit import PlanningUnit, PlanningUnitId, PlanningUnitMembership, PlanningUnitType
@@ -52,6 +53,8 @@ __all__ = [
     "EmployeeRow",
     "ScheduleTables",
     "schedule_tables",
+    "ScheduleMetrics",
+    "schedule_metrics",
     "check_schedule",
     "CheckStatus",
     "Finding",

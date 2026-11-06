@@ -26,11 +26,13 @@ from app.domain import (
     PlanningMonth,
     Rule,
     ScheduleCheck,
+    ScheduleMetrics,
     ScheduleTables,
     SchedulingBaseModel,
     SchedulingDataset,
     check_schedule,
     month_calendar,
+    schedule_metrics,
     schedule_tables,
 )
 from app.domain.schedule import CoverageRow, DutyRow, EmployeeRow
@@ -172,6 +174,11 @@ class ScheduleBundle:
     @cached_property
     def tables(self) -> ScheduleTables:
         return schedule_tables(self.input.dataset, self.result.solution.assignments)
+
+    @cached_property
+    def metrics(self) -> ScheduleMetrics:
+        """Derived like the tables, never stored, so a pair of files stays valid when the counts change."""
+        return schedule_metrics(self.input.dataset, self.result.solution.assignments)
 
     @cached_property
     def files(self) -> dict[FileName, bytes]:

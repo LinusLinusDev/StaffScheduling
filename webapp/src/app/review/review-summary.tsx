@@ -23,6 +23,45 @@ const SOURCES: Record<ScheduleReview["source"], string> = { generation: "Generie
 const TIME = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", dateStyle: "short", timeStyle: "short" });
 const TONES: Record<CheckStatus, Tone> = { accepted: "success", rejected: "error", incomplete: "warning" };
 
+/**
+ * The schedule's counts as a ward reads them, whichever solver made it: the backend's metrics with the gaps, wishes
+ * and transfers of the check.
+ */
+function metricFacts(review: ScheduleReview, missing: number): [string, string][] {
+  const { metrics } = review;
+  const { scores, wish_counts: wishes } = review.solution.check;
+  const band = `±${formatHours(metrics.balance_tolerance_minutes)}`;
+  const largest = `größte Abweichung ${formatHours(metrics.largest_balance_minutes, { signed: true })}`;
+  const outside = metrics.balances_outside_tolerance;
+  const decided = wishes.granted + wishes.denied;
+  return [
+    [
+      "Lücken",
+      missing ? `${missing} ${missing === 1 ? "unbesetzte Pflichtstelle" : "unbesetzte Pflichtstellen"}` : "keine",
+    ],
+    [
+      "Monatssaldo",
+      `${outside ? `${outside} ${outside === 1 ? "Person" : "Personen"} außerhalb` : "alle innerhalb"} ${band}, ${largest}`,
+    ],
+    [
+      "Wünsche",
+      decided + wishes.not_grantable === 0
+        ? "keine eingetragen"
+        : [
+            decided && `${wishes.granted} von ${decided} erfüllt`,
+            wishes.not_grantable && `${wishes.not_grantable} nicht erfüllbar`,
+          ]
+            .filter(Boolean)
+            .join(", "),
+    ],
+    [
+      "Einsätze außerhalb der Stammstation (ohne Springer)",
+      scores.station_transfers ? String(scores.station_transfers) : "keine",
+    ],
+    ["Wechsel Spät- auf Frühdienst", metrics.late_to_early ? String(metrics.late_to_early) : "keine"],
+  ];
+}
+
 /** A tier's score, with the health events split into their terms and the balance also in hours. */
 function scoreText(scores: ScheduleCheck["scores"], tier: ScoreName) {
   if (tier === "health_events")
@@ -70,6 +109,8 @@ export function ReviewSummary({ review, actions }: { review: ScheduleReview; act
       .join(" · "),
   );
   const inputs = missingInputs(check);
+  // The check's scores are the CP-SAT solver's objective tiers; another solver's run optimizes other ones.
+  const cpSat = solution.stages.every((stage) => stage.name in SCORE_LABELS);
 
   return (
     <Card aria-label="Dienstplan zur Prüfung">
@@ -112,6 +153,10 @@ export function ReviewSummary({ review, actions }: { review: ScheduleReview; act
           </section>
         )}
 
+        <section aria-label="Kennzahlen">
+          <Facts title="Kennzahlen" facts={metricFacts(review, missing)} />
+        </section>
+
         <Disclosure title="Technische Details">
           <div className="grid gap-6 md:grid-cols-2">
             <Facts
@@ -130,13 +175,15 @@ export function ReviewSummary({ review, actions }: { review: ScheduleReview; act
                 ]),
               ]}
             />
-            <Facts
-              title="Bewertung"
-              facts={(Object.keys(SCORE_LABELS) as ScoreName[]).map((tier) => [
-                SCORE_LABELS[tier],
-                scoreText(check.scores, tier),
-              ])}
-            />
+            {cpSat && (
+              <Facts
+                title="Bewertung"
+                facts={(Object.keys(SCORE_LABELS) as ScoreName[]).map((tier) => [
+                  SCORE_LABELS[tier],
+                  scoreText(check.scores, tier),
+                ])}
+              />
+            )}
           </div>
           {inputs.later.length > 0 && (
             <div className="space-y-1.5">

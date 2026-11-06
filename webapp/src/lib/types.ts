@@ -365,6 +365,17 @@ export interface ScheduleReview {
   /** Always a found schedule: it has its stages and check. */
   solution: Solution & { check: ScheduleCheck; configuration: RunConfiguration };
   tables: { duties: DutyRow[]; employees: EmployeeRow[]; coverage: CoverageRow[] };
+  metrics: ScheduleMetrics;
+}
+
+/** Plain counts of the schedule as a ward reads it, whichever solver made it; computed by the backend, never here. */
+export interface ScheduleMetrics {
+  balance_tolerance_minutes: number;
+  /** The balance furthest from zero, with its sign. */
+  largest_balance_minutes: number;
+  balances_outside_tolerance: number;
+  /** Early duties on the date after a late one. */
+  late_to_early: number;
 }
 
 /** Why the backend refused an uploaded pair of files. */

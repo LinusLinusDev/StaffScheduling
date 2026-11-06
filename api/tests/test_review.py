@@ -12,7 +12,7 @@ import httpx
 import pytest
 from fastapi.testclient import TestClient
 from inspection_fixture import InspectionSource
-from scheduling import EARLY, JUMPER_POOL, NIGHT, NORTH, account, dataset, duty, jan, member, need
+from scheduling import EARLY, JUMPER_POOL, LATE, NIGHT, NORTH, account, dataset, duty, jan, member, need
 from test_generation import BODY, CONFIGURATION, INFEASIBLE, finished, save_demand
 
 from app.api.generation import get_generation
@@ -25,9 +25,11 @@ from app.domain import (
     PlanningMonth,
     PlanningUnitMembership,
     PublicationRequest,
+    ScheduleMetrics,
     SchedulingDataset,
     StaffLevel,
     check_schedule,
+    schedule_metrics,
     schedule_tables,
 )
 from app.main import app
@@ -173,6 +175,32 @@ def test_tables_follow_the_clock_change_and_mark_public_holidays() -> None:
         "2026-03-29T06:10:00+02:00",
     )
     assert (good_friday.weekday, good_friday.is_public_holiday) == (5, True)
+
+
+def test_metrics_count_balances_and_late_to_early_with_the_trusted_context() -> None:
+    data = dataset(
+        memberships=(*member(1), *member(2, home=JUMPER_POOL, replacements=(NORTH,)), *member(3)),
+        # Employee 1 works two early duties (420 each): 840 minutes, 500 below the target.
+        accounts=(account(1, 1340), account(2, 0), account(3, 1290)),
+        # A late duty before the early one of January 1.
+        context_duties=(duty(1, date(2025, 12, 31), LATE),),
+    )
+    schedule = (
+        duty(1, jan(1), EARLY),
+        duty(1, jan(2), EARLY),
+        duty(3, jan(5), LATE),
+        duty(3, jan(6), EARLY),
+        # A late duty after an early one is no change from late to early.
+        duty(3, jan(7), LATE),
+    )
+
+    # Employee 2 has no duty and a balance of 0.
+    assert schedule_metrics(data, schedule) == ScheduleMetrics(
+        balance_tolerance_minutes=460,
+        largest_balance_minutes=-500,
+        balances_outside_tolerance=1,
+        late_to_early=2,
+    )
 
 
 def test_bundle_files_carry_every_field_and_read_back() -> None:
@@ -497,6 +525,8 @@ def test_http_review_downloads_and_imports_only_valid_pairs(
     assert imported.status_code == 200
     assert imported.json()["source"] == "import"
     assert imported.json()["tables"] == generated["tables"]
+    # The counts are derived like the tables, so an imported pair shows the same ones.
+    assert imported.json()["metrics"] == generated["metrics"]
 
     other_input = _edit(files[INPUT_FILE], _set("dataset.monthly_work_accounts.0.target_minutes", 1))
     rejected = upload(other_input, files[RESULT_FILE])
