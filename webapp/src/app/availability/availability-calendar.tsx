@@ -81,7 +81,7 @@ export function AvailabilityCalendar({ calendar }: { calendar: EmployeeCalendar 
             Strg-Klick einzelne Tage hinzufügen oder entfernen.
           </CardDescription>
           <div className="flex flex-wrap gap-2 pt-1 text-xs">
-            <Badge variant="secondary">Abwesenheit (TimeOffice)</Badge>
+            {calendar.absences.length > 0 && <Badge variant="secondary">Abwesenheit (TimeOffice)</Badge>}
             <Badge className="bg-red-100 text-red-800">Einschränkung</Badge>
             <Badge className="bg-green-100 text-green-800">Wunsch</Badge>
           </div>
@@ -225,6 +225,8 @@ function AvailabilityForm({
   const [reason, setReason] = useState(saved?.reason ?? "");
   const chosen = new Set(shiftIds);
   const { pending, result, run } = useSave();
+  // "Only certain shifts" needs at least one shift; until then saving is not offered.
+  const incomplete = type === "available_only" && shiftIds.length === 0;
 
   function submit() {
     if (type === NONE) return;
@@ -269,6 +271,7 @@ function AvailabilityForm({
           ))}
         </fieldset>
       )}
+      {incomplete && <p className="text-xs text-muted-foreground">Mindestens eine Schicht wählen.</p>}
       {type !== NONE && (
         <Input
           aria-label="Grund"
@@ -278,7 +281,7 @@ function AvailabilityForm({
         />
       )}
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={submit} disabled={pending || type === NONE}>
+        <Button size="sm" onClick={submit} disabled={pending || type === NONE || incomplete}>
           Einschränkung speichern
         </Button>
         {anySaved && (
@@ -321,6 +324,8 @@ function WishForm({
   const [shiftId, setShiftId] = useState(saved?.shift_id ? String(saved.shift_id) : "");
   const { pending, result, run } = useSave();
   const needsShift = type === "free_shift" || type === "preferred_shift";
+  // A shift wish needs its shift; until one is chosen saving is not offered.
+  const incomplete = needsShift && !shiftId;
 
   function submit() {
     if (type === NONE) return;
@@ -367,7 +372,7 @@ function WishForm({
         </Select>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button size="sm" onClick={submit} disabled={pending || type === NONE}>
+        <Button size="sm" onClick={submit} disabled={pending || type === NONE || incomplete}>
           Wunsch speichern
         </Button>
         {anySaved && (

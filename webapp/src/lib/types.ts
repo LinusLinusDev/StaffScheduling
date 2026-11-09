@@ -274,12 +274,15 @@ export interface Stage {
 /** One generation run: `state` is the job's progress, `solution.status` what the solver found. */
 export interface GenerationJob {
   job_id: string;
+  /** `timeout_seconds` is the fixed solver time the backend chose when the job started. */
   request: { planning_unit_ids: number[]; planning_month: PlanningMonth; timeout_seconds: number };
   state: "running" | "completed" | "failed";
   started_at: string;
   finished_at: string | null;
   solution: Solution | null;
   error: string | null;
+  /** Why a failed job failed, when known: the solver could not run, mostly without its license server. */
+  problem: "solver_unavailable" | null;
 }
 
 export interface Shift extends ShiftOption {

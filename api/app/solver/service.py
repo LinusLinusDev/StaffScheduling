@@ -35,6 +35,9 @@ class SolverService:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
 
+    def close(self) -> None:
+        """Nothing to release: CP-SAT needs no license or environment."""
+
     def solve(self, dataset: SchedulingDataset, timeout: float | None = None) -> Solution:
         built = build_model(dataset)
         configuration = RunConfiguration(

@@ -11,8 +11,6 @@ import type {
   PlanningInspection,
   PlanningOptions,
   BundleProblem,
-  PublicationProblem,
-  PublicationResult,
   ScheduleReview,
   WishEntry,
   WriteProblem,
@@ -20,8 +18,8 @@ import type {
 
 const API_URL = process.env.API_URL ?? "http://127.0.0.1:8000";
 
-const INVALID_SELECTION = "Ungültige Auswahl. Nur Stationen mit Planungsziel für diesen Monat wählen.";
-const INCOMPLETE = "Daten unvollständig. Stationen, Zuordnungen, Monatskonten und Abwesenheiten prüfen.";
+const INVALID_SELECTION = "Ungültige Auswahl. Bitte die Seite neu laden.";
+const INCOMPLETE = "Daten unvollständig. Bitte die Seite neu laden.";
 /** Any write the backend rolled back because another writer changed the same TimeOffice rows. */
 const CONCURRENT_PROBLEM: WriteProblem = "concurrent";
 const CONCURRENT = "TimeOffice wurde gleichzeitig geändert. Nichts wurde gespeichert; bitte erneut versuchen.";
@@ -72,7 +70,7 @@ async function send(
       signal: AbortSignal.timeout(timeoutSeconds * 1000),
     });
   } catch {
-    throw new ApiError("Backend nicht erreichbar. Verbindung und Einrichtung prüfen.");
+    throw new ApiError("Die Anwendung antwortet nicht. Bitte kurz warten und die Seite neu laden.");
   }
   if (response.status === 422 || response.status === 409) {
     const problem = (await response.json().catch(() => null))?.problem;
@@ -101,7 +99,7 @@ function unavailableMessage(body: { integration?: string; stage?: string } | nul
   if (body?.integration === "timeoffice" && body.stage === "query") {
     return "TimeOffice-Abfrage fehlgeschlagen. Datenbankschema und Berechtigungen prüfen.";
   }
-  return "Backend oder TimeOffice nicht verfügbar. Verbindung und Einrichtung prüfen.";
+  return "Die Anwendung antwortet nicht. Bitte kurz warten und die Seite neu laden.";
 }
 
 /** The `YYYY-MM` selection month as the API's year and month numbers. */
@@ -157,7 +155,7 @@ export function setWish(employeeId: number, date: string, entry: WishEntry | nul
   return putOrDelete(`/wishes/${employeeId}/${date}`, entry, INVALID_ENTRY);
 }
 
-const INVALID_DEMAND = "Mindestbesetzung ungültig. Station, Datum, Schichten und Anzahlen (0–99) prüfen.";
+const INVALID_DEMAND = "Mindestbesetzung ungültig. Anzahlen von 0 bis 5 wählen.";
 
 export function getDemand(month: string, stationId: number) {
   const params = monthQuery(month);
@@ -175,13 +173,12 @@ export function previewPattern(month: string, stationId: number, cells: PatternR
   return request<MonthlyDemand>("POST", "/demand/pattern", { body, invalid: INVALID_DEMAND });
 }
 
-const INVALID_GENERATION = "Generierung ungültig. Stationen mit Planungsziel und eine Laufzeit von 30–3600 s wählen.";
-const INCOMPLETE_GENERATION =
-  "Eingaben unvollständig. Mindestbesetzung jeder Station speichern und Mitarbeiterdaten prüfen.";
+const INVALID_GENERATION = "Dienstplan konnte nicht gestartet werden. Bitte die Seite neu laden.";
+const INCOMPLETE_GENERATION = "Eingaben unvollständig. Bitte die Mindestbesetzung prüfen und speichern.";
 
-/** Validate the full month's input and start solving it; the job runs on in the backend. */
-export async function startGeneration(month: string, stationIds: number[], timeoutSeconds: number) {
-  const body = { planning_unit_ids: stationIds, planning_month: planningMonth(month), timeout_seconds: timeoutSeconds };
+/** Validate the full month's input and start solving it with the backend's fixed time; the job runs on there. */
+export async function startGeneration(month: string, stationIds: number[]) {
+  const body = { planning_unit_ids: stationIds, planning_month: planningMonth(month) };
   try {
     return await request<GenerationJob>("POST", "/generation", {
       body,
@@ -191,7 +188,7 @@ export async function startGeneration(month: string, stationIds: number[], timeo
   } catch (error) {
     // 423: the backend solves one generation at a time.
     if (error instanceof ApiError && error.status === 423) {
-      throw new ApiError("Es läuft bereits eine Generierung. Nach ihrem Ende erneut starten.", 423);
+      throw new ApiError("Es wird bereits ein Dienstplan berechnet. Nach dessen Ende erneut starten.", 423);
     }
     throw error;
   }
@@ -218,13 +215,13 @@ export async function getReview(): Promise<ScheduleReview | null> {
 }
 
 const IMPORT_PROBLEMS: Record<BundleProblem, string> = {
-  malformed: "Dateien ungültig. input.json und result.json im Format Version 3 wählen.",
-  mismatch: "Dateien passen nicht zusammen. result.json gehört zu einer anderen input.json oder einem anderen Monat.",
+  malformed: "Das sind keine gespeicherten Dienstplan-Dateien. Bitte input.json und result.json eines Plans wählen.",
+  mismatch:
+    "Die beiden Dateien gehören zu verschiedenen Dienstplänen. Bitte input.json und result.json desselben Plans wählen.",
   no_schedule: "result.json enthält keinen Dienstplan.",
-  references:
-    "result.json enthält Dienste unbekannter Mitarbeiter, Stationen oder Schichten oder außerhalb des Monats.",
-  policy: "result.json wurde mit anderen Regeleinstellungen gelöst.",
-  check: "Die Prüfung in result.json weicht von der unabhängigen Prüfung ab.",
+  references: "Die Dateien gehören nicht zu dieser Station. Bitte einen hier gespeicherten Dienstplan wählen.",
+  policy: "Die Dateien stammen aus einer anderen Version der Anwendung.",
+  check: "Die Dateien stammen aus einer anderen Version der Anwendung.",
 };
 
 /** Review an uploaded `input`/`result` pair; a rejected pair leaves the current review unchanged. */
@@ -236,75 +233,8 @@ export function importReview(files: FormData) {
   });
 }
 
-const INVALID_PUBLICATION =
-  "Veröffentlichung ungültig. Stationen mit Planungsziel wählen; ein leerer Dienstplan wird nicht veröffentlicht.";
-const INCOMPLETE_PUBLICATION =
-  "TimeOffice-Daten für die Veröffentlichung sind unvollständig oder mehrdeutig (Planungsziele, Zuordnungen oder " +
-  "Schichten). Nichts wurde geändert.";
-const PUBLICATION_PROBLEMS: Record<PublicationProblem, string> = {
-  changed: "Der Dienstplan zur Prüfung hat sich geändert. Seite neu laden und erneut prüfen.",
-  not_accepted: "Nur ein angenommener Dienstplan kann veröffentlicht werden.",
-  conflict:
-    "TimeOffice enthält an einem Diensttag bereits eine Abwesenheit oder einen anderen Dienst eines Mitarbeiters. " +
-    "Nichts wurde geändert; den Dienstplan neu generieren.",
-  read_back: "TimeOffice hat die Dienste anders gespeichert als geschrieben. Nichts wurde geändert.",
-};
-
-const UNKNOWN_OUTCOME = "Ob TimeOffice geändert wurde, ist unbekannt. Seite neu laden und TimeOffice prüfen.";
-
-/**
- * One publication write. Its failures say that nothing changed, because the backend rolls the transaction back;
- * a request without an answer or a connection lost while committing may still have been saved, so their outcome
- * is unknown, not failed.
- */
-async function publicationWrite(write: () => Promise<PublicationResult>) {
-  try {
-    return await write();
-  } catch (error) {
-    if (!(error instanceof ApiError) || error.status === 409 || error.status === 422) throw error;
-    if (error.status === undefined) throw new ApiError(`Keine Antwort vom Backend: ${UNKNOWN_OUTCOME}`);
-    if (error.stage === "commit") {
-      throw new ApiError(`Verbindung beim Abschluss abgebrochen: ${UNKNOWN_OUTCOME}`, error.status, error.stage);
-    }
-    throw new ApiError(`${error.message} Nichts wurde geändert.`, error.status, error.stage);
-  }
-}
-
-/** Publish the accepted schedule under review, identified by its scope and arrival, to its stations' targets. */
-export function publishReview(month: string, stationIds: number[], receivedAt: string) {
-  const body = { planning_month: planningMonth(month), planning_unit_ids: stationIds, received_at: receivedAt };
-  return publicationWrite(() =>
-    request<PublicationResult>("POST", "/publication", {
-      body,
-      invalid: INVALID_PUBLICATION,
-      incomplete: INCOMPLETE_PUBLICATION,
-      problems: PUBLICATION_PROBLEMS,
-      timeoutSeconds: 120,
-    }),
-  );
-}
-
-/** Remove the published duties of exactly these stations' month. */
-export function clearPublication(month: string, stationIds: number[]) {
-  return publicationWrite(() =>
-    request<PublicationResult>("DELETE", "/publication", {
-      params: selectionQuery(month, stationIds),
-      invalid: INVALID_PUBLICATION,
-      incomplete: INCOMPLETE_PUBLICATION,
-      timeoutSeconds: 120,
-    }),
-  );
-}
-
-/** The downloadable files of the schedule under review. */
-export const REVIEW_FILES = [
-  "input.json",
-  "result.json",
-  "schedule.csv",
-  "employees.csv",
-  "besetzung.csv",
-  "gaps.csv",
-] as const;
+/** The downloadable files of the schedule under review: the pair that saves it, to import it again later. */
+export const REVIEW_FILES = ["input.json", "result.json"] as const;
 export type ReviewFile = (typeof REVIEW_FILES)[number];
 
 /** One file of the schedule under review as the API's attachment response, or `null` without a review. */

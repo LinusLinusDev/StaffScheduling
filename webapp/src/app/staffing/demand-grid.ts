@@ -4,19 +4,10 @@ import type { DemandCell, StaffLevel } from "@/lib/types";
 
 export type DemandGrid = ReadonlyMap<string, DemandCell>;
 
-export const MAX_REQUIRED_COUNT = 99;
+/** The most staff one field may require, as the backend accepts it; the editor offers exactly 0 to this many. */
+export const MAX_REQUIRED_COUNT = 5;
 
 const keyOf = (date: string, shiftId: number, level: StaffLevel) => `${date}|${shiftId}|${level}`;
-
-/** Whether the backend accepts a count: a whole number from 0 to 99. */
-export function isValidCount(count: number) {
-  return Number.isInteger(count) && count >= 0 && count <= MAX_REQUIRED_COUNT;
-}
-
-/** An input's text as a count: empty means zero; anything else is kept as typed, even if invalid. */
-export function parseCount(text: string) {
-  return text.trim() === "" ? 0 : Number(text);
-}
 
 export function gridOf(cells: readonly DemandCell[]): DemandGrid {
   return new Map(cells.map((cell) => [keyOf(cell.date, cell.shift_id, cell.staff_level), cell]));
@@ -26,7 +17,7 @@ export function countAt(grid: DemandGrid, date: string, shiftId: number, level: 
   return grid.get(keyOf(date, shiftId, level))?.required_count ?? 0;
 }
 
-/** A copy with one cell changed; zero removes the cell, an invalid count is kept for the API to reject. */
+/** A copy with one cell changed; zero removes the cell. */
 export function withCount(grid: DemandGrid, date: string, shiftId: number, level: StaffLevel, count: number) {
   const next = new Map(grid);
   const key = keyOf(date, shiftId, level);

@@ -48,8 +48,9 @@ class Gap(SchedulingBaseModel):
         return (self.planning_unit_id, self.date, self.shift_id, self.staff_level)
 
 
-# An upper bound that no station reaches, so a typo cannot save an absurd minimum.
-MAX_REQUIRED_COUNT = 99
+# The most staff one shift of one qualification may require: enough for the demo station, whose staffing page
+# offers exactly 0 to this many.
+MAX_REQUIRED_COUNT = 5
 
 
 class DemandCell(SchedulingBaseModel):

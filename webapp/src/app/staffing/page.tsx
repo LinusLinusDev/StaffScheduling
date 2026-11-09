@@ -27,7 +27,7 @@ export default async function StaffingPage({
         <LoadError title="Mindestbesetzung nicht geladen" message={scope.error} />
       ) : (
         <div className="space-y-4">
-          <StationTabs month={scope.month} stations={selected} selectedId={stationId} />
+          {selected.length > 1 && <StationTabs month={scope.month} stations={selected} selectedId={stationId} />}
           <StationDemand month={scope.month} stationId={stationId} />
         </div>
       )}

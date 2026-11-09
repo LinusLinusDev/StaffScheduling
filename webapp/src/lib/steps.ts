@@ -14,7 +14,7 @@ interface Step {
 export const steps = [
   {
     title: "Mitarbeiter",
-    description: "Mitarbeiter der Auswahl mit Zuordnungen, Monatskonten und Verfügbarkeit ansehen",
+    description: "Mitarbeiter der Station mit Qualifikation, Monatskonto und Verfügbarkeit ansehen",
     icon: Users,
     href: "/employees",
     color: areaColors.employees.icon,
@@ -28,21 +28,21 @@ export const steps = [
   },
   {
     title: "Mindestbesetzung",
-    description: "Benötigtes Personal je Station, Tag, Schicht und Qualifikation festlegen",
+    description: "Benötigtes Personal je Tag, Schicht und Qualifikation festlegen",
     icon: UserCog,
     href: "/staffing",
     color: areaColors.staffing.icon,
   },
   {
     title: "Dienstplan erstellen",
-    description: "Einen Dienstplan für den ganzen Monat der gewählten Stationen generieren",
+    description: "Einen Dienstplan für den ganzen Monat berechnen lassen",
     icon: CalendarPlus,
     href: "/generation",
     color: areaColors.createRoster.icon,
   },
   {
     title: "Dienstplan prüfen",
-    description: "Den erstellten oder importierten Dienstplan prüfen, herunterladen und in TimeOffice veröffentlichen",
+    description: "Den erstellten Dienstplan ansehen, speichern oder einen gespeicherten Plan laden",
     icon: CalendarCheck,
     href: "/review",
     color: areaColors.reviewRoster.icon,

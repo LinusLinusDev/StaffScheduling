@@ -47,7 +47,7 @@ export default async function GenerationPage({ searchParams }: { searchParams: P
       )}
 
       <div className="space-y-6">
-        <Card aria-label="Neue Generierung">
+        <Card aria-label="Neuer Dienstplan">
           <CardContent className="space-y-3 text-sm">
             <GenerationForm
               month={scope.month}
@@ -77,15 +77,16 @@ export default async function GenerationPage({ searchParams }: { searchParams: P
         </Card>
 
         {"error" in latest ? (
-          <LoadError title="Generierung nicht geladen" message={latest.error} />
+          <LoadError title="Berechnung nicht geladen" message={latest.error} />
         ) : latest.job ? (
           <JobPanel job={latest.job} units={scope.stations} />
         ) : (
-          <Card aria-label="Letzte Generierung" className="border-dashed shadow-none">
+          <Card aria-label="Letzte Berechnung" className="border-dashed shadow-none">
             <CardContent className="text-sm">
-              <h2 className="text-lg font-semibold">Letzte Generierung</h2>
+              <h2 className="text-lg font-semibold">Letzte Berechnung</h2>
               <p className="text-muted-foreground">
-                Kein Ergebnis verfügbar. Generierungen werden nur bis zum Neustart des Backends vorgehalten.
+                Noch kein Dienstplan berechnet. Mit „Dienstplan erstellen“ starten; die Berechnung dauert etwa eine
+                halbe Minute.
               </p>
             </CardContent>
           </Card>

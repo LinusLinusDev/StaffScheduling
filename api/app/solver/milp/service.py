@@ -1,6 +1,7 @@
 import math
 from collections import Counter, defaultdict
 from datetime import timedelta
+from time import monotonic
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -13,22 +14,64 @@ from app.domain import (
     SchedulingDataset,
     ShiftType,
     check_schedule,
+    duty_times,
 )
 from app.domain.rules import BLOCKING_AVAILABILITY
 from app.settings import Settings
-from app.solver.models import RunConfiguration, Solution, SolutionStatus, StageReport
+from app.solver.model.candidates import _pattern_problem  # the daily work and break rules of one duty
+from app.solver.models import RunConfiguration, Solution, SolutionStatus, SolverUnavailable, StageReport
+
+# Gurobi errors that mean the license cannot be used (no license, size limit, no network, rejected, session overage),
+# not that the model is wrong.
+LICENSE_ERRORS = frozenset({
+    GRB.Error.NO_LICENSE,
+    GRB.Error.SIZE_LIMIT_EXCEEDED,
+    GRB.Error.NETWORK,
+    GRB.Error.JOB_REJECTED,
+    GRB.Error.CLOUD,
+    GRB.Error.CSWORKER,
+})
+# How long past its time limit a run may take before the watchdog stops it, whichever pass is running.
+WATCHDOG_GRACE_SECONDS = 5
 
 
 class GurobiSolverService:
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
+        self._env: gp.Env | None = None
+
+    def close(self) -> None:
+        """Release the license session; the next solve opens a new one."""
+        if self._env is not None:
+            self._env.dispose()
+            self._env = None
+
+    def _environment(self) -> gp.Env:
+        """The process's one Gurobi environment, opened on first use.
+
+        A WLS license limits the sessions running at once, and a session's token outlives its environment by
+        minutes. One environment for every solve keeps this process at a single session, however often it solves.
+        """
+        if self._env is None:
+            # log only when asked (SOLVER_LOG_SEARCH_PROGRESS); this also silences the license banner
+            self._env = gp.Env(params={"OutputFlag": 1 if self._settings.solver_log_search_progress else 0})
+        return self._env
 
     def solve(self, dataset: SchedulingDataset, timeout: float | None = None) -> Solution:
+        try:
+            return self._solve(dataset, timeout)
+        except gp.GurobiError as error:
+            if error.errno not in LICENSE_ERRORS:
+                raise
+            # a broken session is not reused: the next solve opens a new one
+            self.close()
+            raise SolverUnavailable(f"Gurobi cannot use its license (error {error.errno}).") from error
+
+    def _solve(self, dataset: SchedulingDataset, timeout: float | None) -> Solution:
+        started = monotonic()
         settings = self._settings
         timeout = timeout if timeout is not None else settings.solver_max_time_seconds
-        # log only when asked (SOLVER_LOG_SEARCH_PROGRESS); this also silences the license banner
-        env_params = {"OutputFlag": 1 if settings.solver_log_search_progress else 0}
-        with gp.Env(params=env_params) as env, gp.Model("schedule", env=env) as schedule:
+        with gp.Model("schedule", env=self._environment()) as schedule:
             # Sets and Indices
             U = [unit.planning_unit_id for unit in dataset.planning_units]
             I = [employee.employee_id for employee in dataset.employees]
@@ -107,6 +150,13 @@ class GurobiSolverService:
                     if (i, next_day) in vacation and (i, d) not in vacation:
                         for s in S_late:
                             not_allowed.add((i, s, d))
+            # a shift whose own work and breaks break the daily rules on a date is never assigned there, as in the
+            # CP-SAT model: the night of the October clock change lasts an hour longer, over ten hours of work
+            for shift in dataset.shifts:
+                for d in D:
+                    if _pattern_problem(duty_times(d, shift)):
+                        for i in I:
+                            not_allowed.add((i, shift.shift_id, d))
 
             transfer_penalty = 10
             wish_reward = 30
@@ -367,7 +417,14 @@ class GurobiSolverService:
             for n, (name, _, _) in enumerate(objectives):
                 if name in stage_slack:
                     schedule.getMultiobjEnv(n).setParam("MIPGapAbs", stage_slack[name] / 2)
-            schedule.optimize()
+            # the time limit is a promise to the user: should a pass overrun it, stop the whole run shortly after
+            deadline = started + timeout + WATCHDOG_GRACE_SECONDS
+
+            def watchdog(model: gp.Model, _where: int) -> None:
+                if monotonic() > deadline:
+                    model.terminate()
+
+            schedule.optimize(watchdog)
             # status first: without a solution Gurobi has no values to read
             if schedule.Status == GRB.OPTIMAL:
                 status = SolutionStatus.OPTIMAL

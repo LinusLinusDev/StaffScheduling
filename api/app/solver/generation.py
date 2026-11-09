@@ -11,7 +11,7 @@ from uuid import UUID, uuid4
 from pydantic import Field
 
 from app.domain import PlanningMonth, PositiveId, SchedulingBaseModel, SchedulingDataset
-from app.solver.models import Solution
+from app.solver.models import Solution, SolverUnavailable
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,10 @@ class GenerationRequest(SchedulingBaseModel):
 
     planning_unit_ids: tuple[PositiveId, ...] = Field(min_length=1)
     planning_month: PlanningMonth
-    timeout_seconds: float = Field(ge=MIN_TIMEOUT_SECONDS, le=MAX_TIMEOUT_SECONDS, allow_inf_nan=False)
+    timeout_seconds: float | None = Field(
+        default=None, ge=MIN_TIMEOUT_SECONDS, le=MAX_TIMEOUT_SECONDS, allow_inf_nan=False
+    )
+    """Without it, the configured solver time (SOLVER_MAX_TIME_SECONDS); a started job always names its time."""
 
 
 class JobState(StrEnum):
@@ -38,6 +41,12 @@ class JobState(StrEnum):
     RUNNING = "running"
     COMPLETED = "completed"
     FAILED = "failed"
+
+
+class JobProblem(StrEnum):
+    """Why a job failed, when the cause is known: SOLVER_UNAVAILABLE, the solver could not run (its license)."""
+
+    SOLVER_UNAVAILABLE = "solver_unavailable"
 
 
 class GenerationJob(SchedulingBaseModel):
@@ -50,6 +59,8 @@ class GenerationJob(SchedulingBaseModel):
     solution: Solution | None = None
     # Set when failed.
     error: str | None = None
+    problem: JobProblem | None = None
+    """Set when failed for a known cause, so the webapp can say what to do."""
 
 
 class GenerationBusy(RuntimeError):
@@ -77,10 +88,13 @@ class Generation:
     process only: a restart forgets them, and only one API process may run because the lock is process-local.
     """
 
-    def __init__(self, *, read_input: ReadInput, solve: Solve, on_solved: OnSolved) -> None:
+    def __init__(
+        self, *, read_input: ReadInput, solve: Solve, on_solved: OnSolved, default_timeout: float = MIN_TIMEOUT_SECONDS
+    ) -> None:
         self._read_input = read_input
         self._solve = solve
         self._on_solved = on_solved
+        self._default_timeout = default_timeout
         self._lock = Lock()
         self._latest: GenerationJob | None = None
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="generation")
@@ -92,6 +106,8 @@ class Generation:
             dataset = self._read_input(
                 planning_unit_ids=request.planning_unit_ids, planning_month=request.planning_month
             )
+            if request.timeout_seconds is None:
+                request = request.model_copy(update={"timeout_seconds": self._default_timeout})
             job = GenerationJob(job_id=uuid4(), request=request, state=JobState.RUNNING, started_at=datetime.now(UTC))
             self._latest = job
             self._executor.submit(self._run, job, dataset)
@@ -115,9 +131,14 @@ class Generation:
     def _run(self, job: GenerationJob, dataset: SchedulingDataset) -> None:
         finished = job.model_copy(update={"state": JobState.FAILED, "error": FAILED})
         try:
-            solution = self._solve(dataset, job.request.timeout_seconds)
+            solution = self._solve(dataset, job.request.timeout_seconds or self._default_timeout)
             self._on_solved(dataset, solution)
             finished = job.model_copy(update={"state": JobState.COMPLETED, "solution": solution})
+        except SolverUnavailable as error:
+            logger.error("Generation failed: job_id=%s solver unavailable: %s", job.job_id, error.__cause__ or error)
+            finished = job.model_copy(
+                update={"state": JobState.FAILED, "error": str(error), "problem": JobProblem.SOLVER_UNAVAILABLE}
+            )
         except Exception:
             logger.exception("Generation failed: job_id=%s", job.job_id)
         finally:

@@ -156,8 +156,9 @@ Schedule-Check.
   N^{V} &= \{(i,s,d) : \text{für } (i,d) \text{ ist eine Einschränkung eingetragen, die } s \text{ nicht erlaubt}\} \label{eq:NV}\\
   N^{N} &= \{(i,s,d) : s \in S^{N},\ d \in D,\ (i,d+1) \in B\} \label{eq:NN}\\
   N^{S} &= \{(i,s,d) : s \in S^{S},\ d \in D,\ (i,d+1) \in V,\ (i,d) \notin V\} \label{eq:NS}\\
+  N^{A} &= \{(i,s,d) : \text{Schicht } s \text{ verletzt an } d \text{ selbst die Arbeits- und Pausenregeln}\} \label{eq:NA}\\
   A &= \bigl\{(i,s,d,u) : u \in U^{St},\ \lambda_{iud} \text{ definiert},\
-       (i,s,d) \notin N^{V} \cup N^{N} \cup N^{S},\ (u,s,\lambda_{iud}) \in \mathcal{B}\bigr\} \label{eq:A}
+       (i,s,d) \notin N^{V} \cup N^{N} \cup N^{S} \cup N^{A},\ (u,s,\lambda_{iud}) \in \mathcal{B}\bigr\} \label{eq:A}
 \end{align}
 
 \textbf{Erklärung.}
@@ -169,6 +170,9 @@ bestimmte Schichten“ verbietet die übrigen.
 Monatstag also auch vor einer Abwesenheit am Ersten des Folgemonats.
 \eqref{eq:NS}: Am Tag vor Urlaubsbeginn gibt es keinen Spätdienst, auch wenn der Urlaub am Ersten des
 Folgemonats beginnt.
+\eqref{eq:NA}: Eine Schicht, die schon für sich gegen das Arbeitszeitgesetz verstößt (höchstens 10\,h Arbeit,
+Pausen, höchstens 6\,h am Stück), wird an diesem Tag nie vergeben. Das betrifft die Nacht der Zeitumstellung im
+Oktober: Sie dauert eine Stunde länger als sonst.
 \eqref{eq:A}: Ein Dienst ist nur auf einer Station möglich, zu der an diesem Tag eine gültige Zugehörigkeit
 besteht, und nur in einer Schicht, für die die Station mit dieser Qualifikation im Monat überhaupt Bedarf hat
 (z.\,B. kein Zwischendienst, wenn nie einer gefordert ist, keine Nächte für Azubis, wenn nie Azubi-Nachtbedarf
@@ -261,10 +265,10 @@ alle anderen & -- & $10^{-6}$ \\
 \end{tabular}
 \end{center}
 
-\textbf{Abbruchkriterien.} Gesamtzeit $T$ (Eingabe „Maximale Laufzeit“, Vorgabe 600\,s), relative
-Optimalitätslücke 3\,\% (\code{MIPGap}) für jede Stufe; für $f_3$, $f_4$, $f_6$ zusätzlich eine absolute Lücke
-von $\varepsilon_j/2$ (\code{MIPGapAbs}); Zeitlimit $0{,}15\,T$ für $f_4$ und $0{,}10\,T$ für $f_6$
-(\code{stage\_time\_share}).
+\textbf{Abbruchkriterien.} Gesamtzeit $T$ (in der Demo-Version fest $T = 20$\,s, \code{SOLVER\_MAX\_TIME\_SECONDS}),
+relative Optimalitätslücke 3\,\% (\code{MIPGap}) für jede Stufe; für $f_3$, $f_4$, $f_6$ zusätzlich eine absolute
+Lücke von $\varepsilon_j/2$ (\code{MIPGapAbs}); Zeitlimit $0{,}15\,T$ für $f_4$ und $0{,}10\,T$ für $f_6$
+(\code{stage\_time\_share}). Ein Watchdog beendet die Rechnung spätestens 5\,s nach $T$, gleich in welcher Stufe.
 
 \textbf{Erklärung.}
 \eqref{obj:gaps}: Zuerst möglichst wenige unbesetzte Pflichtstellen.

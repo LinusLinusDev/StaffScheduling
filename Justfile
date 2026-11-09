@@ -8,7 +8,7 @@ install:
     cd webapp && pnpm exec playwright install chromium
     cd api && uv run --frozen pre-commit install
 
-# Warn about tools that are missing or differ from the project pins; fail if the password file is missing.
+# Warn about tools that are missing or differ from the project pins; fail if the Gurobi license file is missing.
 precheck:
     #!/usr/bin/env bash
     check_version() {
@@ -24,8 +24,8 @@ precheck:
     check_version "python${python%.*}" "$python"
     check_version node "$(sed -n 's/.*"node": "\(.*\)".*/\1/p' webapp/package.json)"
     check_version pnpm "$(sed -n 's/.*"packageManager": "pnpm@\(.*\)".*/\1/p' webapp/package.json)"
-    file=${DB_PASSWORD_FILE:-.secrets/db_password}
-    [[ -f $file ]] || { echo "Missing $file; create it as described in the quickstart." >&2; exit 1; }
+    file=${GUROBI_LICENSE_FILE:-.secrets/gurobi.lic}
+    [[ -f $file ]] || { echo "Missing $file; put this laptop's Gurobi WLS license there, as the README describes." >&2; exit 1; }
 
 format:
     cd api && uv run --frozen ruff format .

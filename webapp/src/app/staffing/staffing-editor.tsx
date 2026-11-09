@@ -4,7 +4,6 @@ import { useId, useState, useTransition } from "react";
 import { Disclosure } from "@/components/disclosure";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STAFF_LEVEL_LABELS, WEEKDAYS, formatDate } from "@/lib/labels";
 import type { DayType, DemandConfiguration, StaffLevel } from "@/lib/types";
@@ -16,19 +15,49 @@ import {
   changesFrom,
   countAt,
   gridOf,
-  isValidCount,
-  parseCount,
   withCount,
   withLevelFrom,
   type DemandGrid,
 } from "./demand-grid";
 
-const LEVELS = Object.keys(STAFF_LEVEL_LABELS) as StaffLevel[];
-// Count inputs are centered under their shift heading; spinners would push the digits off-center.
-const COUNT_INPUT =
-  "mx-auto w-16 text-center [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+// The demo station's staff levels; MFA has no staff there, so it is not offered.
+const LEVELS = (Object.keys(STAFF_LEVEL_LABELS) as StaffLevel[]).filter((level) => level !== "mfa");
+const COUNTS = Array.from({ length: MAX_REQUIRED_COUNT + 1 }, (_, count) => count);
+// Counts are chosen from a list, so nothing invalid can be typed; centered under their shift heading.
+const COUNT_SELECT =
+  "mx-auto block h-9 w-16 rounded-md border border-input bg-background px-2 text-sm shadow-xs [text-align-last:center] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 // An unsaved cell: a thicker amber border and bold digits, so the mark does not rely on color alone.
 const CHANGED_INPUT = "border-2 border-amber-500 bg-amber-50 font-semibold dark:bg-amber-950";
+
+/** A count from 0 to the maximum; the only way to enter staffing, so it is always valid. */
+function CountSelect({
+  value,
+  onChange,
+  className,
+  ...aria
+}: {
+  value: number;
+  onChange: (count: number) => void;
+  className?: string;
+  "aria-label": string;
+  "aria-describedby"?: string;
+  title?: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(event) => onChange(Number(event.target.value))}
+      className={cn(COUNT_SELECT, className)}
+      {...aria}
+    >
+      {COUNTS.map((count) => (
+        <option key={count} value={count}>
+          {count}
+        </option>
+      ))}
+    </select>
+  );
+}
 const DAY_TYPES: Array<{ type: DayType; label: string }> = [
   ...(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const).map((type, index) => ({
     type,
@@ -49,8 +78,8 @@ export function StaffingEditor({ month, configuration }: { month: string; config
   const markId = useId();
   const dirty = changes.size > 0;
 
-  function setCount(date: string, shiftId: number, value: string) {
-    setGrid((current) => withCount(current, date, shiftId, level, parseCount(value)));
+  function setCount(date: string, shiftId: number, count: number) {
+    setGrid((current) => withCount(current, date, shiftId, level, count));
     setMessage(null);
   }
 
@@ -72,8 +101,8 @@ export function StaffingEditor({ month, configuration }: { month: string; config
       <CardHeader>
         <CardTitle id={`${markId}-title`}>Tägliche Mindestbesetzung</CardTitle>
         <CardDescription>
-          Benötigte Personen je Schicht, 0 bis {MAX_REQUIRED_COUNT}; leer heißt 0. Geänderte Felder bleiben markiert,
-          bis sie gespeichert oder zurückgesetzt sind.
+          Benötigte Personen je Schicht, 0 bis {MAX_REQUIRED_COUNT}. Geänderte Felder bleiben markiert, bis sie
+          gespeichert oder zurückgesetzt sind.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -172,17 +201,13 @@ export function StaffingEditor({ month, configuration }: { month: string; config
                           Geändert, gespeichert: {before}
                         </span>
                       )}
-                      <Input
-                        type="number"
-                        min={0}
-                        max={MAX_REQUIRED_COUNT}
+                      <CountSelect
                         aria-label={`${shift.code} am ${formatDate(day.date)}`}
-                        aria-invalid={!isValidCount(count)}
                         aria-describedby={before === undefined ? undefined : mark}
                         title={before === undefined ? undefined : `Gespeichert: ${before}`}
                         value={count}
-                        onChange={(event) => setCount(day.date, shift.shift_id, event.target.value)}
-                        className={cn(COUNT_INPUT, before !== undefined && CHANGED_INPUT)}
+                        onChange={(next) => setCount(day.date, shift.shift_id, next)}
+                        className={cn(before !== undefined && CHANGED_INPUT)}
                       />
                     </TableCell>
                   );
@@ -272,18 +297,13 @@ function PatternPanel({
                 const count = pattern[at] ?? 0;
                 return (
                   <TableCell key={shift.shift_id} className="text-center">
-                    <Input
-                      type="number"
-                      min={0}
-                      max={MAX_REQUIRED_COUNT}
+                    <CountSelect
                       aria-label={`Muster ${shift.code} ${label}`}
-                      aria-invalid={!isValidCount(count)}
                       value={count}
-                      onChange={(event) => {
-                        setPattern((current) => ({ ...current, [at]: parseCount(event.target.value) }));
+                      onChange={(next) => {
+                        setPattern((current) => ({ ...current, [at]: next }));
                         setPreview(null);
                       }}
-                      className={COUNT_INPUT}
                     />
                   </TableCell>
                 );

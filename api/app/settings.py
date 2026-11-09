@@ -15,6 +15,10 @@ class Settings(BaseSettings):
 
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
+    # Where planning data comes from: the TimeOffice database, or the fictional demo station in memory
+    # (`app/demo.py`), which needs no database and offers no publication.
+    data_source: Literal["timeoffice", "demo"] = "timeoffice"
+
     # TimeOffice Database
     db_driver: str = "ODBC Driver 18 for SQL Server"
     db_server: str = ""

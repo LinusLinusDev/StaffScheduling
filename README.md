@@ -8,9 +8,15 @@ Developed at RWTH Aachen University with St. Marien-Hospital Düren and Pradtke 
 - **API**: FastAPI, owning the domain rules and the TimeOffice adapter
 - **Solver**: Google OR-Tools CP-SAT, with an independent schedule check
 
+## Demo version
+
+This branch is the demo version for the practice partner's laptops. It plans one fictional station (`api/app/demo.py`: nine professionals, three of them part-time, one assistant and two trainees) for every month of 2026 and 2027, without TimeOffice, and solves every schedule with Gurobi in a fixed 20 seconds (`SOLVER_MAX_TIME_SECONDS` in `.env`). What is entered lives in memory until the API restarts. Downloads are only `input.json` and `result.json`, to load a saved schedule again; publishing to TimeOffice is not offered. The full version lives on the `gurobi_full` branch.
+
+Every laptop needs **its own** Gurobi WLS license in `.secrets/gurobi.lic`: an academic WLS license allows two sessions at once, and each running app holds one. The laptop also needs internet while it solves, since WLS checks the license online.
+
 ## Quickstart
 
-You need [Docker with Compose](https://docs.docker.com/compose/install/) and [just](https://github.com/casey/just#installation). Put the supplied database password into `.secrets/db_password`, then run from the repository root:
+You need [Docker with Compose](https://docs.docker.com/compose/install/) and [just](https://github.com/casey/just#installation). Put the laptop's Gurobi WLS license into `.secrets/gurobi.lic`, then run from the repository root:
 
 ```sh
 just run

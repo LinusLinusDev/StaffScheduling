@@ -15,6 +15,14 @@ export const MONTHS = [
   "Dezember",
 ];
 
+/** The years the demo offers; every month of them is tested to plan without gaps (api/tests/test_demo.py). */
+export const PLANNING_YEARS = [2026, 2027] as const;
+
+/** Whether a `YYYY-MM` month lies in the offered years. */
+export function isOfferedMonth(month: string) {
+  return /^\d{4}-(0[1-9]|1[0-2])$/.test(month) && PLANNING_YEARS.some((year) => month.startsWith(`${year}-`));
+}
+
 /** The selection's `YYYY-MM` month of a year and month number. */
 export function selectionMonth(year: number, month: number) {
   return `${year}-${String(month).padStart(2, "0")}`;

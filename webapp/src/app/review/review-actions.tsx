@@ -1,6 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unused-vars -- DEMO: publishing and removal are switched off, their code
-   (ConfirmedAction, month, scope, kept) stays for switching them back on; drop this line then. */
 
 import { useState, useTransition } from "react";
 import { ChevronDown, Download, Upload } from "lucide-react";
@@ -9,85 +7,23 @@ import { buttonVariants } from "@/components/ui/button-variants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import type { PublicationResult } from "@/lib/types";
-import type { WriteResult } from "@/lib/write-result";
 import { cn } from "@/lib/utils";
-// DEMO: publishSchedule and clearSchedule are switched off for now, see the two buttons in ReviewActions.
-import { importFiles /* , clearSchedule, publishSchedule */ } from "./actions";
+import { importFiles } from "./actions";
 
-type Outcome = { ok: boolean; message: string } | null;
+const FILE_LABELS: Record<string, string> = { "input.json": "Eingaben", "result.json": "Ergebnis" };
 
-/**
- * A TimeOffice write behind a confirmation popover that names its exact effect. Success is reported only
- * with the backend's committed result; cancelling changes nothing.
- */
-function ConfirmedAction({
-  label,
-  confirmation,
-  confirmLabel,
-  run,
-  success,
-  onOutcome,
-  primary,
-}: {
-  label: string;
-  confirmation: string;
-  confirmLabel: string;
-  run: () => Promise<WriteResult<PublicationResult>>;
-  success: (result: PublicationResult) => string;
-  onOutcome: (outcome: Outcome) => void;
-  primary?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
-
-  function confirm() {
-    startTransition(async () => {
-      const result = await run();
-      setOpen(false);
-      onOutcome(result.ok ? { ok: true, message: success(result.value) } : { ok: false, message: result.error });
-    });
-  }
-
-  return (
-    <Popover
-      open={open}
-      onOpenChange={(next) => {
-        if (pending) return;
-        if (next) onOutcome(null);
-        setOpen(next);
-      }}
-    >
-      <PopoverTrigger asChild>
-        <Button variant={primary ? "default" : "outline"}>{label}</Button>
-      </PopoverTrigger>
-      <PopoverContent role="dialog" aria-label={label} align="start" className="w-96 space-y-3 text-sm">
-        <p>{confirmation}</p>
-        <div className="flex flex-wrap gap-2">
-          <Button variant={primary ? "default" : "destructive"} disabled={pending} onClick={confirm}>
-            {pending ? "TimeOffice wird geändert …" : confirmLabel}
-          </Button>
-          <Button variant="outline" disabled={pending} onClick={() => setOpen(false)}>
-            Abbrechen
-          </Button>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-/** The schedule's six portable files, readable and checkable without TimeOffice; a diagnosis unless accepted. */
-function DownloadMenu({ files, accepted }: { files: readonly string[]; accepted: boolean }) {
+/** Save the schedule under review as its two files, to load it again later and compare it with others. */
+function SaveMenu({ files }: { files: readonly string[] }) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="outline">
           <Download />
-          Herunterladen
+          Speichern
           <ChevronDown />
         </Button>
       </PopoverTrigger>
-      <PopoverContent role="dialog" aria-label="Herunterladen" align="start" className="w-64 p-1">
+      <PopoverContent role="dialog" aria-label="Speichern" align="start" className="w-72 p-1">
         {files.map((name) => (
           <a
             key={name}
@@ -95,13 +31,11 @@ function DownloadMenu({ files, accepted }: { files: readonly string[]; accepted:
             download
             className={cn(buttonVariants({ variant: "ghost" }), "w-full justify-start")}
           >
-            {name}
+            {name} ({FILE_LABELS[name] ?? name})
           </a>
         ))}
         <p className="px-3 py-2 text-xs text-muted-foreground">
-          {accepted
-            ? "Ohne TimeOffice lesbar und prüfbar."
-            : "Nicht angenommen: Die Dateien sind eine Diagnose, kein verwendbarer Dienstplan."}
+          Beide Dateien speichern. Mit „Laden“ lässt sich der Dienstplan später wieder öffnen.
         </p>
       </PopoverContent>
     </Popover>
@@ -109,10 +43,10 @@ function DownloadMenu({ files, accepted }: { files: readonly string[]; accepted:
 }
 
 /**
- * Upload an input.json/result.json pair; a rejected pair leaves the reviewed schedule unchanged and keeps the
+ * Load a saved input.json/result.json pair; a rejected pair leaves the shown schedule unchanged and keeps the
  * chosen files for another try. Closing the popover discards the form.
  */
-function ImportMenu({ onOpen }: { onOpen: () => void }) {
+function LoadMenu() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -125,7 +59,7 @@ function ImportMenu({ onOpen }: { onOpen: () => void }) {
     startTransition(async () => {
       const result = await importFiles(files);
       if (result.ok) setOpen(false);
-      else setError(`${result.error} Der bisherige Dienstplan bleibt zur Prüfung.`);
+      else setError(`${result.error} Der bisherige Dienstplan bleibt angezeigt.`);
     });
   }
 
@@ -134,24 +68,20 @@ function ImportMenu({ onOpen }: { onOpen: () => void }) {
       open={open}
       onOpenChange={(next) => {
         if (pending) return;
-        if (next) {
-          setError(null);
-          onOpen();
-        }
+        if (next) setError(null);
         setOpen(next);
       }}
     >
       <PopoverTrigger asChild>
         <Button variant="outline">
           <Upload />
-          Importieren
+          Laden
         </Button>
       </PopoverTrigger>
-      <PopoverContent role="dialog" aria-label="Importieren" align="start" className="w-96 text-sm">
+      <PopoverContent role="dialog" aria-label="Laden" align="start" className="w-96 text-sm">
         <form onSubmit={submit} className="space-y-3">
           <p className="text-muted-foreground">
-            Ein Paar aus input.json und result.json prüfen. Der Import ersetzt den Dienstplan zur Prüfung und
-            veröffentlicht nichts.
+            Einen gespeicherten Dienstplan wieder öffnen: input.json und result.json desselben Plans wählen.
           </p>
           <div className="space-y-2">
             <Label htmlFor="import-input">input.json</Label>
@@ -162,7 +92,7 @@ function ImportMenu({ onOpen }: { onOpen: () => void }) {
             <Input id="import-result" name="result" type="file" accept=".json,application/json" required />
           </div>
           <Button type="submit" disabled={pending}>
-            {pending ? "Dateien werden geprüft …" : "Dateien importieren"}
+            {pending ? "Wird geladen …" : "Dienstplan laden"}
           </Button>
           {error && (
             <p role="alert" className="text-destructive">
@@ -175,78 +105,12 @@ function ImportMenu({ onOpen }: { onOpen: () => void }) {
   );
 }
 
-/**
- * What a staff admin does with the schedule: publish it to the selected stations' TimeOffice plans, download
- * or import files, and remove published duties. `review` is the schedule under review when it belongs to
- * the selection; without it, only import and removal are offered.
- */
-export function ReviewActions({
-  month,
-  monthName,
-  stations,
-  review,
-  files,
-}: {
-  month: string;
-  monthName: string;
-  stations: { id: number; name: string }[];
-  review: { receivedAt: string; duties: number; accepted: boolean } | null;
-  files: readonly string[];
-}) {
-  const [outcome, setOutcome] = useState<Outcome>(null);
-  const ids = stations.map((station) => station.id);
-  const scope = `${stations.map((station) => station.name).join(", ")} im ${monthName}`;
-  const kept = "Abwesenheiten, Wünsche und andere Pläne bleiben unverändert.";
-  const publishable = review !== null && review.accepted && review.duties > 0;
-
+/** Save the schedule under review, or load a saved one; without a schedule, only loading is offered. */
+export function ReviewActions({ hasReview, files }: { hasReview: boolean; files: readonly string[] }) {
   return (
-    <div role="group" aria-label="Veröffentlichung" className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        {/* DEMO: publishing is switched off for now; the button is shown but does nothing. To switch it back on,
-            restore this block and the publishSchedule import, remove the plain button below and un-skip the
-            tests in tests/browser/publication.spec.ts.
-        {publishable && (
-          <ConfirmedAction
-            primary
-            label="In TimeOffice veröffentlichen"
-            confirmLabel="Veröffentlichen bestätigen"
-            confirmation={`Die veröffentlichten Dienste von ${scope} werden durch die ${review.duties} Dienste dieses Dienstplans ersetzt. ${kept}`}
-            run={() => publishSchedule(month, ids, review.receivedAt)}
-            success={(result) =>
-              `Veröffentlicht: ${result.published_duties} Dienste geschrieben und gelesen, ${result.removed_duties} bisherige ersetzt.`
-            }
-            onOutcome={setOutcome}
-          />
-        )} */}
-        {publishable && <Button>In TimeOffice veröffentlichen</Button>}
-        {review && <DownloadMenu files={files} accepted={review.accepted} />}
-        <ImportMenu onOpen={() => setOutcome(null)} />
-        {/* DEMO: removing published duties is switched off for now as well; the button is shown but does nothing.
-            To switch it back on, restore this block and the clearSchedule import and remove the plain button below.
-        {ids.length > 0 && (
-          <ConfirmedAction
-            label="Veröffentlichte Dienste entfernen"
-            confirmLabel="Entfernen bestätigen"
-            confirmation={`Alle veröffentlichten Dienste von ${scope} werden aus TimeOffice entfernt. ${kept}`}
-            run={() => clearSchedule(month, ids)}
-            success={(result) => `Entfernt: ${result.removed_duties} veröffentlichte Dienste.`}
-            onOutcome={setOutcome}
-          />
-        )} */}
-        {ids.length > 0 && <Button variant="outline">Veröffentlichte Dienste entfernen</Button>}
-      </div>
-      {review && !publishable && (
-        <p className="text-sm text-muted-foreground">
-          {review.duties === 0
-            ? "Ein Dienstplan ohne Dienste wird nicht veröffentlicht."
-            : "Nur ein angenommener Dienstplan kann veröffentlicht werden."}
-        </p>
-      )}
-      {outcome && (
-        <p role={outcome.ok ? "status" : "alert"} className={cn("text-sm", !outcome.ok && "text-destructive")}>
-          {outcome.message}
-        </p>
-      )}
+    <div role="group" aria-label="Speichern und Laden" className="flex flex-wrap items-center gap-2">
+      {hasReview && <SaveMenu files={files} />}
+      <LoadMenu />
     </div>
   );
 }

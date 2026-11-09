@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.api import availability, demand, generation, planning, publication, review
+from app.demo import DemoPlanningSource
 from app.domain import PublicationRejected
 from app.logging import configure_logging
 from app.settings import get_settings
@@ -20,23 +21,29 @@ configure_logging(level=settings.log_level)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
-    engine = create_db_engine(settings=settings)
-    source = TimeOfficeService(engine)
+    # The demo station needs no database; only TimeOffice gets an engine.
+    engine = create_db_engine(settings=settings) if settings.data_source == "timeoffice" else None
+    source = TimeOfficeService(engine) if engine is not None else DemoPlanningSource()
     if settings.solver_backend == "gurobi":
-        from app.solver.milp.service import GurobiSolverService   # nur laden, wenn gebraucht
+        from app.solver.milp.service import GurobiSolverService  # nur laden, wenn gebraucht
         solver = GurobiSolverService(settings)
     else:
         solver = SolverService(settings)
     app.state.planning_source = source
     app.state.review = Review()
     app.state.generation = Generation(
-        read_input=source.read_generation_input, solve=solver.solve, on_solved=app.state.review.generated
+        read_input=source.read_generation_input,
+        solve=solver.solve,
+        on_solved=app.state.review.generated,
+        default_timeout=settings.solver_max_time_seconds,
     )
     try:
         yield
     finally:
         app.state.generation.shutdown()
-        engine.dispose()
+        solver.close()
+        if engine is not None:
+            engine.dispose()
 
 
 app = FastAPI(title="Staff Scheduling API", lifespan=lifespan)
@@ -45,7 +52,9 @@ app.include_router(availability.router)
 app.include_router(demand.router)
 app.include_router(generation.router)
 app.include_router(review.router)
-app.include_router(publication.router)
+# Publishing writes to TimeOffice; the demo station has nothing to publish to.
+if settings.data_source == "timeoffice":
+    app.include_router(publication.router)
 
 
 @app.exception_handler(TimeOfficeUnavailable)

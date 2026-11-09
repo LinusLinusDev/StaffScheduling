@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent } from "@/components/ui/card";
 import { REVIEW_FILES, getReview } from "@/lib/api";
-import { monthLabel, selectionMonthLabel } from "@/lib/labels";
+import { monthLabel } from "@/lib/labels";
 import { loadPlanningScope, type PlanningScope, type ScopeSearchParams } from "@/lib/scope";
 import { selectionMonth, selectionSearch } from "@/lib/selection";
 import type { ScheduleReview } from "@/lib/types";
@@ -24,29 +24,12 @@ function reviewScope(review: ScheduleReview) {
   return { month: selectionMonth(year, month), monthName: monthLabel(year, month).name, stations };
 }
 
-/** Whether the review's own scope is exactly the selected month and stations. */
-function isSelected(own: ReturnType<typeof reviewScope>, scope: PlanningScope, selected: Set<number>) {
-  return (
-    own.month === scope.month &&
-    own.stations.length === selected.size &&
-    own.stations.every((unit) => selected.has(unit.planning_unit_id))
-  );
-}
-
-/** The actions' scope: the selected stations and month, and the review if it is theirs. */
-function publicationScope(scope: PlanningScope, selected: Set<number>, review: ScheduleReview | null) {
-  return {
-    month: scope.month,
-    monthName: selectionMonthLabel(scope.month).name,
-    stations: scope.stations
-      .filter((unit) => selected.has(unit.planning_unit_id))
-      .map((unit) => ({ id: unit.planning_unit_id, name: unit.display_name })),
-    review: review && {
-      receivedAt: review.received_at,
-      duties: review.tables.duties.length,
-      accepted: review.solution.check.status === "accepted",
-    },
-  };
+/**
+ * Whether the review belongs to the selected month. The demo offers one station, so only the month is compared: a
+ * loaded plan of another station (such as one saved by the full version) is still shown in its month.
+ */
+function isSelected(own: ReturnType<typeof reviewScope>, scope: PlanningScope) {
+  return own.month === scope.month;
 }
 
 export default async function ReviewPage({ searchParams }: { searchParams: Promise<ScopeSearchParams> }) {
@@ -60,11 +43,8 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
   ]);
   const review = "review" in current ? current.review : null;
   const own = review && reviewScope(review);
-  const selected = new Set(scope.stationIds);
-  const matches = own !== null && isSelected(own, scope, selected);
-  const actions = (
-    <ReviewActions {...publicationScope(scope, selected, matches ? review : null)} files={REVIEW_FILES} />
-  );
+  const matches = own !== null && isSelected(own, scope);
+  const actions = <ReviewActions hasReview={matches} files={REVIEW_FILES} />;
 
   return (
     <div className="py-6">
@@ -83,10 +63,9 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
             <CardContent className="flex flex-wrap items-start justify-between gap-4 text-sm">
               {own ? (
                 <div className="space-y-2">
-                  <h2 className="text-lg font-semibold">Anderer Planungsumfang</h2>
+                  <h2 className="text-lg font-semibold">Dienstplan für einen anderen Monat</h2>
                   <p className="text-muted-foreground">
-                    Der Dienstplan zur Prüfung gehört zu {own.monthName} ·{" "}
-                    {own.stations.map((unit) => unit.display_name).join(", ")}.
+                    Der zuletzt erstellte oder geladene Dienstplan gehört zu {own.monthName}.
                   </p>
                   <Link
                     className={buttonVariants({ variant: "outline" })}
@@ -95,15 +74,14 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
                       own.stations.map((unit) => unit.planning_unit_id),
                     )}`}
                   >
-                    Zu diesem Umfang wechseln
+                    Zu {own.monthName} wechseln
                   </Link>
                 </div>
               ) : (
                 <div className="space-y-1">
-                  <h2 className="text-lg font-semibold">Kein Dienstplan zur Prüfung</h2>
+                  <h2 className="text-lg font-semibold">Noch kein Dienstplan</h2>
                   <p className="text-muted-foreground">
-                    Einen Dienstplan generieren oder input.json und result.json importieren. Der Plan wird nur bis zum
-                    Neustart des Backends vorgehalten.
+                    Unter „Dienstplan erstellen“ einen Plan berechnen lassen oder einen gespeicherten Plan laden.
                   </p>
                 </div>
               )}

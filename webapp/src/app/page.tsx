@@ -30,10 +30,10 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             Willkommen beim Schichtplan Manager
           </h2>
           <p className="max-w-3xl text-muted-foreground">
-            Hier planen Sie den Dienstplan Ihrer Stationen für einen ganzen Monat: Mitarbeiter ansehen, Verfügbarkeit
-            und Mindestbesetzung pflegen, einen Dienstplan erstellen lassen, ihn prüfen und in TimeOffice
-            veröffentlichen. Wählen Sie oben Monat und Stationen; jede Seite arbeitet mit dieser Auswahl. Die Karten
-            unten stehen in der üblichen Reihenfolge der Planung, jede Seite ist aber auch direkt erreichbar.
+            Hier planen Sie den Dienstplan einer Musterstation für einen ganzen Monat: Mitarbeiter ansehen,
+            Verfügbarkeit und Mindestbesetzung pflegen, einen Dienstplan erstellen lassen und ihn prüfen. Wählen Sie
+            oben den Monat; jede Seite arbeitet mit dieser Auswahl. Die Karten unten stehen in der üblichen Reihenfolge
+            der Planung, jede Seite ist aber auch direkt erreichbar.
           </p>
         </div>
       </section>
