@@ -77,20 +77,11 @@ coverage/
 # Browser test artifacts
 playwright-report/
 test-results/
-Demo Pratke/model/model.aux
-Demo Pratke/model/model.out
-Demo Pratke/model/model.synctex.gz
-Demo Pratke/model/model_lite.synctex.gz
-Demo Pratke/model/model_lite.out
-Demo Pratke/model/model_lite.aux
-Demo Pratke/model/betriebsanleitung.aux
-Demo Pratke/model/betriebsanleitung.out
-Demo Pratke/model/betriebsanleitung.pdf
-Demo Pratke/model/betriebsanleitung.synctex.gz
-Demo Pratke/model/betriebsanleitung.tex
-Demo Pratke/model/betriebsanleitung.fdb_latexmk
-Demo Pratke/model/betriebsanleitung.fls
-Demo Pratke/model/model.fdb_latexmk
-Demo Pratke/model/model.fls
-Demo Pratke/model/model_lite.fdb_latexmk
-Demo Pratke/model/model_lite.fls
+
+# LaTeX build files of the demo documents
+Demo Pratke/*.aux
+Demo Pratke/*.out
+Demo Pratke/*.log
+Demo Pratke/*.synctex.gz
+Demo Pratke/*.fdb_latexmk
+Demo Pratke/*.fls

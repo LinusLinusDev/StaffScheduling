@@ -11,13 +11,16 @@ const TIME = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", dateS
 const TONES: Record<CheckStatus, Tone> = { accepted: "success", rejected: "error", incomplete: "warning" };
 // What a finding of a rule means, in German; the check's own message is English and for developers only.
 const FINDING_TEXT: Partial<Record<Rule, string>> = {
-  availability: "Dienst trotz Einschränkung",
+  availability: "Dienst trotz Einschränkung, Nacht vor Abwesenheit oder Spätdienst vor Urlaub oder Fortbildung",
   one_duty_per_day: "mehr als ein Dienst an einem Tag",
   work_and_breaks: "Schicht verletzt Höchstarbeitszeit oder Pausen",
   work_average: "im Schnitt mehr als 8 Stunden pro Werktag",
   rest: "weniger als 11 Stunden Ruhe zwischen zwei Diensten",
   consecutive_nights: "mehr als 3 Nachtdienste hintereinander",
-  night_recovery: "weniger als 48 Stunden frei nach dem letzten Nachtdienst",
+  night_recovery: "weniger als 48 Stunden frei nach dem letzten Nachtdienst (auch Fortbildung zählt nicht als frei)",
+  consecutive_days: "mehr als 10 Arbeitstage am Stück (Fortbildung zählt mit)",
+  weekend_shift: "Samstag und Sonntag nicht dieselbe Schicht",
+  consecutive_weekends: "zwei Wochenenden hintereinander gearbeitet",
   replacement_rest: "kein freier Werktag als Ausgleich für einen gearbeiteten Sonn- oder Feiertag",
 };
 

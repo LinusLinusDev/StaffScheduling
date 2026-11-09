@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { History, Upload, X } from "lucide-react";
+import { History, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { monthLabel } from "@/lib/labels";
@@ -27,14 +27,21 @@ export function HistoryPanel({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // A submit handler instead of a form action: React resets a form after its action, also a failed one.
-  function submit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const files = new FormData(event.currentTarget);
+  // Choosing the file loads it at once: a chosen file that was never sent must not look like a loaded month before.
+  function choose(event: React.ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+    const files = new FormData();
+    files.append("plan", file);
     setError(null);
     startTransition(async () => {
       const result = await loadHistory(month, files);
-      if (!result.ok) setError(`${result.error} Bitte den gespeicherten Dienstplan von ${previousName} wählen.`);
+      if (!result.ok) {
+        setError(`${result.error} Bitte den gespeicherten Dienstplan von ${previousName} wählen.`);
+        // empty again, so that choosing the same file once more loads it again
+        input.value = "";
+      }
     });
   }
 
@@ -64,26 +71,25 @@ export function HistoryPanel({
           </Button>
         </div>
       ) : (
-        <form onSubmit={submit} className="space-y-2">
+        <div className="space-y-2">
           <p>
-            Den gespeicherten Dienstplan von {previousName} laden, damit Nachtdienste, Ruhezeiten, Arbeitstage am Stück
-            und Wochenenden auch über den Monatswechsel stimmen. Ohne ihn gelten die Tage vor dem Monat als frei.
+            Den gespeicherten Dienstplan von {previousName} auswählen, damit Nachtdienste, Ruhezeiten, Arbeitstage am
+            Stück und Wochenenden auch über den Monatswechsel stimmen. Er wird sofort geprüft und geladen. Ohne ihn
+            gelten die Tage vor dem Monat als frei.
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <Input
               name="plan"
               type="file"
               accept=".json,application/json"
-              required
+              disabled={pending || running}
+              onChange={choose}
               aria-label={`Dienstplan von ${previousName}`}
               className="w-auto max-w-full"
             />
-            <Button type="submit" size="sm" variant="outline" disabled={pending || running}>
-              <Upload />
-              {pending ? "Wird geprüft …" : "Vormonat laden"}
-            </Button>
+            {pending && <span className="text-muted-foreground">Wird geprüft …</span>}
           </div>
-        </form>
+        </div>
       )}
       {error && (
         <p role="alert" className="text-destructive">

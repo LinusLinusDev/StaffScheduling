@@ -108,6 +108,9 @@ export const RULES: Record<Rule, string> = {
   rest: "Ruhezeit",
   consecutive_nights: "Nächte in Folge",
   night_recovery: "Erholung nach Nachtdiensten",
+  consecutive_days: "Arbeitstage am Stück",
+  weekend_shift: "Gleiche Schicht am Wochenende",
+  consecutive_weekends: "Wochenenden in Folge",
   replacement_rest: "Ersatzruhetag",
   annual_free_sundays: "Freie Sonntage im Jahr",
 };

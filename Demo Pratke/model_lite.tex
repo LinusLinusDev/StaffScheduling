@@ -6,6 +6,7 @@
 \usepackage{parskip}
 \usepackage{enumitem}
 \setlist{itemsep=2pt, topsep=2pt, parsep=0pt}
+\setlength{\emergencystretch}{2em}
 
 \definecolor{myblue}{RGB}{0, 84, 159}
 
@@ -19,80 +20,160 @@
 \date{09. November 2026}
 \maketitle
 
-Der Schichtplan Manager erstellt für einen Monat und eine Station automatisch einen Dienstplan. In der Demo
-ist das die fiktive Musterstation. Dabei hält er feste Regeln immer ein und verfolgt mehrere Ziele in einer festen Rangfolge.
+Der Schichtplan Manager erstellt für einen Monat und eine Station automatisch einen Dienstplan. In der Demo ist
+das die erfundene Musterstation. Diese Kurzfassung erklärt ohne Formeln, wie der Plan entsteht. Die genaue
+mathematische Beschreibung steht im Dokument \emph{Modell}.
 
-\section{Eingaben}
+\textbf{Der Ablauf auf einen Blick.}
+\begin{enumerate}
+  \item \textbf{Eingaben sammeln}: Team, Sollzeiten, Schichten, Mindestbesetzung, Einschränkungen, Wünsche und
+        optional der Dienstplan des Vormonats (Abschnitt~\ref{sec:eingaben}).
+  \item \textbf{Rechnen}, fest \textbf{30 Sekunden}: Der Solver hält die festen Regeln immer ein
+        (Abschnitt~\ref{sec:regeln}) und verbessert die Ziele in einer festen Rangfolge
+        (Abschnitt~\ref{sec:ziele}). Ist die Zeit um, gilt der beste bis dahin gefundene Plan.
+  \item \textbf{Unabhängig prüfen}: Ein eigenes Prüfprogramm kontrolliert den fertigen Plan noch einmal gegen die
+        gesetzlichen und betrieblichen Regeln (Abschnitt~\ref{sec:ergebnis}).
+  \item \textbf{Ergebnis anzeigen}: Dienstplan, Besetzung, Lücken, Monatskonten und Kennzahlen.
+\end{enumerate}
+
+%==========================================================================================================
+\section{Eingaben}\label{sec:eingaben}
 
 \begin{itemize}
-  \item \textbf{Monat}, für den geplant wird. Die Rechenzeit ist fest: \textbf{30 Sekunden}.
-  \item \textbf{Mitarbeitende} mit ihrer Qualifikation: 9 Fachkräfte (drei davon in Teilzeit mit 80 bis 90\,\%),
-        eine Hilfskraft und zwei Azubis.
-  \item \textbf{Sollzeit und Gutschriften} je Person: 38,5 Stunden je Woche, in Teilzeit anteilig; Urlaub und
-        Fortbildung werden mit dem Tagessoll gutgeschrieben.
-  \item \textbf{Schichten} mit Uhrzeiten und anrechenbaren Stunden: Früh (F), Zwischen (Z), Spät (S), Nacht (N).
-  \item \textbf{Mindestbesetzung} je Tag, Schicht und Qualifikation, jeweils 0 bis 5 Personen.
+  \item \textbf{Monat}, für den geplant wird; immer der ganze Monat.
+  \item \textbf{Mitarbeitende} mit ihrer Qualifikation: neun Fachkräfte (sechs in Vollzeit, drei in Teilzeit mit
+        80, 85 und 90\,\%), eine Hilfskraft und zwei Azubis, beide in Vollzeit.
+  \item \textbf{Sollzeit und Gutschriften} je Person: 38,5 Stunden je Woche, in Teilzeit anteilig, verteilt auf die
+        Werktage des Monats ohne Feiertage. Urlaub und Fortbildung werden mit dem Tagessoll gutgeschrieben.
+  \item \textbf{Schichten} mit Uhrzeiten und den Stunden, die auf das Monatskonto zählen (ohne Pausen):
+
+        \begin{tabular}{l l l}
+          \hline
+          Schicht & Uhrzeit & zählt \\
+          \hline
+          Früh (F) & 05:55--13:25 & 7:00 Std. \\
+          Zwischen (Z) & 08:30--14:15 & 5:45 Std. \\
+          Spät (S) & 13:15--21:00 & 7:15 Std. \\
+          Nacht (N) & 20:10--06:10 & 9:15 Std. \\
+          \hline
+        \end{tabular}
+  \item \textbf{Mindestbesetzung} je Tag, Schicht und Qualifikation, jeweils 0 bis 5 Personen. Jeder Monat
+        beginnt mit dieser Vorgabe (Personen je Schicht F\,/\,Z\,/\,S\,/\,N):
+
+        \begin{tabular}{l l l}
+          \hline
+          Qualifikation & Montag bis Freitag & Wochenende und Feiertag \\
+          \hline
+          Fachkraft & 3\,/\,0\,/\,2\,/\,1 & 2\,/\,0\,/\,1\,/\,1 \\
+          Hilfskraft & 1\,/\,0\,/\,0\,/\,0 & -- \\
+          Azubi & 1\,/\,0\,/\,1\,/\,0 & -- \\
+          \hline
+        \end{tabular}
   \item \textbf{Einschränkungen}: Urlaub, Fortbildung, freier Tag, nicht verfügbar, „nur bestimmte Schichten“.
   \item \textbf{Wünsche}: freier Tag, bestimmte Schicht frei, Wunschtag oder Wunschschicht.
-  \item Optional der gespeicherte \textbf{Dienstplan des Vormonats}, damit die Regeln auch über den Monatswechsel
-        gelten. Er muss unverändert, genau der Vormonat und angenommen sein. Ohne ihn gelten die Tage vor dem Monat
-        als frei.
+  \item Optional der gespeicherte \textbf{Dienstplan des Vormonats}. Er muss unverändert, genau der Vormonat und
+        angenommen sein. Mit ihm gelten die Regeln auch über den Monatswechsel; ohne ihn gelten die Tage vor dem
+        Monat als frei.
 \end{itemize}
 
-\section{Feste Regeln}
+Früh- und Spätdienste kann jede Qualifikation übernehmen, auch über ihre Mindestbesetzung hinaus. Nacht- und
+Zwischendienste arbeitet eine Qualifikation nur, wenn sie dafür im Monat irgendwann Bedarf hat. Mit der Vorgabe
+haben Hilfskraft und Azubis also keine Nacht- und Zwischendienste.
+
+%==========================================================================================================
+\section{Feste Regeln}\label{sec:regeln}
 
 Jeder erstellte Dienstplan hält diese Regeln ein:
 \begin{itemize}
   \item Höchstens \textbf{ein Dienst pro Person und Tag}; der Dienst zählt mit der Qualifikation der Person.
-  \item \textbf{Einschränkungen} gelten immer. Vor einem Abwesenheitstag gibt es keinen Nachtdienst, am Tag vor
-        Urlaubsbeginn keinen Spätdienst.
+  \item \textbf{Einschränkungen} gelten immer. Vor einem Abwesenheitstag gibt es keinen Nachtdienst, weil die
+        Nacht in ihn hineinreicht. Am Tag vor Urlaubsbeginn und vor einer Fortbildung gibt es keinen Spätdienst:
+        Die Fortbildung ist Arbeitszeit, und ihr Beginn könnte sonst in die 11 Stunden Ruhezeit fallen.
   \item Höchstens \textbf{10 Arbeitstage in Folge}; Fortbildungstage zählen mit.
-  \item \textbf{Nachtdienste} kommen in Blöcken von 2 bis 3 Nächten. Danach folgen 2 freie Tage und am dritten Tag
-        kein Frühdienst. Zwischen zwei Nachtblöcken liegen mindestens 7 Tage.
+  \item \textbf{Nachtdienste} kommen in Blöcken von 2 bis 3 Nächten. Danach folgen \textbf{2 Tage ganz frei}, also
+        auch ohne Fortbildung, und am dritten Tag kein Frühdienst. Zwischen zwei Nachtblöcken liegen mindestens
+        7 Tage.
   \item \textbf{Wochenenden}: Samstag und Sonntag dieselbe Schicht oder beide frei; nie zwei Wochenenden in Folge,
         auch nicht über den Monatswechsel. Ein Wochenende gilt als gearbeitet, wenn am Samstag oder Sonntag ein
         Dienst beginnt; ein Nachtdienst am Freitag allein zählt nicht.
-  \item Dienste des Vormonats werden \textbf{nicht verändert}, zählen aber bei den Regeln mit. Was dort schon
-        feststeht, erzwingt im neuen Monat nichts: Nach einem gearbeiteten Samstag hat der Sonntag am Ersten dieselbe
-        Schicht oder ist frei, nach einem freien Samstag ist er offen.
+  \item \textbf{Endet ein Monat an einem Samstag}, wird der Sonntag danach unsichtbar mitgeplant: als Kopie des
+        Samstags, für den alle Regeln gelten. So bekommt am Samstag nur Dienst, wer am Sonntag weitermachen könnte,
+        also z.\,B.\ keine dritte Nacht am Samstag. Der Sonntag zählt nicht fürs Monatskonto und steht nicht im Plan;
+        geplant wird er im Folgemonat.
+  \item Dienste des Vormonats werden \textbf{nicht verändert}, zählen aber bei den Regeln mit.
 \end{itemize}
 
-Mindestbesetzung, Sollzeit und der Wechsel vom Spät- in den Frühdienst sind bewusst \emph{keine} festen
-Regeln, sondern Ziele. So entsteht auch bei Personalmangel ein Plan, und was fehlt, wird als Lücke ausgewiesen.
+Drei Dinge sind bewusst \emph{keine} festen Regeln, sondern Ziele, damit auch bei Personalmangel immer ein Plan
+entsteht:
+\begin{itemize}
+  \item die \textbf{Mindestbesetzung}: Was fehlt, wird als \emph{Lücke} ausgewiesen;
+  \item die \textbf{Sollzeit} und das \textbf{Wochenende über den Monatswechsel}: Sie sind die obersten Ziele und
+        werden eingehalten, wann immer das möglich ist;
+  \item der \textbf{Wechsel vom Spät- in den Frühdienst}: erlaubt, aber so selten wie möglich.
+\end{itemize}
 
-\section{Ziele in ihrer Rangfolge}
+%==========================================================================================================
+\section{Ziele in ihrer Rangfolge}\label{sec:ziele}
 
-Die Ziele werden nacheinander verbessert. Ein späteres Ziel darf ein früheres nicht verschlechtern; nur bei den
-Zielen c), d) und f) ist ein kleiner Spielraum erlaubt, damit die folgenden Ziele noch Wahlmöglichkeiten haben.
+Die Ziele werden nacheinander verbessert, das wichtigste zuerst. Ein späteres Ziel darf ein früheres nicht
+verschlechtern. Nur bei den drei Verteilungszielen (Lücken verteilen, gleichmäßig besetzte Tage, gleichmäßig
+besetzte Schichten) ist ein kleiner Spielraum erlaubt, damit die folgenden Ziele noch Wahlmöglichkeiten haben.
 \begin{enumerate}
+  \item \textbf{Sollzeit einhalten}: Am Monatsende liegt jede Person höchstens \textbf{4 Stunden} über oder unter
+        ihrem Soll. Weil dieses Ziel ganz oben steht, hält jeder Plan es ein, sobald das für alle erreichbar ist;
+        es wirkt dann wie eine feste Regel. Nur wenn es unmöglich ist, etwa weil jemand den halben Monat nicht
+        verfügbar ist, entsteht trotzdem ein Plan mit möglichst kleiner Abweichung, und die Prüfung weist sie aus.
+  \item \textbf{Wochenende über den Monatswechsel fortführen}: Beginnt der Monat an einem Sonntag und ist der
+        Vormonat geladen, bekommt der Sonntag die Schicht vom Samstag des Vormonats; wer dort frei hatte, hat auch
+        Sonntag frei. Das gilt wie eine feste Regel, sobald es möglich ist. Nur wenn nicht, etwa weil nach dem Plan
+        des Vormonats noch Urlaub am Ersten eingetragen wurde, bleibt das Wochenende geteilt, und die Prüfung weist es
+        aus.
   \item \textbf{Möglichst wenige Lücken}, also unbesetzte Pflichtstellen.
-  \item \textbf{Sollzeit einhalten}: Am Monatsende liegt jede Person höchstens 7:40 Stunden über oder unter ihrem Soll.
-  \item \textbf{Lücken gleichmäßig verteilen}: Bleiben Lücken, fallen sie gemessen am Bedarf gleichmäßig auf die Tage.
+  \item \textbf{Lücken gleichmäßig verteilen}: Bleiben Lücken, fallen sie gemessen am Bedarf gleichmäßig auf die
+        Tage, statt sich an einzelnen Tagen zu häufen.
   \item \textbf{Gleichmäßig besetzte Tage}: Jeder Tag ist im gleichen Verhältnis zu seiner Mindestbesetzung besetzt.
+  \item \textbf{Samstage gerecht verteilen}: Alle mit derselben Qualifikation arbeiten möglichst gleich viele
+        Samstage, und damit Wochenenden; die Zahlen unterscheiden sich höchstens um eins, soweit Urlaub und
+        Einschränkungen es zulassen.
   \item \textbf{Wünsche erfüllen}.
+  \item \textbf{Abwechslung}: In jedem Zeitraum von 28 Tagen hat jede Person möglichst jede Schichtart, die sie
+        arbeiten kann (mit der Vorgabe: Fachkräfte Früh, Spät und Nacht, Hilfskraft und Azubis Früh und Spät).
+        Mit Vormonat reichen diese Zeiträume in den Vormonat zurück; was dort schon gearbeitet wurde, zählt mit.
   \item \textbf{Gleichmäßig besetzte Schichten}: Zusätzliches Personal eines Tages verteilt sich im Verhältnis
         der Mindestbesetzung auf die Schichten.
-  \item \textbf{Möglichst wenige Wechsel vom Spät- in den Frühdienst}.
-  \item \textbf{Möglichst oft dieselbe Schicht wie am Vortag}.
+  \item \textbf{Möglichst wenige Wechsel vom Spät- in den Frühdienst}: Zwischen 21:00 und 05:55 liegen nur knapp
+        9 Stunden.
+  \item \textbf{Möglichst oft dieselbe Schicht wie am Vortag}, damit ruhige Folgen entstehen.
 \end{enumerate}
 
-Ist die Rechenzeit abgelaufen, wird der beste bis dahin gefundene Plan ausgegeben.
+%==========================================================================================================
+\section{Prüfung und Ergebnis}\label{sec:ergebnis}
 
-\section{Ausgabe}
+\textbf{Unabhängige Prüfung.} Ein eigenes Prüfprogramm, das vom Solver nichts übernimmt, kontrolliert den
+fertigen Plan gegen gesetzliche und betriebliche Regeln, unter anderem: Mindestbesetzung und Lücken,
+Einschränkungen samt keiner Nacht vor einer Abwesenheit und keinem Spätdienst vor Urlaub oder Fortbildung, ein
+Dienst pro Tag, Monatssaldo innerhalb von $\pm$\,4 Stunden, tägliche Höchstarbeitszeit und
+Pausen, 11 Stunden Ruhezeit zwischen zwei Diensten, höchstens 3 Nächte in Folge und die 48 Stunden Erholung
+danach, höchstens 10 Arbeitstage am Stück, am Wochenende dieselbe Schicht an beiden Tagen und nie zwei Wochenenden
+in Folge, auch über den Monatswechsel, wenn der Vormonat geladen ist. Den Wechsel vom Spät- in den Frühdienst lässt
+die Demo-Version zu und zählt ihn nur. Das Ergebnis ist \emph{angenommen},
+\emph{abgelehnt} (mit Person, Datum und Regel) oder \emph{unvollständig geprüft}. Nur ein angenommener Plan kann
+als Vormonat für den nächsten Monat geladen werden.
 
+\textbf{Ausgabe.}
 \begin{itemize}
   \item \textbf{Der Dienstplan}: für jede Person und jeden Tag die Schicht.
   \item \textbf{Besetzung und Lücken}: je Tag und Schicht die Besetzung im Vergleich zur Mindestbesetzung
         (Ist/Soll) und welche Pflichtstellen mit welcher Qualifikation offen bleiben.
   \item \textbf{Monatskonten}: Soll, Gutschriften, geplante Stunden und Saldo je Person.
-  \item \textbf{Unabhängige Prüfung} des Plans gegen gesetzliche und betriebliche Regeln, z.\,B. 11 Stunden Ruhezeit
-        zwischen zwei Diensten. Ergebnis: \emph{angenommen}, \emph{abgelehnt} (mit Person, Datum und Regel) oder
-        \emph{unvollständig geprüft}. Nur ein angenommener Plan kann als Vormonat für den nächsten Monat
-        geladen werden.
-  \item \textbf{Kennzahlen}: Lücken, wie viele Monatssalden außerhalb von $\pm$\,7:40 Stunden liegen und die größte
+  \item \textbf{Kennzahlen}: Lücken, wie viele Monatssalden außerhalb von $\pm$\,4 Stunden liegen und die größte
         Abweichung, erfüllte Wünsche und Wechsel vom Spät- in den Frühdienst.
-  \item Der Plan lässt sich als \textbf{eine Datei speichern} („Dienstplan \textless Monat\textgreater{}
-        \textless Jahr\textgreater{} - Version \textless n\textgreater.json“) und später wieder laden.
+  \item \textbf{Wünsche}: jeder als \emph{erfüllt}, \emph{nicht erfüllt} oder \emph{nicht erfüllbar}, wenn ihn
+        keine Planung erfüllen könnte (z.\,B.\ eine Nacht kurz vor einer Fortbildung oder ein Spätdienst am Tag
+        davor).
 \end{itemize}
+Der Plan lässt sich als \textbf{eine Datei speichern} („Dienstplan \textless Monat\textgreater{}
+\textless Jahr\textgreater{} - Version \textless n\textgreater.json“) und später wieder laden, auch als Vormonat
+für den nächsten Monat.
 
 \end{document}

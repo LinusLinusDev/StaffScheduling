@@ -21,7 +21,7 @@
 \assistent{Linus Palm}
 \contact{palm@combi.rwth-aachen.de}
 \title{Betriebsanleitung}
-\date{08. November 2026}
+\date{09. November 2026}
 \maketitle
 
 Der Schichtplan Manager plant den Dienstplan einer Station für einen ganzen Monat. Diese Demo-Version arbeitet
@@ -30,8 +30,14 @@ Auszubildende. Sie nimmt Einschränkungen, Wünsche und die Mindestbesetzung auf
 30 Sekunden einen geprüften Dienstplan. Die Anwendung läuft lokal auf dem MacBook und wird im Browser bedient.
 Für die Berechnung braucht sie eine \textbf{Internetverbindung}, weil der Solver seine Lizenz online prüft.
 
+Die Anleitung folgt dem Ablauf einer Sitzung: starten (Abschnitt~\ref{sec:start}), Daten ansehen und pflegen
+(Abschnitte~\ref{sec:oberflaeche}--\ref{sec:bedarf}), Dienstplan erstellen und prüfen
+(Abschnitte~\ref{sec:erstellen} und~\ref{sec:pruefen}), mehrere Monate nacheinander planen
+(Abschnitt~\ref{sec:monate}) und beenden (Abschnitt~\ref{sec:beenden}). Wie der Plan entsteht, erklärt die
+\emph{Modell -- Kurzfassung}.
+
 %==========================================================================================================
-\section{Programm starten}
+\section{Programm starten}\label{sec:start}
 
 \begin{enumerate}
   \item Den Mac einschalten und das Passwort eingeben (wird vor Ort mitgeteilt).
@@ -39,7 +45,8 @@ Für die Berechnung braucht sie eine \textbf{Internetverbindung}, weil der Solve
   \item Warten, bis sich \textbf{Docker} und \textbf{Visual Studio Code} von selbst geöffnet haben.
   \item In \textbf{Visual Studio Code} oben im Menü \emph{Terminal $\to$ Neues Terminal} wählen. Unten öffnet sich ein
         Terminal.
-  \item Dort \code{git pull} eingeben und mit \taste{Enter} bestätigen, um die aktuelle Version des Schichtplaners zu laden.
+  \item Dort \code{git pull} eingeben und mit \taste{Enter} bestätigen, um die aktuelle Version des Schichtplaners
+        zu laden.
   \item Dann \code{just run} eingeben und mit \taste{Enter} bestätigen, um ihn zu starten.
   \item Warten, bis alles aufgebaut ist: Die Meldungen zu \code{api} und \code{webapp} enden grün mit
         \emph{Healthy}, danach erscheint wieder die Eingabezeile. Beim ersten Start kann das einige Minuten
@@ -51,17 +58,8 @@ Für die Berechnung braucht sie eine \textbf{Internetverbindung}, weil der Solve
         \emph{Übersicht-Schichtplan Manager} anwählen. Die Übersicht des Schichtplan Managers erscheint.
 \end{enumerate}
 
-\section{Programm beenden}
-
-Im selben Terminal in Visual Studio Code \code{just stop} eingeben und mit \taste{Enter} bestätigen. Danach
-kann der Mac wie gewohnt ausgeschaltet werden.
-
-\textbf{Achtung:} Alles, was eingetragen oder berechnet wurde (Einschränkungen, Wünsche, Mindestbesetzung und
-Dienstpläne), wird nur gehalten, solange das Programm läuft. Nach einem Neustart beginnt die Musterstation wieder
-im Ausgangszustand. Einen Dienstplan, den man behalten möchte, vorher speichern (Abschnitt~\ref{sec:pruefen}).
-
 %==========================================================================================================
-\section{Aufbau der Oberfläche}
+\section{Die Oberfläche}\label{sec:oberflaeche}
 
 \begin{itemize}
   \item \textbf{Seitenleiste} links: \emph{Übersicht}, unter \emph{Planungsdaten} die Seiten
@@ -70,12 +68,19 @@ im Ausgangszustand. Einen Dienstplan, den man behalten möchte, vorher speichern
   \item \textbf{Monat und Jahr} neben dem Seitentitel. Alle Seiten arbeiten mit diesem Monat; er bleibt beim
         Seitenwechsel erhalten. Jeder Monat der Jahre 2026 und 2027 kann geplant werden, immer als ganzer Monat.
         Beim Öffnen ist der nächste Monat gewählt.
-  \item \textbf{Übersicht}: eine Karte je Seite in der üblichen Reihenfolge der Planung. Der Pfeil vor einem
+  \item \textbf{Übersicht}: eine Karte je Seite in der Reihenfolge der Planung. Der Pfeil vor einem
         Seitentitel führt zur Übersicht zurück.
 \end{itemize}
 
-Die übliche Reihenfolge: Mitarbeiter ansehen $\to$ Verfügbarkeit und Mindestbesetzung pflegen $\to$
-Dienstplan erstellen $\to$ Dienstplan prüfen.
+Die übliche Reihenfolge der Planung:
+\begin{enumerate}
+  \item \textbf{Mitarbeiter} ansehen: Wer gehört zur Station, mit welcher Qualifikation und welchem Soll?
+  \item \textbf{Verfügbarkeit} pflegen: Urlaub, Fortbildung und andere Einschränkungen, dazu die Wünsche.
+  \item \textbf{Mindestbesetzung} festlegen: Wie viele müssen je Schicht mindestens da sein?
+  \item \textbf{Dienstplan erstellen} und anschließend \textbf{prüfen}.
+\end{enumerate}
+Für einen ersten Eindruck genügt Schritt 4: Jeder Monat beginnt mit Beispieleinträgen und einer passenden
+Mindestbesetzung.
 
 %==========================================================================================================
 \section{Mitarbeiter}
@@ -90,7 +95,7 @@ Das Soll ergibt sich aus der Arbeitszeit (Vollzeit 38,5 Stunden pro Woche, Teilz
 des Monats. Urlaub und Fortbildung werden mit dem Tagessoll gutgeschrieben.
 
 %==========================================================================================================
-\section{Verfügbarkeit}
+\section{Verfügbarkeit: Einschränkungen und Wünsche}
 
 Hier werden für einen Mitarbeiter (Auswahl oben auf der Seite) \textbf{Einschränkungen} und \textbf{Wünsche}
 im Monatskalender gepflegt. Der Kalender zeigt je Tag zwei Dinge:
@@ -101,20 +106,27 @@ im Monatskalender gepflegt. Der Kalender zeigt je Tag zwei Dinge:
   \item \textbf{Wunsch}, grün: freier Tag, bestimmte Schicht frei, Wunschtag oder Wunschschicht. Wünsche werden
         so weit wie möglich erfüllt, aber nicht garantiert.
 \end{itemize}
-Einen Tag anklicken, rechts Einschränkung oder Wunsch wählen und \knopf{Einschränkung speichern} bzw.
-\knopf{Wunsch speichern} drücken; \knopf{Einschränkung entfernen} bzw.\ \knopf{Wunsch entfernen} löscht den
-Eintrag. Pro Tag gibt es höchstens eine
-Einschränkung und einen Wunsch. \textbf{Mehrere Tage auf einmal:} \taste{Umschalt}-Klick wählt einen Zeitraum,
-\taste{ctrl}-Klick fügt einzelne Tage hinzu oder entfernt sie; das Speichern gilt dann für alle gewählten Tage. Die Hinweise über dem Kalender zeigen die Tasten.
+So wird ein Eintrag gesetzt:
+\begin{enumerate}
+  \item Einen Tag anklicken.
+  \item Rechts die Einschränkung oder den Wunsch wählen.
+  \item \knopf{Einschränkung speichern} bzw.\ \knopf{Wunsch speichern} drücken. \knopf{Einschränkung entfernen}
+        bzw.\ \knopf{Wunsch entfernen} löscht den Eintrag wieder.
+\end{enumerate}
+Pro Tag gibt es höchstens eine Einschränkung und einen Wunsch.
+
+\textbf{Mehrere Tage auf einmal:} \taste{Umschalt}-Klick wählt einen Zeitraum, \taste{ctrl}-Klick fügt einzelne
+Tage hinzu oder entfernt sie; das Speichern gilt dann für alle gewählten Tage. Die Hinweise über dem Kalender
+zeigen die Tasten.
 
 Jeder Monat beginnt mit einigen Beispieleinträgen: einer Urlaubswoche, einem Fortbildungstag und zwei Wünschen.
 Sie lassen sich wie jeder andere Eintrag ändern oder entfernen.
 
 %==========================================================================================================
-\section{Mindestbesetzung}
+\section{Mindestbesetzung}\label{sec:bedarf}
 
 Legt fest, wie viele Mitarbeiter je Tag, Schicht und Qualifikation mindestens im Dienst sein müssen. Jeder Monat
-beginnt mit einer Vorgabe, die zum Team passt.
+beginnt mit einer Vorgabe, die zum Team passt (siehe \emph{Modell -- Kurzfassung}).
 \begin{itemize}
   \item Reiter wählen die Qualifikation: \emph{Fachkraft}, \emph{Hilfskraft}, \emph{Azubi}.
   \item Das Raster hat eine Zeile je Tag und eine Spalte je Schicht (F, Z, S, N). Wochenenden und Feiertage
@@ -125,34 +137,30 @@ beginnt mit einer Vorgabe, die zum Team passt.
         den gespeicherten Stand wieder her.
 \end{itemize}
 \textbf{Wichtig:} Ungespeicherte Änderungen gehen beim Verlassen der Seite verloren. Mehr Bedarf, als das Team
-leisten kann, bleibt im Dienstplan als Lücke offen.
+leisten kann, bleibt im Dienstplan als \textbf{Lücke} offen; es entsteht trotzdem ein Plan.
 
 %==========================================================================================================
-\section{Dienstplan erstellen}
+\section{Dienstplan erstellen}\label{sec:erstellen}
 
 \begin{enumerate}
   \item Den Monat oben wählen. Die Karte nennt, was geplant wird, und listet unter \emph{Berücksichtigt}, welche
         Daten und Regeln in die Planung eingehen.
+  \item Optional unter \emph{Vormonat} den gespeicherten Dienstplan des Vormonats auswählen, siehe
+        Abschnitt~\ref{sec:monate}.
   \item \knopf{Dienstplan erstellen} drücken.
 \end{enumerate}
-\textbf{Vormonat (optional):} Unter \emph{Vormonat} lässt sich der gespeicherte Dienstplan des Vormonats laden,
-z.\,B.\ \code{Dienstplan November 2026 - Version 2.json} für den Dezember. Dann gelten Nachtdienste, Ruhezeiten,
-Arbeitstage am Stück und Wochenenden auch über den Monatswechsel. Angenommen wird nur ein unveränderter Plan
-genau des Vormonats, der alle Regeln einhält; sonst erscheint eine Meldung. \knopf{Entfernen} nimmt ihn wieder
-heraus. Ohne Vormonat gelten die Tage vor dem Monat als frei.
-
 Die Berechnung dauert etwa 30 Sekunden; ein Balken zeigt die verbleibende Zeit. Die Seite darf währenddessen
-verlassen werden. Unter \emph{Letzte Berechnung} steht dann das Ergebnis, mit einer Überschrift, die sagt, was zu
-tun ist:
+verlassen werden. Es läuft immer nur eine Berechnung gleichzeitig. Unter \emph{Letzte Berechnung} steht dann das
+Ergebnis, mit einer Überschrift, die sagt, was zu tun ist:
 \begin{itemize}
   \item \emph{Dienstplan erstellt, Regeln eingehalten}: Mit \knopf{Dienstplan prüfen} weiter zur Prüfung.
-  \item \emph{Berechnung nicht möglich}: Der Solver kann seine Lizenz nicht prüfen, meist fehlt die Internetverbindung. WLAN prüfen und erneut starten.
-  \item \emph{\dots\ mit Regelverstößen} oder \emph{\dots\ unvollständig geprüft}: Der Kasten \emph{Verstöße}
-        bzw.\ \emph{Hinweise} nennt die Ursache.
+  \item \emph{Dienstplan erstellt, aber mit Regelverstößen} oder \emph{\dots\ aber unvollständig geprüft}: Der
+        Kasten \emph{Verstöße} bzw.\ \emph{Hinweise} nennt die Ursache.
+  \item \emph{Berechnung nicht möglich}: Der Solver kann seine Lizenz nicht prüfen, meist fehlt die
+        Internetverbindung. WLAN prüfen und erneut starten.
 \end{itemize}
 Darunter stehen Zeit, Ergebnis der Prüfung, Anzahl der Dienste und der \textbf{Lücken}, also Pflichtstellen, die
-mangels Personal offen bleiben. Ein Plan mit Lücken kann trotzdem gültig sein. Es läuft immer nur eine Berechnung
-gleichzeitig. Wie der Plan entsteht, beschreibt die \emph{Modell -- Kurzfassung}.
+mangels Personal offen bleiben. Ein Plan mit Lücken kann trotzdem alle Regeln einhalten.
 
 %==========================================================================================================
 \section{Dienstplan prüfen}\label{sec:pruefen}
@@ -160,38 +168,83 @@ gleichzeitig. Wie der Plan entsteht, beschreibt die \emph{Modell -- Kurzfassung}
 Zeigt den zuletzt erstellten oder geladenen Dienstplan. Von oben nach unten:
 \begin{itemize}
   \item \textbf{Zusammenfassung} mit der Statuszeile. Nur bei \emph{Regeln eingehalten} ist der Plan
-        verwendbar. Bei \emph{Regelverstöße} oder \emph{Unvollständig geprüft} listet ein
-        Kasten jeden Befund mit Regel, Mitarbeiter und Datum.
+        verwendbar. Bei \emph{Regelverstöße} oder \emph{Unvollständig geprüft} listet ein Kasten jeden Befund
+        mit Regel, Mitarbeiter und Datum.
   \item \textbf{Lücken}: je Tag, Schicht und Qualifikation, wie viele Mitarbeiter fehlen. Für diese Schichten
         Gastpersonal anfragen.
-  \item \textbf{Kennzahlen}: der Plan auf einen Blick: Lücken, Monatssaldo, erfüllte Wünsche und Wechsel vom
-        Spät- in den Frühdienst.
+  \item \textbf{Kennzahlen}, der Plan auf einen Blick:
+        \begin{itemize}
+          \item \emph{Lücken}: Anzahl der unbesetzten Pflichtstellen.
+          \item \emph{Monatssaldo}: wie viele Mitarbeiter mehr als 4 Stunden über oder unter ihrem Soll liegen,
+                und die größte Abweichung.
+          \item \emph{Wünsche}: wie viele erfüllt wurden.
+          \item \emph{Wechsel Spät- auf Frühdienst}: erlaubt, aber so selten wie möglich.
+        \end{itemize}
   \item \textbf{Wünsche} (aufklappbar): jeder Wunsch mit \emph{erfüllt}, \emph{nicht erfüllt} oder \emph{nicht
-        erfüllbar} (z.\,B. wegen einer Einschränkung am selben Tag).
-  \item \textbf{Dienstplan}: je Mitarbeiter und Tag die Schicht in ihrer Farbe: F gelb, Z türkis, S orange,
-        N schwarz. Zeigt man auf einen Dienst, erscheinen Uhrzeit und Qualifikation. Kürzel zeigen
-        Einschränkungen, rot
-        hervorgehoben \code{U} Urlaub, \code{FB} Fortbildung und z.\,B.\ \code{nur F,S} für nur bestimmte
-        Schichten. Wochenenden sind rosa hinterlegt.
-        Suche nach Name und \knopf{Vollbild} helfen bei großen Plänen.
+        erfüllbar}. Nicht erfüllbar ist ein Wunsch, den keine Planung erfüllen könnte, z.\,B.\ eine
+        Wunschschicht an einem Urlaubstag, ein Nachtdienst kurz vor einer Fortbildung oder ein Spätdienst am Tag vor
+        Urlaub oder Fortbildung.
+  \item \textbf{Dienstplan}: eine Zeile je Mitarbeiter mit Name, Qualifikation und Station, eine Spalte je Tag.
+        Die Schichten stehen in ihrer Farbe: F gelb, Z türkis, S orange, N schwarz. Zeigt man auf einen Dienst,
+        erscheinen Uhrzeit und Qualifikation. Kürzel zeigen Einschränkungen, rot hervorgehoben \code{U} Urlaub,
+        \code{FB} Fortbildung und z.\,B.\ \code{nur F,S} für nur bestimmte Schichten. Wochenenden sind rosa
+        hinterlegt. Die Suche (Name, Personalnummer oder Qualifikation, z.\,B.\ \emph{Azubi}) und
+        \knopf{Vollbild} helfen bei großen Plänen.
   \item \textbf{Besetzung} unter dem Plan: je Schicht und Tag \emph{Ist/Soll}, z.\,B.\ \code{3/2}.
         Rot hinterlegte Zellen sind Lücken.
   \item \textbf{Monatskonten} (aufklappbar): je Mitarbeiter Soll, Gutschriften, geplante Stunden und Saldo.
 \end{itemize}
+
 Die Knöpfe in der Zusammenfassung:
 \begin{itemize}
   \item \knopf{Speichern}: speichert den Plan als eine Datei im Ordner \emph{Downloads}, benannt nach Monat, Jahr
         und Version, z.\,B.\ \code{Dienstplan Dezember 2026 - Version 2.json}. Jeder neu erstellte Plan eines
         Monats bekommt die nächste Version, so lassen sich mehrere Pläne auseinanderhalten.
   \item \knopf{Laden}: öffnet einen gespeicherten Plan wieder; dazu die Datei wählen. So lassen sich mehrere
-        Pläne nacheinander ansehen und vergleichen. Die vier vorbereiteten Pläne liegen als
-        \code{Dienstplan Januar 2026 - Version 1} bis \code{4} in den Ordnern \emph{Plan 1} bis \emph{Plan 4}.
+        Pläne nacheinander ansehen und vergleichen.
 \end{itemize}
 Die Version steht auch in der Zusammenfassung über dem Plan. Nach einem Neustart des Programms beginnt die
-Zählung wieder bei 1, sobald kein gespeicherter Plan des Monats geladen wurde.
+Zählung wieder bei 1, solange kein gespeicherter Plan des Monats geladen wurde. Gehört der angezeigte Plan zu
+einem anderen Monat als dem oben gewählten, wechselt \knopf{Zu \dots\ wechseln} zu seinem Monat.
 
-Gehört der Plan zu einem anderen Monat als dem oben gewählten, wechselt \knopf{Zu \dots\ wechseln} zu seinem
-Monat.
+%==========================================================================================================
+\section{Mehrere Monate nacheinander planen}\label{sec:monate}
+
+Ohne weitere Angabe gelten die Tage vor dem Monat als frei. Wer mehrere Monate nacheinander plant, lädt deshalb
+den gespeicherten Plan des Vormonats. Dann gelten Nachtdienste, Erholung nach Nächten, Arbeitstage am Stück,
+Wochenenden und die Abwechslung der Schichten auch über den Monatswechsel. Beispiel Januar und Februar 2026:
+\begin{enumerate}
+  \item Januar 2026 wählen, den Dienstplan erstellen und prüfen.
+  \item Steht dort \emph{Regeln eingehalten}, mit \knopf{Speichern} sichern. Im Ordner \emph{Downloads} liegt dann
+        z.\,B.\ \code{Dienstplan Januar 2026 - Version 1.json}.
+  \item Oben Februar 2026 wählen und \emph{Dienstplan erstellen} öffnen.
+  \item Unter \emph{Vormonat} die Januar-Datei auswählen. Sie wird \textbf{sofort} geprüft und geladen; ein eigener
+        Knopf ist nicht nötig. Danach steht dort \emph{Geladen: Dienstplan Januar 2026 - Version 1} mit der Zahl
+        der Dienste.
+  \item \knopf{Dienstplan erstellen} drücken.
+\end{enumerate}
+Gut zu wissen:
+\begin{itemize}
+  \item Angenommen wird nur ein \textbf{unveränderter} Plan \textbf{genau des Vormonats}, der alle Regeln
+        einhält. Sonst erscheint sofort eine Meldung, z.\,B.\ \emph{Das ist nicht der Dienstplan des Vormonats.}
+  \item Der Vormonat gilt nur für den Monat, auf dessen Seite er geladen wurde. \knopf{Entfernen} nimmt ihn wieder
+        heraus.
+  \item Nach einem Neustart des Programms muss er erneut geladen werden.
+  \item Endet ein Monat an einem Samstag, plant der Schichtplan Manager den folgenden Sonntag im Hintergrund mit,
+        ohne ihn anzuzeigen. Wer am Samstag Dienst hat, kann so im Folgemonat am Sonntag dieselbe Schicht weiterführen.
+        Beginnt der Folgemonat an diesem Sonntag, wird das Wochenende genau so fortgesetzt.
+\end{itemize}
+
+%==========================================================================================================
+\section{Programm beenden}\label{sec:beenden}
+
+Im selben Terminal in Visual Studio Code \code{just stop} eingeben und mit \taste{Enter} bestätigen. Danach
+kann der Mac wie gewohnt ausgeschaltet werden.
+
+\textbf{Achtung:} Alles, was eingetragen, geladen oder berechnet wurde (Einschränkungen, Wünsche,
+Mindestbesetzung, Vormonat und Dienstpläne), wird nur gehalten, solange das Programm läuft. Nach einem Neustart
+beginnt die Musterstation wieder im Ausgangszustand. Einen Dienstplan, den man behalten möchte, vorher speichern
+(Abschnitt~\ref{sec:pruefen}).
 
 %==========================================================================================================
 \section{Wenn etwas nicht klappt}
@@ -203,6 +256,10 @@ Monat.
   \item \textbf{\emph{Berechnung nicht möglich}:} Internetverbindung prüfen, dann erneut
         \knopf{Dienstplan erstellen} drücken.
   \item \textbf{\emph{Die Anwendung antwortet nicht}:} kurz warten und die Seite neu laden.
+  \item \textbf{Der Vormonat wird nicht angenommen:} Die Meldung nennt den Grund. Den gespeicherten Plan genau des
+        Vormonats wählen, der \emph{Regeln eingehalten} hatte.
+  \item \textbf{\emph{Die Datei stammt aus einer anderen Version der Anwendung}:} Der Plan wurde mit einer älteren
+        Version gespeichert. Den Monat neu erstellen und erneut speichern.
   \item \textbf{Ganz neu starten:} \code{just stop}, danach \code{just run}.
 \end{itemize}
 

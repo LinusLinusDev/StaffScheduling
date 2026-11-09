@@ -25,11 +25,13 @@ const jobMonth = (job: GenerationJob) =>
 // The demo plans one station without a previous month, so station transfers and the days before the month are left out.
 const USED = [
   "Mindestbesetzung je Schicht und Qualifikation; was fehlt, wird als Lücke ausgewiesen",
-  "Urlaub, Fortbildung, freie Tage und Einschränkungen werden immer eingehalten",
-  "Monatskonten: Sollzeit und Gutschriften, Saldo möglichst innerhalb ±7:40 Std.",
+  "Urlaub, Fortbildung, freie Tage und Einschränkungen werden immer eingehalten; vor Urlaub und Fortbildung kein Spät- oder Nachtdienst",
+  "Monatskonten: Sollzeit und Gutschriften, Saldo innerhalb ±4 Std.",
   "Wünsche, so weit möglich",
-  "Nachtdienste in Blöcken von 2–3 Nächten, danach 2 freie Tage",
-  "Höchstens 10 Arbeitstage am Stück und nie zwei Wochenenden in Folge",
+  "Rotation: jede Person in jedem 28-Tage-Zeitraum möglichst in allen ihren Schichtarten",
+  "Nachtdienste in Blöcken von 2–3 Nächten, danach 2 Tage ganz frei",
+  "Höchstens 10 Arbeitstage am Stück; Wochenende mit gleicher Schicht an beiden Tagen, nie zwei in Folge",
+  "Gearbeitete Wochenenden gleichmäßig verteilt",
   "Gleichmäßige Besetzung über alle Tage und Schichten, möglichst wenige Spät-Früh-Wechsel",
   "Dienstplan des Vormonats, wenn geladen: die Regeln gelten dann auch über den Monatswechsel",
 ];

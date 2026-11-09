@@ -4,6 +4,8 @@
 \usetikzlibrary{shapes,arrows,calc}
 \usepackage{calc}
 \usepackage{parskip}
+\usepackage{array}
+\setlength{\emergencystretch}{2em}
 
 \definecolor{myblue}{RGB}{0, 84, 159}
 
@@ -12,6 +14,8 @@
 % Abkuerzungen fuer die Notation
 \newcommand{\Dm}{D^{-}}
 \newcommand{\Db}{\bar{D}}
+\newcommand{\Dp}{D^{+}}
+\newcommand{\Wr}{\mathcal{W}}
 \newcommand{\ind}[1]{\mathbf{1}\!\left[#1\right]}
 \newcommand{\code}[1]{\texttt{#1}}
 
@@ -25,10 +29,47 @@
 
 Dieses Dokument beschreibt das gemischt-ganzzahlige lineare Programm (MILP), mit dem der Gurobi-Solver
 (\code{api/app/solver/milp/service.py}, Klasse \code{GurobiSolverService}) den Dienstplan eines Monats
-erstellt. Jeder Abschnitt gibt zuerst die mathematische Formulierung und darunter die Erklärung mit Verweis
-auf die Gleichungen. In Klammern steht jeweils der Name im Code. Werte, die im Projekt fest gesetzt sind,
-stehen bei den Parametern; Werte, die aus der Webapp kommen, sind Eingabedaten des Monats. In der Demo stammen
-sie von der fiktiven Musterstation (\code{api/app/demo.py}) und den Eingaben auf den Seiten der Webapp.
+erstellt. Eine Fassung ohne Formeln ist die \emph{Modell -- Kurzfassung}.
+
+%==========================================================================================================
+\section{Überblick}
+
+\textbf{Was entschieden wird.} Für jede Person, jeden Tag des Monats und jede Schicht: arbeitet sie diese Schicht
+und auf welcher Station? Das Modell ist allgemein für mehrere Stationen formuliert; die Demo plant genau eine,
+die fiktive Musterstation (\code{api/app/demo.py}).
+
+\textbf{Feste Regeln und Ziele.} Jeder Plan hält die festen Regeln aus Abschnitt~\ref{sec:regeln} ein. Alles
+andere ist ein Ziel. Die elf Ziele werden lexikografisch optimiert (Abschnitt~\ref{sec:lex}), also nacheinander
+in dieser Rangfolge, wobei ein späteres Ziel ein früheres nicht verschlechtern darf:
+
+\begin{center}
+\small
+\begin{tabular}{r l l l}
+\hline
+Rang & Ziel & Code & Abschnitt \\
+\hline
+1 & Monatssaldo innerhalb $\pm 4$\,h & \code{balance\_violation} & \ref{sec:z:saldo} \\
+2 & Wochenende über den Monatswechsel fortführen & \code{weekend\_start} & \ref{sec:z:wochenende} \\
+3 & möglichst wenige Lücken & \code{gaps} & \ref{sec:z:luecken} \\
+4 & Lücken gleichmäßig auf die Tage verteilen & \code{gap\_spread} & \ref{sec:z:lueckenverteilung} \\
+5 & Tage gleichmäßig besetzen & \code{staffing\_spread} & \ref{sec:z:tage} \\
+6 & Samstage je Qualifikation gleichmäßig verteilen & \code{saturdays} & \ref{sec:z:samstage} \\
+7 & Wünsche erfüllen & \code{wishes} & \ref{sec:z:wuensche} \\
+8 & Rotation: jede Schichtart in jedem 28-Tage-Fenster & \code{rotation} & \ref{sec:z:rotation} \\
+9 & Schichten eines Tages gleichmäßig besetzen & \code{shift\_balance} & \ref{sec:z:schichten} \\
+10 & möglichst wenige Wechsel Spät $\to$ Früh & \code{Min\_L\_to\_E} & \ref{sec:z:spaetfrueh} \\
+11 & möglichst oft dieselbe Schicht wie am Vortag & \code{cons} & \ref{sec:z:folgen} \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Monatswechsel.} Zwei Dinge verbinden aufeinanderfolgende Monate: Mit geladenem Vormonat zählen seine
+Dienste als feste Werte bei allen Regeln mit. Endet ein Monat an einem Samstag, wird zudem der folgende Sonntag
+mitgeplant (Abschnitt~\ref{sec:regeln}), damit jeder Samstagsdienst im nächsten Monat weitergehen kann.
+
+\textbf{Lesehilfe.} Die Tage werden fortlaufend nummeriert: $1$ ist der erste Tag des Monats, $n$ der letzte,
+$0$ der letzte Tag davor. Dienste vor dem Monat sind feste Werte, keine Variablen. Jeder Abschnitt gibt zuerst
+die Formeln und darunter die Erklärung mit Verweis auf die Gleichungsnummern; in Klammern steht der Name im Code.
 
 %==========================================================================================================
 \section{Mengen und Indizes}
@@ -36,37 +77,43 @@ sie von der fiktiven Musterstation (\code{api/app/demo.py}) und den Eingaben auf
 \begin{align}
   & i \in I && \text{Mitarbeitende} \label{set:I}\\
   & u \in U,\quad U^{St} \subseteq U && \text{Planungseinheiten, davon Stationen} \label{set:U}\\
-  & s \in S,\quad S^{F}, S^{S}, S^{N} \subseteq S && \text{Schichten, davon Früh-, Spät- und Nachtdienste} \label{set:S}\\
+  & s \in S && \text{Schichten} \label{set:S}\\
+  & \theta \in \Theta = \{\text{Früh}, \text{Zwischen}, \text{Spät}, \text{Nacht}\},\quad S^{\theta} \subseteq S
+    && \text{Schichtarten und ihre Schichten} \label{set:Theta}\\
   & l \in L = \{\text{Fachkraft}, \text{Hilfskraft}, \text{Azubi}, \text{MFA}\} && \text{Qualifikationen} \label{set:L}\\
-  & d \in D = \{1,\dots,n\} && \text{Tage des Planungsmonats} \label{set:D}\\
+  & d \in D = \{1,\dots,n\},\quad \Dp = D \cup \{n+1\} && \text{Tage des Monats, dazu der Folgetag} \label{set:D}\\
+  & \hat D = \{1,\dots,\hat n\} && \text{Planungstage: der Monat, ggf.\ mit Sonntag} \label{set:Dhat}\\
   & d \in \Dm = \{1-m,\dots,0\},\quad \Db = \Dm \cup D && \text{Vortage mit bekannten Diensten, Planungshorizont} \label{set:Dm}\\
-  & D^{Sa} \subseteq \{0,\dots,n-1\} && \text{Samstage, deren Sonntag im Monat liegt} \label{set:DSa}\\
+  & D^{Sa} \subseteq \{0,\dots,\hat n-1\} && \text{Samstage, deren Sonntag geplant wird} \label{set:DSa}\\
   & W = (w_1,\dots,w_{|W|}) \subseteq \{-m,\dots,n\} && \text{Samstage der Wochenenden mit einem Tag in } \Db \label{set:W}\\
-  & D^{end} = \{1-\max(\Delta^N, L^N+1),\dots,n-1\} && \text{Tage, an denen ein Nachtblock enden kann} \label{set:Dend}\\
+  & D^{end} = \{1-\max(\Delta^N, L^N+1),\dots,\hat n-1\} && \text{Tage, an denen ein Nachtblock enden kann} \label{set:Dend}\\
   & K \subseteq S \times D \times U^{St} \times L && \text{Bedarfszeilen mit } r_{sdul} > 0 \label{set:K}\\
-  & A \subseteq I \times S \times D \times U^{St} && \text{zulässige Dienste, siehe \eqref{eq:A}} \label{set:A}
+  & A \subseteq I \times S \times \hat D \times U^{St} && \text{zulässige Dienste, siehe \eqref{eq:A}} \label{set:A}
 \end{align}
 
 \textbf{Erklärung.}
-\eqref{set:I}--\eqref{set:L}: $I$ (\code{I}) sind alle Mitarbeitenden der gewählten Stationen und ihrer
+\eqref{set:I}, \eqref{set:U}: $I$ (\code{I}) sind alle Mitarbeitenden der gewählten Stationen und ihrer
 Springerpools, $U$ (\code{U}) alle Planungseinheiten. Dienste gibt es nur auf Stationen $U^{St}$
-(\code{dataset.station\_ids}); Springerpools sind nur Herkunft. Die Schichtmengen nach Typ
-(\code{S\_early}, \code{S\_late}, \code{S\_night}) sorgen dafür, dass jede Regel für alle Schichten eines
-Typs gilt, unabhängig vom Kürzel.
-\eqref{set:D}, \eqref{set:Dm}: Tage werden fortlaufend nummeriert. $D$ (\code{D}) ist der Monat, $\Dm$
-(\code{D\_prev}) sind die Vortage, für die die tatsächlichen Dienste bekannt sind. Ist der Dienstplan des
-Vormonats geladen, ist $\Dm$ der ganze Vormonat; sonst sind es die $m = 5$ Tage davor, an denen niemand gearbeitet
-hat. Auf
-diesen Tagen gibt es keine Entscheidungsvariablen, die Dienste dort sind feste Werte, siehe \eqref{eq:X}.
-\eqref{set:DSa}, \eqref{set:W}: $D^{Sa}$ (\code{D\_s}) enthält die Samstage, deren Sonntag im Monat liegt;
+(\code{dataset.station\_ids}); Springerpools sind nur Herkunft.
+\eqref{set:S}, \eqref{set:Theta}: Jede Schicht hat eine Art. Kurz geschrieben sind $S^{F}$, $S^{S}$, $S^{N}$ die
+Früh-, Spät- und Nachtschichten (\code{S\_early}, \code{S\_late}, \code{S\_night}). Jede Regel gilt so für alle
+Schichten einer Art, unabhängig vom Kürzel. In der Demo hat jede Art genau eine Schicht: F, Z, S und N.
+\eqref{set:D}, \eqref{set:Dm}: $D$ (\code{D}) ist der Monat. $\Dm$ (\code{D\_prev}) sind die Vortage, für die
+die tatsächlichen Dienste bekannt sind: Ist der Dienstplan des Vormonats geladen, ist $\Dm$ der ganze Vormonat;
+sonst sind es die $m = 5$ Tage davor, an denen niemand gearbeitet hat. Der Folgetag $n+1$ in $\Dp$ zählt für
+Abwesenheiten, in die eine Nacht vom letzten Monatstag hineinreicht.
+\eqref{set:Dhat}: $\hat D$ (\code{D\_plan}) sind die Tage mit Dienstvariablen. Endet der Monat an einem Samstag,
+gehört der Sonntag $n+1$ (\code{D\_next}) dazu und es ist $\hat n = n+1$, sonst $\hat n = n$; siehe
+Abschnitt~\ref{sec:regeln}.
+Allgemein gilt: Alle Tagesbereiche, die in die Vortage reichen (nicht-positive $d$), sind mit $\Dm$ geschnitten,
+umfassen also nur bekannte Vortage.
+\eqref{set:DSa}, \eqref{set:W}: $D^{Sa}$ (\code{D\_s}) enthält die Samstage, deren Sonntag im Monat liegt oder
+mitgeplant wird, dazu den letzten Vortag, wenn er ein Samstag ist;
 $W$ (\code{W}) jedes Wochenende, dessen Samstag oder Sonntag im Monat oder in den Vortagen liegt, durch seinen
-Samstag und aufsteigend; damit gehört das letzte Wochenende vor dem Monat dazu, gleich an welchem Wochentag der
+Samstag und aufsteigend. Damit gehört das letzte Wochenende vor dem Monat dazu, gleich an welchem Wochentag der
 Monat beginnt.
-Ist der letzte Vortag ein Samstag, gilt für ihn \eqref{con:weekendstart}.
-\eqref{set:Dend}: $D^{end}$ (\code{D\_end}) sind die Tage, für die ein Blockende in den Nachtregeln
-gebraucht wird.
-Allgemein gilt: Alle Tagesbereiche, die in die Vortage reichen (nicht-positive $d$), sind mit $\Dm$
-geschnitten, umfassen also nur bekannte Vortage.
+\eqref{set:Dend}: $D^{end}$ (\code{D\_end}) sind die Tage, für die ein Blockende in den Nachtregeln gebraucht
+wird.
 \eqref{set:K}: $K$ (Schlüssel von \code{R\_min}) enthält nur Zeilen mit tatsächlichem Bedarf.
 
 %==========================================================================================================
@@ -80,8 +127,8 @@ geschnitten, umfassen also nur bekannte Vortage.
   & t_i,\ c_i \in \mathbb{N} && \text{Sollminuten und gutgeschriebene Minuten im Monat} \label{par:t}\\
   & \lambda_{iud} \in L && \text{Qualifikation der an Tag } d \text{ gültigen Zugehörigkeit von } i \text{ zu } u \label{par:lambda}\\
   & y^{0}_{isd} \in \{0,1\},\ d \in \Dm && \text{fester Dienst } s \text{ von } i \text{ an Vortag } d \label{par:y0}\\
-  & T_i \subseteq D && \text{Fortbildungstage von } i \label{par:T}\\
-  & B \subseteq I \times D^{+},\ V \subseteq B && \text{blockierte Tage, davon Urlaubstage} \label{par:B}\\
+  & T_i \subseteq \Dp && \text{Fortbildungstage von } i \label{par:T}\\
+  & B \subseteq I \times \Dp,\ V \subseteq B && \text{blockierte Tage, davon Urlaubstage} \label{par:B}\\
   & \operatorname{home}(i,d) \in U && \text{Stammeinheit von } i \text{ am Tag } d \label{par:home}
 \end{align}
 
@@ -104,10 +151,9 @@ anteilig. Für Urlaub und Fortbildung an diesen Tagen wird das Tagessoll gutgesc
 \eqref{par:lambda} (\code{level\_at}): Ein Dienst zählt mit der Qualifikation der Stationszugehörigkeit,
 nicht mit der der Person.
 \eqref{par:y0} (\code{past\_shifts}) sind die Dienste des geladenen Vormonats; ohne Vormonat sind alle 0.
-\eqref{par:T} (\code{training}), \eqref{par:B} (\code{blocked}, \code{vacation}): $B$ enthält alle Tage
-mit Urlaub, freiem Tag, Fortbildung oder „nicht verfügbar“, $V$ nur die Urlaubstage. Beide umfassen auch den
-Tag $n+1$ nach dem Monat (\code{context.availability}), in den eine Nacht vom letzten Monatstag hineinreicht:
-$D^{+} = D \cup \{n+1\}$.
+\eqref{par:T} (\code{training}, \code{training\_days}), \eqref{par:B} (\code{blocked}, \code{vacation}): $B$
+enthält alle Tage mit Urlaub, freiem Tag, Fortbildung oder „nicht verfügbar“, $V$ nur die Urlaubstage. Alle drei
+umfassen auch den Folgetag $n+1$ (\code{context.availability}).
 \eqref{par:home} (\code{home\_of}) ist die Einheit der an $d$ gültigen Stammzugehörigkeit.
 \eqref{par:R}--\eqref{par:Iudl}: $R_{usd}$, $R_{ud}$, $R_u$ (\code{required\_usd}, \code{required\_ud},
 \code{required\_u}) sind der Bedarf je Schicht, Tag und Monat über alle Qualifikationen. $\mathcal{B}$
@@ -118,40 +164,21 @@ Bedarf haben. $I_{udl}$ (\code{staff\_for}) sind die Personen, die an $d$ auf $u
 
 \begin{center}
 \small
-\begin{tabular}{l l l p{5.4cm}}
+\begin{tabular}{l l l >{\raggedright\arraybackslash}p{5.2cm}}
 \hline
 Symbol & Code & Wert & Bedeutung \\
 \hline
-$\tau$ & \code{POLICY.balance\_tolerance\_minutes} & 460 & erlaubte Saldoabweichung in Minuten (7:40\,h) \\
-$K^{S}$ & \code{K\_s} & 10 & höchstens so viele Arbeitstage in Folge \\
+$\tau$ & \code{POLICY.balance\_tolerance\_minutes} & 240 & erlaubte Saldoabweichung in Minuten (4\,h) \\
+$K^{S}$ & \code{POLICY.max\_consecutive\_work\_days} & 10 & höchstens so viele Arbeitstage in Folge \\
 $N^{max}$ & \code{POLICY.max\_consecutive\_nights} & 3 & höchstens so viele Nächte in Folge \\
-$L^{N}$ & \code{L\_n} & $\lfloor 2880/1440 \rfloor = 2$ & freie Tage nach einem Nachtblock \\
+$L^{N}$ & \code{L\_n} & $\lfloor 2880/1440 \rfloor = 2$ & ganz freie Tage nach einem Nachtblock \\
 $\Delta^{N}$ & \code{Dist\_n} & 7 & Tage zwischen Ende eines Nachtblocks und Beginn des nächsten \\
+$\Delta^{R}$ & \code{Rot\_w} & 28 & Tage eines Rotationsfensters \\
 $\pi$ & \code{transfer\_penalty} & 10 & Strafe für einen Dienst auf fremder Station \\
 $\omega$ & \code{wish\_reward} & 30 & Gewicht eines Wunsches \\
 \hline
 \end{tabular}
 \end{center}
-
-\subsection{Präferenzwerte}
-
-Für jeden zulässigen Dienst $(i,s,d,u) \in A$ (\code{pref}):
-\begin{align}
-  p_{isdu} = {} & - \pi \cdot \ind{\operatorname{home}(i,d) \in U^{St},\ \operatorname{home}(i,d) \neq u}
-                 \label{par:p}\\
-  & - \omega \cdot \ind{\text{Wunsch „freier Tag“ für } (i,d)}
-    - \omega \cdot \ind{s \in S^{N},\ \text{Wunsch „freier Tag“ für } (i,d+1)} \notag\\
-  & - \omega \cdot \ind{\text{Wunsch „Schicht } s \text{ frei“ für } (i,d)} \notag\\
-  & + \omega \cdot \ind{\text{Wunsch „Wunschtag“ für } (i,d)}
-    + \omega \cdot \ind{\text{Wunsch „Wunschschicht } s\text{“ für } (i,d)} \notag
-\end{align}
-
-\textbf{Erklärung.}
-\eqref{par:p}: Ein Dienst auf einer fremden Station kostet $\pi$, aber nur, wenn die Person eine Station als
-Stammeinheit hat; Springer (Stammeinheit ist ein Pool) dürfen überall gleich gut arbeiten. Ein erfüllter
-Dienstwunsch bringt $+\omega$, ein Dienst gegen einen Freiwunsch kostet $-\omega$. Beim freien Tag zählt auch
-ein Nachtdienst am Vorabend, weil er bis 06:10 in den Wunschtag hineinreicht; so bewertet es auch der
-Schedule-Check.
 
 %==========================================================================================================
 \section{Zulässige Dienste}
@@ -159,35 +186,45 @@ Schedule-Check.
 \begin{align}
   N^{V} &= \{(i,s,d) : \text{für } (i,d) \text{ ist eine Einschränkung eingetragen, die } s \text{ nicht erlaubt}\} \label{eq:NV}\\
   N^{N} &= \{(i,s,d) : s \in S^{N},\ d \in D,\ (i,d+1) \in B\} \label{eq:NN}\\
-  N^{S} &= \{(i,s,d) : s \in S^{S},\ d \in D,\ (i,d+1) \in V,\ (i,d) \notin V\} \label{eq:NS}\\
+  N^{S} &= \{(i,s,d) : s \in S^{S},\ d \in D,\ \bigl((i,d+1) \in V,\ (i,d) \notin V\bigr) \text{ oder }
+          \bigl(d+1 \in T_i,\ d \notin T_i\bigr)\} \label{eq:NS}\\
   A &= \bigl\{(i,s,d,u) : u \in U^{St},\ \lambda_{iud} \text{ definiert},\
-       (i,s,d) \notin N^{V} \cup N^{N} \cup N^{S},\ (u,s,\lambda_{iud}) \in \mathcal{B}\bigr\} \label{eq:A}
+       (i,s,d) \notin N^{V} \cup N^{N} \cup N^{S}, \label{eq:A}\\
+    &\hphantom{{}= \bigl\{(i,s,d,u) :{}} s \in S^{F} \cup S^{S} \text{ oder } (u,s,\lambda_{iud}) \in \mathcal{B}\bigr\} \notag
 \end{align}
 
 \textbf{Erklärung.}
 Statt diese Regeln als Nebenbedingungen zu formulieren, werden verbotene Dienste gar nicht erst als Variable
 angelegt (\code{not\_allowed}, Liste beim Anlegen von \code{assignment}).
 \eqref{eq:NV}: Urlaub, freier Tag, Fortbildung und „nicht verfügbar“ verbieten alle Schichten, „nur
-bestimmte Schichten“ verbietet die übrigen.
+bestimmte Schichten“ verbietet die übrigen. Für einen mitgeplanten Sonntag gelten die Einträge, die der Folgemonat
+für ihn schon hat.
 \eqref{eq:NN}: Eine Nacht reicht in den Folgetag; vor einem blockierten Tag ist sie verboten, am letzten
 Monatstag also auch vor einer Abwesenheit am Ersten des Folgemonats.
-\eqref{eq:NS}: Am Tag vor Urlaubsbeginn gibt es keinen Spätdienst, auch wenn der Urlaub am Ersten des
-Folgemonats beginnt.
-\eqref{eq:A}: Ein Dienst ist nur auf einer Station möglich, zu der an diesem Tag eine gültige Zugehörigkeit
-besteht, und nur in einer Schicht, für die die Station mit dieser Qualifikation im Monat überhaupt Bedarf hat
-(z.\,B. kein Zwischendienst, wenn nie einer gefordert ist, keine Nächte für Azubis, wenn nie Azubi-Nachtbedarf
-besteht).
+\eqref{eq:NS}: Am Tag vor Urlaubsbeginn und vor einer Fortbildung gibt es keinen Spätdienst, auch wenn sie am
+Ersten des Folgemonats beginnen. Vor dem Urlaub ist das betriebliche Gepflogenheit; die Fortbildung ist
+Arbeitszeit, und nach einem Spätdienst bis 21:00 blieben 11\,h Ruhezeit nur bis zu einem Beginn um 08:00, dessen
+Uhrzeit das Modell nicht kennt.
+\eqref{eq:A} (\code{always\_open}, \code{demanded}): Ein Dienst ist nur auf einer Station möglich, zu der an
+diesem Tag eine gültige Zugehörigkeit besteht. Früh- und Spätdienste kann dort jede Qualifikation übernehmen, auch
+ohne eigenen Bedarf; sie zählen dann als zusätzliches Personal. Nacht- und Zwischendienste dagegen nur, wenn die
+Station sie von dieser Qualifikation im Monat überhaupt fordert (z.\,B. kein Zwischendienst, wenn nie einer
+gefordert ist, keine Nächte für Azubis, wenn nie Azubi-Nachtbedarf besteht).
 
 %==========================================================================================================
-\section{Entscheidungsvariablen}
+\section{Variablen und Hilfsausdrücke}
+
+\subsection{Entscheidungsvariablen}
 
 \begin{align}
   & x_{isdu} \in \{0,1\} && (i,s,d,u) \in A && \text{Dienst } (\code{assignment}) \label{var:x}\\
+  & \psi_{iw\theta} \in \{0,1\} && (i,w,\theta) \in \Psi && \text{Schichtart im Rotationsfenster } (\code{rotation}) \label{var:psi}\\
   & g_{sdul} \ge 0 && (s,d,u,l) \in K && \text{Lücke } (\code{gap}) \label{var:g}\\
   & \eta_i \in \mathbb{R} && i \in I && \text{Monatssaldo in Minuten } (\code{hour}) \label{var:eta}\\
   & o_i \ge 0 && i \in I && \text{Saldo außerhalb des Bands } (\code{over}) \label{var:o}\\
   & q_{ud} \ge 0 && u \in U^{St},\ d \in D,\ R_{ud} > 0 && \text{Quadrat der Lücken des Tages } (\code{gap\_sq}) \label{var:q}\\
   & \rho_{ud} \ge 0 && u \in U^{D},\ d \in D && \text{Abweichung der Tagesbesetzung } (\code{day\_dev}) \label{var:rho}\\
+  & \chi_i \ge 0 && i \in I && \text{Quadrat der gearbeiteten Samstage } (\code{sat\_sq}) \label{var:chi}\\
   & \delta_{usd} \ge 0 && u \in U^{St},\ d \in D,\ R_{ud} > 0,\ s \in S && \text{Abweichung der Schichtbesetzung } (\code{dev}) \label{var:delta}\\
   & b_{id} \in [0,1] && i \in I,\ d \in \{0\} \cup D && \text{Beginn eines Nachtblocks } (\code{n\_beg}) \label{var:b}\\
   & e_{id} \in [0,1] && i \in I,\ d \in D^{end} && \text{Ende eines Nachtblocks } (\code{n\_end}) \label{var:e}\\
@@ -196,17 +233,17 @@ besteht).
 \end{align}
 
 \textbf{Erklärung.}
-Nur $x$ \eqref{var:x} ist ganzzahlig. Alle anderen Variablen sind stetige Hilfsgrößen; ihre Werte ergeben
-sich aus $x$ und der Optimierung. $g$ \eqref{var:g} nimmt im Optimum ganzzahlige Werte an, $b$, $e$, $z$
-und $v$ \eqref{var:b}--\eqref{var:v} nur 0 oder 1, weil sie ausschließlich durch ganzzahlige Ausdrücke in $x$
+Die eigentliche Entscheidung ist $x$ \eqref{var:x}. $\psi$ \eqref{var:psi} ist ebenfalls binär; die Menge $\Psi$
+steht bei der Rotation in Abschnitt~\ref{sec:z:rotation}. Alle anderen Variablen sind stetige Hilfsgrößen; ihre
+Werte ergeben sich aus $x$ und der Optimierung. $g$ \eqref{var:g} nimmt im Optimum ganzzahlige Werte an, $b$, $e$,
+$z$ und $v$ \eqref{var:b}--\eqref{var:v} nur 0 oder 1, weil sie ausschließlich durch ganzzahlige Ausdrücke in $x$
 nach oben bzw. unten begrenzt werden und die Optimierung sie an diese Grenze drückt.
 
-%==========================================================================================================
-\section{Hilfsausdrücke}
+\subsection{Hilfsausdrücke}
 
 \begin{align}
   X_{isd} &= \begin{cases}
-      \sum_{u : (i,s,d,u) \in A} x_{isdu} & d \in D\\
+      \sum_{u : (i,s,d,u) \in A} x_{isdu} & d \in \hat D\\
       y^{0}_{isd} & d \in \Dm\\
       0 & \text{sonst}
     \end{cases} && \text{(\code{x}, \code{shift\_on})} \label{eq:X}\\
@@ -230,137 +267,29 @@ für Früh-, Spät- und Nachtdienst.
 \eqref{eq:G}: Summe der Lücken einer Station an einem Tag.
 
 %==========================================================================================================
-\section{Zielfunktionen}
+\section{Feste Regeln}\label{sec:regeln}
 
-Die Ziele werden lexikografisch in dieser Reihenfolge optimiert (Priorität fallend):
-\begin{align}
-  f_1 &= \textstyle\sum_{(s,d,u,l) \in K} g_{sdul} \to \min && \text{(\code{gaps})} \label{obj:gaps}\\
-  f_2 &= \textstyle\sum_{i \in I} o_i \to \min && \text{(\code{balance\_violation})} \label{obj:balance}\\
-  f_3 &= \textstyle\sum_{(u,d) : R_{ud} > 0} \dfrac{q_{ud}}{R_{ud}} \to \min && \text{(\code{gap\_spread})} \label{obj:gapspread}\\
-  f_4 &= \textstyle\sum_{u \in U^{D}} \sum_{d \in D} \rho_{ud} \to \min && \text{(\code{staffing\_spread})} \label{obj:staffingspread}\\
-  f_5 &= \textstyle\sum_{(i,s,d,u) \in A} p_{isdu}\, x_{isdu} \to \max && \text{(\code{wishes})} \label{obj:wishes}\\
-  f_6 &= \textstyle\sum_{u,s,d} \delta_{usd} \to \min && \text{(\code{shift\_balance})} \label{obj:shiftbalance}\\
-  f_7 &= \textstyle\sum_{i \in I} \sum_{d \in D} z_{id} \to \min && \text{(\code{Min\_L\_to\_E})} \label{obj:ltoe}\\
-  f_8 &= \textstyle\sum_{i \in I} \sum_{s \in S} \sum_{d \in D} v_{isd} \to \max && \text{(\code{cons})} \label{obj:cons}
-\end{align}
+Diese Nebenbedingungen hält jeder Plan ein. Zusammen mit den verbotenen Diensten aus \eqref{eq:A} sind das alle
+festen Regeln. Am Monatsanfang erzwingen sie nie etwas, das die Vergangenheit unmöglich machen könnte: So bleibt
+das Modell auch mit geladenem Vormonat immer lösbar.
 
-\textbf{Lexikografisches Vorgehen.}
-Für $k = 1,\dots,8$ wird $f_k$ über alle zulässigen Lösungen optimiert, unter den zusätzlichen Bedingungen
-\begin{equation}
-  f_j \le \hat f_j + \alpha_j \quad (\text{bzw. } f_j \ge \hat f_j - \alpha_j \text{ für } j = 5, 8)
-  \qquad \forall j < k, \label{obj:lex}
-\end{equation}
-wobei $\hat f_j$ der in Stufe $j$ erreichte Wert ist. Die Toleranzen $\alpha_j$ (\code{abstol}) sind
-\begin{center}
-\small
-\begin{tabular}{l l l}
-\hline
-Stufe & Gesamtspielraum $\varepsilon_j$ (\code{stage\_slack}) & $\alpha_j = \varepsilon_j/2$ \\
-\hline
-$f_3$ \code{gap\_spread} & $2$ & $1$ \\
-$f_4$ \code{staffing\_spread} & $|U^{D}| \cdot n / 7$ & $|U^{D}| \cdot n / 14$ \\
-$f_6$ \code{shift\_balance} & $2\,|U^{D}| \cdot n / 7$ & $|U^{D}| \cdot n / 7$ \\
-alle anderen & -- & $10^{-6}$ \\
-\hline
-\end{tabular}
-\end{center}
+\textbf{Der mitgeplante Sonntag.} Die Regeln gelten auf allen Planungstagen $\hat D$. Endet der Monat an einem
+Samstag, ist das auch der Sonntag $n+1$ (\code{D\_next}). Er ist durch \eqref{con:weekend} eine Kopie des Samstags:
+dieselbe Schicht oder beide frei. So plant der Monat nur Samstagsdienste, die am Sonntag weitergehen können, ohne
+eine vierte Nacht, gegen die Erholung oder eine Abwesenheit am Sonntag. Der Sonntag zählt aber für kein Konto
+\eqref{con:balance}, keinen Bedarf und kein Ziel, und seine Dienste gehören nicht zum Plan. Der Folgemonat plant ihn
+mit diesem Plan als Vormonat neu und führt das Wochenende über \eqref{obj:weekend} fort.
 
-\textbf{Abbruchkriterien.} Gesamtzeit $T$ (in der Demo-Version fest $T = 30$\,s, \code{SOLVER\_MAX\_TIME\_SECONDS}),
-relative Optimalitätslücke 3\,\% (\code{MIPGap}) für jede Stufe außer $f_1$ und $f_2$, die exakt gelöst
-werden (\code{MIPGap} 0); für $f_3$, $f_4$, $f_6$ zusätzlich eine absolute
-Lücke von $\varepsilon_j/2$ (\code{MIPGapAbs}); Zeitlimit $0{,}15\,T$ für $f_4$ und $0{,}10\,T$ für $f_6$
-(\code{stage\_time\_share}). Ein Watchdog beendet die Rechnung spätestens 5\,s nach $T$, gleich in welcher Stufe.
-
-\textbf{Erklärung.}
-\eqref{obj:gaps}: Zuerst möglichst wenige unbesetzte Pflichtstellen.
-\eqref{obj:balance}: Danach die Saldoregel: Minuten, um die ein Monatssaldo das Band $\pm\tau$ verlässt,
-siehe \eqref{con:over}. Die Regel ist weich, damit es auch dann einen Plan gibt, wenn sie nicht für alle
-einzuhalten ist.
-\eqref{obj:gapspread}: Lücken möglichst gleichmäßig auf die Tage verteilen. $q_{ud}$ ist das Quadrat der
-Lücken eines Tages \eqref{con:gapsq}; zwei Tage mit je einer Lücke ($1+1$) sind billiger als ein Tag mit zwei
-($4$). Die Division durch $R_{ud}$ gewichtet relativ zum Bedarf: Eine Lücke wiegt an einem schwach besetzten
-Tag schwerer.
-\eqref{obj:staffingspread}: Jeder Tag einer Station soll im gleichen Verhältnis Ist/Soll besetzt sein wie der
-ganze Monat \eqref{con:daydev}; Über- und Unterbesetzung verteilen sich so gleichmäßig auf die Tage.
-\eqref{obj:wishes}: Wünsche erfüllen und Einsätze auf fremden Stationen vermeiden, siehe \eqref{par:p}.
-\eqref{obj:shiftbalance}: Die Besetzung eines Tages soll sich im Verhältnis der Mindestbesetzung auf die
-Schichten verteilen \eqref{con:shiftdev}.
-\eqref{obj:ltoe}: Möglichst wenige Wechsel von Spät- auf Frühdienst \eqref{con:ltoe}; die 11-h-Ruhezeit ist
-im Modell bewusst nur weich.
-\eqref{obj:cons}: Möglichst oft dieselbe Schicht wie am Vortag \eqref{con:cons}.
-\eqref{obj:lex}: Eine spätere Stufe darf eine frühere nur um deren Toleranz verschlechtern. Bei den drei
-Verteilungsstufen ist das bewusst etwas Spielraum, damit die späteren Stufen noch Wahlmöglichkeiten haben;
-die andere Hälfte des Spielraums erlaubt einen frühen Abbruch der Stufe. Insgesamt liegt der Endwert einer
-solchen Stufe höchstens $\varepsilon_j$ über dem bestmöglichen Wert.
-
-%==========================================================================================================
-\section{Nebenbedingungen}
-
-\subsection{Grundregeln und Besetzung}
+\subsection{Ein Dienst pro Tag und Arbeitstage am Stück}
 
 \begin{align}
-  & Y_{id} \le 1 && \forall i \in I,\ d \in D \label{con:one}\\
-  & \textstyle\sum_{i \in I_{udl} : (i,s,d,u) \in A} x_{isdu} + g_{sdul} \ge r_{sdul} && \forall (s,d,u,l) \in K \label{con:demand}
+  & Y_{id} \le 1 && \forall i \in I,\ d \in \hat D \label{con:one}\\
+  & \textstyle\sum_{d' = d}^{d + K^{S}} Y_{id'} + |T_i \cap \{d,\dots,d+K^{S}\}| \le \max\bigl(K^{S},\ \kappa_{id}\bigr)
+    && \forall i \in I,\ d \in \{1-\min(m,K^{S}),\dots,\hat n-K^{S}\} \label{con:ks}
 \end{align}
 
 \textbf{Erklärung.}
 \eqref{con:one} (\code{one\_shift}): Höchstens ein Dienst pro Person und Tag, über alle Stationen.
-\eqref{con:demand} (\code{demand}): Die Mindestbesetzung jeder Bedarfszeile wird durch Dienste mit passender
-Qualifikation gedeckt; was fehlt, ist eine Lücke $g$. Die Mindestbesetzung ist damit weich und wird über
-\eqref{obj:gaps} minimiert.
-
-\subsection{Monatssaldo}
-
-\begin{align}
-  & \textstyle\sum_{(s,d,u) : (i,s,d,u) \in A} h_s\, x_{isdu} + c_i - \eta_i = t_i && \forall i \in I \label{con:balance}\\
-  & o_i \ge \eta_i - \tau,\qquad o_i \ge -\eta_i - \tau && \forall i \in I \label{con:over}
-\end{align}
-
-\textbf{Erklärung.}
-\eqref{con:balance} (\code{workhours}): $\eta_i$ ist der Saldo in Minuten: geplante Minuten plus
-Gutschriften minus Soll, genau wie das Monatskonto im Projekt.
-\eqref{con:over} (\code{over\_up}, \code{over\_down}): $o_i$ misst, um wie viele Minuten der Saldo außerhalb
-von $\pm\tau = \pm 460$ liegt. Im Optimum gilt $o_i = \max(0, |\eta_i| - \tau)$.
-
-\subsection{Gleichmäßige Verteilung}
-
-\begin{align}
-  & q_{ud} \ge (2k+1)\, G_{ud} - k(k+1) && \forall (u,d) : R_{ud} > 0,\ k = 0,\dots,R_{ud}-1 \label{con:gapsq}\\
-  & \rho_{ud} \ge P_{ud} - \tfrac{R_{ud}}{R_u}\, P_u,\qquad
-    \rho_{ud} \ge -\bigl(P_{ud} - \tfrac{R_{ud}}{R_u}\, P_u\bigr) && \forall u \in U^{D},\ d \in D \label{con:daydev}\\
-  & \delta_{usd} \ge P_{usd} - \tfrac{R_{usd}}{R_{ud}}\, P_{ud},\qquad
-    \delta_{usd} \ge -\bigl(P_{usd} - \tfrac{R_{usd}}{R_{ud}}\, P_{ud}\bigr) && \forall (u,d) : R_{ud} > 0,\ s \in S \label{con:shiftdev}
-\end{align}
-
-\textbf{Erklärung.}
-\eqref{con:gapsq} (\code{gap\_sq}): Lineare Darstellung von $q_{ud} \ge G_{ud}^2$. Die rechte Seite ist für
-jedes $k$ die Sekante durch die Parabelpunkte $(k, k^2)$ und $(k+1, (k+1)^2)$. Zwischen $k$ und $k+1$ liegt sie
-über der Parabel, außerhalb darunter. Das Maximum aller Sekanten ist daher die stückweise lineare Interpolation
-von $G_{ud}^2$: überall mindestens $G_{ud}^2$ und in ganzzahligen Punkten genau $G_{ud}^2$. Da die Lücken eines
-Tages ganzzahlig zwischen $0$ und $R_{ud}$ liegen und $q_{ud}$ minimiert wird, ist $q_{ud} = G_{ud}^2$ im
-Optimum exakt.
-\eqref{con:daydev} (\code{day\_dev\_up}, \code{day\_dev\_down}): $\rho_{ud} \ge |P_{ud} - \frac{R_{ud}}{R_u}
-P_u|$, also die Abweichung der Tagesbesetzung von ihrem Anteil an der Monatsbesetzung. Ein Tag ohne Bedarf
-hat Anteil 0, jeder Dienst dort zählt als Abweichung.
-\eqref{con:shiftdev} (\code{shift\_dev\_up}, \code{shift\_dev\_down}): $\delta_{usd} \ge |P_{usd} -
-\frac{R_{usd}}{R_{ud}} P_{ud}|$, die Abweichung einer Schicht von ihrem Anteil an der Tagesbesetzung. Weil
-sich Anteile nur mit „Bruchteilen von Personen“ exakt treffen lassen, ist ein Teil dieser Abweichung
-unvermeidbar; die Stufe hat deshalb ein Zeitlimit statt eines Optimalitätsbeweises.
-
-\subsection{Folgedienste und Wechsel}
-
-\begin{align}
-  & v_{isd} \le X_{isd},\qquad v_{isd} \le X_{is,d-1} && \forall i \in I,\ s \in S,\ d \in D \label{con:cons}\\
-  & z_{id} \ge Y^{S}_{i,d-1} + Y^{F}_{id} - 1 && \forall i \in I,\ d \in D \label{con:ltoe}\\
-  & \textstyle\sum_{d' = d}^{d + K^{S}} Y_{id'} + |T_i \cap \{d,\dots,d+K^{S}\}| \le \max\bigl(K^{S},\ \kappa_{id}\bigr)
-    && \forall i \in I,\ d \in \{1-\min(m,K^{S}),\dots,n-K^{S}\} \label{con:ks}
-\end{align}
-
-\textbf{Erklärung.}
-\eqref{con:cons} (\code{cons\_s}): $v_{isd}$ darf nur 1 sein, wenn an $d$ und $d-1$ dieselbe Schicht gearbeitet
-wird; maximiert in \eqref{obj:cons}.
-\eqref{con:ltoe} (\code{L\_to\_E}): $z_{id}$ ist mindestens 1, wenn auf einen Spätdienst ein Frühdienst
-folgt; minimiert in \eqref{obj:ltoe}.
 \eqref{con:ks}: In jedem Fenster von $K^{S}+1 = 11$ Tagen höchstens $K^{S} = 10$ Arbeitstage; Fortbildungstage
 zählen als Arbeitstage. Die Fenster beginnen schon in den Vortagen, damit die Regel über den Monatswechsel gilt.
 $\kappa_{id}$ ist der feste Teil des Fensters (Arbeitstage der Vortage und Fortbildungstage). Erreicht er die
@@ -370,13 +299,15 @@ Grenze schon allein, ist im Fenster kein weiterer Dienst möglich, statt dass da
 
 \begin{align}
   & \textstyle\sum_{d' = d}^{d + N^{max}} Y^{N}_{id'} \le \max\bigl(N^{max},\ \nu_{id}\bigr)
-    && \forall i \in I,\ d \in \{1-\min(m,N^{max}),\dots,0\} \cup \{1,\dots,n-N^{max}\} \label{con:nights}\\
-  & b_{id} \ge Y^{N}_{id} - Y^{N}_{i,d-1} && \forall i \in I,\ d \in \{0\} \cup D \label{con:beg}\\
+    && \forall i \in I,\ d \in \{1-\min(m,N^{max}),\dots,0\} \cup \{1,\dots,\hat n-N^{max}\} \label{con:nights}\\
+  & b_{id} \ge Y^{N}_{id} - Y^{N}_{i,d-1} && \forall i \in I,\ d \in \{0\} \cup \hat D \label{con:beg}\\
   & e_{id} \ge Y^{N}_{id} - Y^{N}_{i,d+1} && \forall i \in I,\ d \in D^{end} \label{con:end}\\
-  & b_{id} + e_{id} \le 1 && \forall i \in I,\ d \in \{1,\dots,n-1\} \label{con:single}\\
-  & e_{id} + Y_{i,d+j} \le 1 && \forall i \in I,\ d \in \{-L^{N},\dots,n-1\},\ j = 1,\dots,L^{N},\ d+j \in D \label{con:recovery}\\
-  & e_{id} + Y^{F}_{i,d+L^{N}+1} \le 1 && \forall i \in I,\ d \in \{-L^{N},\dots,n-1\},\ d+L^{N}+1 \in D \label{con:recoveryearly}\\
-  & e_{id} + \textstyle\sum_{j = 1,\ d+j \in D}^{\Delta^{N}} b_{i,d+j} \le 1 && \forall i \in I,\ d \in \{1-\Delta^{N},\dots,n-1\} \cap D^{end} \label{con:distance}
+  & b_{id} + e_{id} \le 1 && \forall i \in I,\ d \in \{1,\dots,\hat n-1\} \label{con:single}\\
+  & e_{id} + Y_{i,d+j} \le 1 && \forall i \in I,\ d \in \{-L^{N},\dots,\hat n-1\},\ j = 1,\dots,L^{N},\ d+j \in \hat D \label{con:recovery}\\
+  & e_{id} \le 0 && \forall i \in I,\ d \in \{1,\dots,\hat n-1\} \text{ mit } T_i \cap \{d+1,\dots,d+L^{N}\} \neq \emptyset
+    \label{con:recoverytraining}\\
+  & e_{id} + Y^{F}_{i,d+L^{N}+1} \le 1 && \forall i \in I,\ d \in \{-L^{N},\dots,\hat n-1\},\ d+L^{N}+1 \in \hat D \label{con:recoveryearly}\\
+  & e_{id} + \textstyle\sum_{j = 1,\ d+j \in \hat D}^{\Delta^{N}} b_{i,d+j} \le 1 && \forall i \in I,\ d \in \{1-\Delta^{N},\dots,\hat n-1\} \cap D^{end} \label{con:distance}
 \end{align}
 
 \textbf{Erklärung.}
@@ -384,14 +315,17 @@ Grenze schon allein, ist im Fenster kein weiterer Dienst möglich, statt dass da
 die Nächte der Vortage im Fenster (wie bei \eqref{con:ks}).
 \eqref{con:beg}, \eqref{con:end} (\code{n\_beg}, \code{n\_end}): $b_{id}$ ist mindestens 1, wenn an $d$ ein
 Nachtblock beginnt (Nacht an $d$, keine an $d-1$), $e_{id}$, wenn einer endet. Untergrenzen genügen, weil $b$
-und $e$ nur in $\le 1$-Bedingungen mit positivem Vorzeichen und in keinem Ziel vorkommen.
+und $e$ nur in $\le$-Bedingungen mit positivem Vorzeichen und in keinem Ziel vorkommen.
 \eqref{con:single}: Beginn und Ende am selben Tag hieße Ein-Nacht-Block; der ist im Monat verboten. Eine
 einzelne Nacht am letzten Vortag wird nicht zwangsweise fortgesetzt, weil eine Abwesenheit am Ersten oder die
 Nachtgrenze die zweite Nacht verbieten kann.
-\eqref{con:recovery}, \eqref{con:recoveryearly}: Nach dem letzten Nachtdienst eines Blocks $L^{N} = 2$ Tage
-frei und am dritten Tag kein Frühdienst. Das bildet die 48 Stunden Erholung ab: Die Nacht endet um 06:10, der
-Frühdienst am dritten Tag beginnt um 05:55. Nur Tage im Monat werden eingeschränkt, die Vergangenheit nie
-gegen sich selbst.
+\eqref{con:recovery}, \eqref{con:recoverytraining}, \eqref{con:recoveryearly}: Nach dem letzten Nachtdienst eines
+Blocks sind $L^{N} = 2$ Tage ganz frei, und am dritten Tag gibt es keinen Frühdienst. Das bildet die 48 Stunden
+Erholung ab: Die Nacht endet um 06:10, der Frühdienst am dritten Tag beginnt um 05:55. \emph{Ganz frei} heißt auch
+ohne Fortbildung \eqref{con:recoverytraining} (\code{recovery\_training}): Ein Block im Monat endet nicht innerhalb
+von $L^{N}$ Tagen vor einer Fortbildung, auch nicht vor einer am Folgetag $n+1$. Mit \eqref{eq:NN} gibt es so in
+den $L^{N}$ Tagen vor einer Fortbildung gar keine Nacht. Nur Tage im Monat werden eingeschränkt; ein Block, der
+schon vor dem Monat geendet hat, bleibt, wie er ist.
 \eqref{con:distance}: Nach dem Ende eines Nachtblocks darf in den nächsten $\Delta^{N} = 7$ Tagen kein neuer
 Block beginnen; berücksichtigt werden nur Blockanfänge im Monat.
 
@@ -411,9 +345,10 @@ Block beginnen; berücksichtigt werden nur Blockanfänge im Monat.
 \textbf{Erklärung.}
 \eqref{con:weekend}: Samstag und Sonntag haben dieselbe Schicht, oder beide sind frei.
 \eqref{con:weekendstart}: Über den Monatswechsel (der Monat beginnt an einem Sonntag) bindet der bekannte Samstag
-den Sonntag nur schwach: Nach einem gearbeiteten Samstag hat der Sonntag dieselbe Schicht oder ist frei; erzwungen
-wird nichts, weil eine Abwesenheit am Ersten oder die Nachtgrenze den Dienst verbieten kann. War der Samstag frei,
-ist der Sonntag offen; sonst müsste jeder am Ersten frei haben, dessen Samstag davor frei war.
+den Sonntag als feste Regel nur schwach: Nach einem gearbeiteten Samstag hat der Sonntag dieselbe Schicht oder ist
+frei; erzwungen wird nichts, weil eine Abwesenheit am Ersten oder die Nachtgrenze den Dienst verbieten kann. War
+der Samstag frei, ist der Sonntag offen; ohne Vormonat gelten die Vortage ja nur als frei, sonst müsste jeder am
+Ersten frei haben. Mit geladenem Vormonat verlangt das Ziel \eqref{obj:weekend} die volle Regel.
 \eqref{eq:Omega}: $\Omega_{iw}$ gibt an, ob $i$ das Wochenende mit dem Samstag $w$ arbeitet. Gearbeitet ist es
 mit einem Dienst am Samstag oder Sonntag; eine Nacht vom Freitag allein lässt es frei. Im Monat haben Samstag
 und Sonntag dieselbe Schicht \eqref{con:weekend}, also entscheidet der Samstag ($w \ge 1$). Für $w \le 0$ liegt
@@ -422,25 +357,299 @@ einem gearbeiteten Samstag, sonst $Y_{i,w+1}$.
 \eqref{con:twoweekends}: Keine zwei Wochenenden in Folge, auch nicht über den Monatswechsel. Geprüft werden nur
 Paare, deren späteres Wochenende den Monat berührt ($w_{k+1} \ge 0$, sein Sonntag liegt also im Monat); die
 Vergangenheit wird nie gegen sich selbst geprüft, auch nicht ein Paar, das nach einem gearbeiteten Samstag vor
-dem Monat schon ganz feststeht. Daraus
-folgt zugleich, dass höchstens jedes zweite Wochenende gearbeitet wird.
+dem Monat schon ganz feststeht. Daraus folgt zugleich, dass höchstens jedes zweite Wochenende gearbeitet wird.
+
+%==========================================================================================================
+\section{Ziele in ihrer Rangfolge}\label{sec:ziele}
+
+Jedes Ziel steht hier mit den Nebenbedingungen, die seine Hilfsvariablen festlegen. Die Reihenfolge ist die
+Rangfolge, in der Gurobi sie optimiert (Abschnitt~\ref{sec:lex}).
+
+\subsection{Rang 1: Monatssaldo innerhalb des Bands}\label{sec:z:saldo}
+
+\begin{align}
+  & \textstyle\sum_{(s,d,u) : (i,s,d,u) \in A,\ d \in D} h_s\, x_{isdu} + c_i - \eta_i = t_i && \forall i \in I \label{con:balance}\\
+  & o_i \ge \eta_i - \tau,\qquad o_i \ge -\eta_i - \tau && \forall i \in I \label{con:over}\\
+  & f_1 = \textstyle\sum_{i \in I} o_i \to \min && \text{(\code{balance\_violation})} \label{obj:balance}
+\end{align}
+
+\textbf{Erklärung.}
+\eqref{con:balance} (\code{workhours}): $\eta_i$ ist der Saldo in Minuten: geplante Minuten im Monat plus
+Gutschriften minus Soll, genau wie das Monatskonto im Projekt. Ein mitgeplanter Sonntag zählt nicht mit.
+\eqref{con:over} (\code{over\_up}, \code{over\_down}): $o_i$ misst, um wie viele Minuten der Saldo außerhalb von
+$\pm\tau = \pm 240$ liegt; im Optimum ist $o_i = \max(0, |\eta_i| - \tau)$.
+\eqref{obj:balance}: Dieses Ziel steht ganz oben, noch vor den Lücken. Können alle Salden im Band liegen, ist
+$\hat f_1 = 0$, und jede spätere Stufe muss $f_1 = 0$ halten \eqref{obj:lex}: Das Band wirkt dann wie eine feste
+Regel, auch wenn dafür eine Lücke offen bleibt. Ist es für jemanden unerreichbar (z.\,B.\ den halben Monat nicht
+verfügbar), entsteht trotzdem ein Plan mit möglichst kleiner Überschreitung, statt dass das Modell unlösbar wird.
+
+\subsection{Rang 2: Wochenende über den Monatswechsel}\label{sec:z:wochenende}
+
+\begin{align}
+  & f_2 = \textstyle\sum_{i \in I : Y_{i0} = 1} \bigl(1 - X_{i\sigma_i 1}\bigr) + \sum_{i \in I : Y_{i0} = 0} Y_{i1} \to \min
+    && \text{(\code{weekend\_start})} \label{obj:weekend}
+\end{align}
+nur mit geladenem Vormonat und wenn der Monat an einem Sonntag beginnt; sonst ist $f_2 = 0$. Dabei ist $\sigma_i$ die
+Schicht von $i$ am Samstag $0$.
+
+\textbf{Erklärung.}
+\eqref{obj:weekend} (\code{weekend\_split}): Zählt die Personen, deren Wochenende über den Monatswechsel ungleich
+ist: Wer Samstag gearbeitet hat und am Sonntag nicht dieselbe Schicht hat, und wer Samstag frei hatte und am Sonntag
+arbeitet. Andere Schichten als die vom Samstag schließt \eqref{con:weekendstart} schon aus. Weil das Ziel direkt
+nach dem Saldo kommt, gilt die volle Wochenendregel, wann immer das möglich ist. Ist es nicht möglich, etwa weil
+nach dem Plan des Vormonats noch Urlaub am Ersten eingetragen wurde, bleibt das Wochenende geteilt, statt dass das
+Modell unlösbar wird; die Prüfung weist es dann aus. Hat der Vormonat mit seinem mitgeplanten Sonntag gerechnet,
+kann jeder Samstagsdienst weitergehen. Ohne Vormonat gilt dieses Ziel nicht, weil die Tage davor nur als frei
+angenommen sind.
+
+\subsection{Rang 3: Lücken}\label{sec:z:luecken}
+
+\begin{align}
+  & \textstyle\sum_{i \in I_{udl} : (i,s,d,u) \in A} x_{isdu} + g_{sdul} \ge r_{sdul} && \forall (s,d,u,l) \in K \label{con:demand}\\
+  & f_3 = \textstyle\sum_{(s,d,u,l) \in K} g_{sdul} \to \min && \text{(\code{gaps})} \label{obj:gaps}
+\end{align}
+
+\textbf{Erklärung.}
+\eqref{con:demand} (\code{demand}): Die Mindestbesetzung jeder Bedarfszeile wird durch Dienste mit passender
+Qualifikation gedeckt; was fehlt, ist eine Lücke $g$. Die Mindestbesetzung ist damit keine feste Regel: Auch bei
+Personalmangel gibt es einen Plan, und \eqref{obj:gaps} hält die Zahl der unbesetzten Pflichtstellen klein.
+
+\subsection{Rang 4: Lücken gleichmäßig verteilen}\label{sec:z:lueckenverteilung}
+
+\begin{align}
+  & q_{ud} \ge (2k+1)\, G_{ud} - k(k+1) && \forall (u,d) : R_{ud} > 0,\ k = 0,\dots,R_{ud}-1 \label{con:gapsq}\\
+  & f_4 = \textstyle\sum_{(u,d) : R_{ud} > 0} \dfrac{q_{ud}}{R_{ud}} \to \min && \text{(\code{gap\_spread})} \label{obj:gapspread}
+\end{align}
+
+\textbf{Erklärung.}
+\eqref{con:gapsq} (\code{gap\_sq}): Lineare Darstellung von $q_{ud} \ge G_{ud}^2$. Die rechte Seite ist für
+jedes $k$ die Sekante durch die Parabelpunkte $(k, k^2)$ und $(k+1, (k+1)^2)$. Zwischen $k$ und $k+1$ liegt sie
+über der Parabel, außerhalb darunter. Das Maximum aller Sekanten ist daher die stückweise lineare Interpolation
+von $G_{ud}^2$: überall mindestens $G_{ud}^2$ und in ganzzahligen Punkten genau $G_{ud}^2$. Da die Lücken eines
+Tages ganzzahlig zwischen $0$ und $R_{ud}$ liegen und $q_{ud}$ minimiert wird, ist $q_{ud} = G_{ud}^2$ im
+Optimum exakt.
+\eqref{obj:gapspread}: Durch das Quadrat sind zwei Tage mit je einer Lücke ($1+1$) billiger als ein Tag mit zwei
+($4$). Die Division durch $R_{ud}$ gewichtet relativ zum Bedarf: Eine Lücke wiegt an einem schwach besetzten Tag
+schwerer.
+
+\subsection{Rang 5: Tage gleichmäßig besetzen}\label{sec:z:tage}
+
+\begin{align}
+  & \rho_{ud} \ge P_{ud} - \tfrac{R_{ud}}{R_u}\, P_u,\qquad
+    \rho_{ud} \ge -\bigl(P_{ud} - \tfrac{R_{ud}}{R_u}\, P_u\bigr) && \forall u \in U^{D},\ d \in D \label{con:daydev}\\
+  & f_5 = \textstyle\sum_{u \in U^{D}} \sum_{d \in D} \rho_{ud} \to \min && \text{(\code{staffing\_spread})} \label{obj:staffingspread}
+\end{align}
+
+\textbf{Erklärung.}
+\eqref{con:daydev} (\code{day\_dev\_up}, \code{day\_dev\_down}): $\rho_{ud} \ge |P_{ud} - \frac{R_{ud}}{R_u}
+P_u|$, also die Abweichung der Tagesbesetzung von ihrem Anteil an der Monatsbesetzung. Ein Tag ohne Bedarf
+hat Anteil 0, jeder Dienst dort zählt als Abweichung.
+\eqref{obj:staffingspread}: Jeder Tag einer Station soll im gleichen Verhältnis Ist/Soll besetzt sein wie der
+ganze Monat; Über- und Unterbesetzung verteilen sich so gleichmäßig auf die Tage.
+
+\subsection{Rang 6: Samstage gleichmäßig verteilen}\label{sec:z:samstage}
+
+\begin{align}
+  & a_i = \textstyle\sum_{d \in D,\ d \text{ Samstag}} Y_{id} && \forall i \in I \label{eq:sat}\\
+  & \chi_i \ge (2k+1)\, a_i - k(k+1) && \forall i \in I,\ k = 0,\dots,s^{Sa}-1 \label{con:satsq}\\
+  & f_6 = \textstyle\sum_{i \in I} \chi_i \to \min && \text{(\code{saturdays})} \label{obj:saturdays}
+\end{align}
+
+\textbf{Erklärung.}
+\eqref{eq:sat} (\code{saturdays\_of}): $a_i$ ist die Zahl der Samstage im Monat, an denen $i$ arbeitet; $s^{Sa}$ ist
+die Zahl der Samstage im Monat. Wegen \eqref{con:weekend} ist das zugleich die Zahl der gearbeiteten Wochenenden.
+\eqref{con:satsq} (\code{sat\_sq}): $\chi_i \ge a_i^2$, mit denselben Sekanten wie bei \eqref{con:gapsq}; im Optimum
+ist $\chi_i = a_i^2$.
+\eqref{obj:saturdays}: Bei gegebener Zahl gearbeiteter Samstage ist die Summe der Quadrate am kleinsten, wenn sich die
+Zahlen höchstens um eins unterscheiden: $2+2+3$ ist besser als $1+3+3$. Jede Qualifikation deckt ihren eigenen
+Bedarf, deshalb gleicht die Summe über alle Personen die Samstage innerhalb jeder Qualifikation aus. Wer an einem
+Samstag nicht kann (Urlaub, Einschränkung), hat entsprechend weniger; die übrigen teilen den Rest gleichmäßig. Die
+Zahlen sind absolut, also unabhängig von Teilzeit. Durch die Sekanten ist die Schranke der Relaxation in der Regel
+schon der ganzzahlige Wert, sodass Gurobi die Stufe schnell exakt löst.
+
+\subsection{Rang 7: Wünsche}\label{sec:z:wuensche}
+
+\begin{align}
+  p_{isdu} = {} & - \pi \cdot \ind{\operatorname{home}(i,d) \in U^{St},\ \operatorname{home}(i,d) \neq u}
+                 \label{par:p}\\
+  & - \omega \cdot \ind{\text{Wunsch „freier Tag“ für } (i,d)}
+    - \omega \cdot \ind{s \in S^{N},\ \text{Wunsch „freier Tag“ für } (i,d+1)} \notag\\
+  & - \omega \cdot \ind{\text{Wunsch „Schicht } s \text{ frei“ für } (i,d)} \notag\\
+  & + \omega \cdot \ind{\text{Wunsch „Wunschtag“ für } (i,d)}
+    + \omega \cdot \ind{\text{Wunsch „Wunschschicht } s\text{“ für } (i,d)} \notag\\
+  f_7 = {} & \textstyle\sum_{(i,s,d,u) \in A} p_{isdu}\, x_{isdu} \to \max \qquad \text{(\code{wishes})} \label{obj:wishes}
+\end{align}
+
+\textbf{Erklärung.}
+\eqref{par:p} (\code{pref}): Jeder zulässige Dienst bekommt einen Präferenzwert. Ein erfüllter Dienstwunsch bringt
+$+\omega$, ein Dienst gegen einen Freiwunsch kostet $\omega$. Beim freien Tag zählt auch ein Nachtdienst am
+Vorabend, weil er bis 06:10 in den Wunschtag hineinreicht; so bewertet es auch die Prüfung. Ein Dienst auf einer
+fremden Station kostet $\pi$, aber nur, wenn die Person eine Station als Stammeinheit hat; Springer (Stammeinheit
+ist ein Pool) dürfen überall gleich gut arbeiten. In der Demo mit nur einer Station kommt das nicht vor.
+\eqref{obj:wishes}: Die Summe der Präferenzwerte aller Dienste wird maximiert.
+
+\subsection{Rang 8: Rotation}\label{sec:z:rotation}
+
+\begin{align}
+  & \Wr = \{w \in \Db : 1 \le w + \Delta^{R} - 1 \le n\},\qquad [w] = \{w,\dots,w + \Delta^{R} - 1\} \label{set:Wr}\\
+  & \Psi = \bigl\{(i,w,\theta) : w \in \Wr,\ \ y^{0}_{isd} = 0\ \forall s \in S^{\theta},\ d \in [w] \cap \Dm,
+    \label{set:Psi}\\
+  & \hphantom{\Psi = \bigl\{(i,w,\theta) :{}}
+    \exists\,(i,s,d,u) \in A \text{ mit } s \in S^{\theta},\ d \in [w] \cap D\bigr\} \notag\\
+  & \psi_{iw\theta} \le \textstyle\sum_{d \in [w] \cap D} \sum_{s \in S^{\theta}} X_{isd} && \forall (i,w,\theta) \in \Psi \label{con:rotation}\\
+  & f_8 = \textstyle\sum_{(i,w,\theta) \in \Psi} \psi_{iw\theta} \to \max && \text{(\code{rotation})} \label{obj:rotation}
+\end{align}
+
+\textbf{Erklärung.}
+Niemand soll wochenlang nur dieselbe Schicht haben: In jedem Fenster von $\Delta^{R} = 28$ Tagen soll jede Person
+möglichst jede Schichtart haben, die sie arbeiten kann.
+\eqref{set:Wr} (\code{window\_starts}): $\Wr$ sind die ersten Tage aller Fenster, die im Monat enden und an
+einem bekannten Tag beginnen. Mit geladenem Vormonat reichen sie bis zu 27 Tage in ihn zurück, sodass die
+Rotation über den Monatswechsel weiterläuft; ohne ihn beginnen sie frühestens $m = 5$ Tage vor dem Monat (ein
+Monat mit 31 Tagen hat dann 9 Fenster).
+\eqref{set:Psi} (Schlüssel von \code{worked\_type}): Gezählt wird ein Paar aus Fenster und Schichtart nur, wenn die
+Person diese Art im Fensterteil des Monats überhaupt arbeiten kann, also eine Variable dafür existiert. Früh und
+Spät kann jede Qualifikation \eqref{eq:A}; Azubis werden aber nicht in Nächte gedrängt, wenn nie
+Azubi-Nachtbedarf besteht, und „nur bestimmte Schichten“ lässt die übrigen Arten aus. Hat die Person die Art im Fensterteil vor dem Monat schon gearbeitet, ist das Paar erfüllt und
+braucht keine Variable.
+\eqref{con:rotation}: $\psi_{iw\theta}$ kann nur 1 sein, wenn $i$ im Fenster ab $w$ mindestens eine Schicht der Art
+$\theta$ arbeitet.
+\eqref{obj:rotation}: Die Zahl der erfüllten Paare aus Person, Fenster und Schichtart wird maximiert. Ohne
+Vormonat überdecken alle Fenster die Monatsmitte; dann genügt eine Schicht jeder Art dort für alle Fenster.
+
+\subsection{Rang 9: Schichten eines Tages gleichmäßig besetzen}\label{sec:z:schichten}
+
+\begin{align}
+  & \delta_{usd} \ge P_{usd} - \tfrac{R_{usd}}{R_{ud}}\, P_{ud},\qquad
+    \delta_{usd} \ge -\bigl(P_{usd} - \tfrac{R_{usd}}{R_{ud}}\, P_{ud}\bigr) && \forall (u,d) : R_{ud} > 0,\ s \in S \label{con:shiftdev}\\
+  & f_9 = \textstyle\sum_{u,s,d} \delta_{usd} \to \min && \text{(\code{shift\_balance})} \label{obj:shiftbalance}
+\end{align}
+
+\textbf{Erklärung.}
+\eqref{con:shiftdev} (\code{shift\_dev\_up}, \code{shift\_dev\_down}): $\delta_{usd} \ge |P_{usd} -
+\frac{R_{usd}}{R_{ud}} P_{ud}|$, die Abweichung einer Schicht von ihrem Anteil an der Tagesbesetzung.
+\eqref{obj:shiftbalance}: Zusätzliches Personal eines Tages verteilt sich im Verhältnis der Mindestbesetzung auf
+die Schichten. Weil sich Anteile nur mit „Bruchteilen von Personen“ exakt treffen lassen, ist ein Teil dieser
+Abweichung unvermeidbar; die Stufe hat deshalb ein Zeitlimit statt eines Optimalitätsbeweises.
+
+\subsection{Rang 10: Wechsel vom Spät- in den Frühdienst}\label{sec:z:spaetfrueh}
+
+\begin{align}
+  & z_{id} \ge Y^{S}_{i,d-1} + Y^{F}_{id} - 1 && \forall i \in I,\ d \in D \label{con:ltoe}\\
+  & f_{10} = \textstyle\sum_{i \in I} \sum_{d \in D} z_{id} \to \min && \text{(\code{Min\_L\_to\_E})} \label{obj:ltoe}
+\end{align}
+
+\textbf{Erklärung.}
+\eqref{con:ltoe} (\code{L\_to\_E}): $z_{id}$ ist mindestens 1, wenn auf einen Spätdienst am Vortag ein Frühdienst
+folgt, auch über den Monatswechsel.
+\eqref{obj:ltoe}: Zwischen Spätdienst-Ende (21:00) und Frühdienst-Beginn (05:55) liegen nur 8:55\,h. Mit den
+Schichtzeiten der Demo und den Nachtregeln ist das der einzige mögliche Fall unter 11\,h Ruhezeit. Er ist bewusst
+erlaubt, wird aber so selten wie möglich geplant.
+
+\subsection{Rang 11: Dieselbe Schicht wie am Vortag}\label{sec:z:folgen}
+
+\begin{align}
+  & v_{isd} \le X_{isd},\qquad v_{isd} \le X_{is,d-1} && \forall i \in I,\ s \in S,\ d \in D \label{con:cons}\\
+  & f_{11} = \textstyle\sum_{i \in I} \sum_{s \in S} \sum_{d \in D} v_{isd} \to \max && \text{(\code{cons})} \label{obj:cons}
+\end{align}
+
+\textbf{Erklärung.}
+\eqref{con:cons} (\code{cons\_s}): $v_{isd}$ darf nur 1 sein, wenn an $d$ und $d-1$ dieselbe Schicht gearbeitet
+wird.
+\eqref{obj:cons}: Möglichst oft dieselbe Schicht wie am Vortag, damit ruhige Folgen entstehen.
+
+%==========================================================================================================
+\section{Lexikografisches Lösen}\label{sec:lex}
+
+Für $k = 1,\dots,11$ wird $f_k$ über alle zulässigen Lösungen optimiert, unter den zusätzlichen Bedingungen
+\begin{equation}
+  f_j \le \hat f_j + \alpha_j \quad (\text{bzw. } f_j \ge \hat f_j - \alpha_j \text{ für die Maximierungen } j = 7, 8, 11)
+  \qquad \forall j < k, \label{obj:lex}
+\end{equation}
+wobei $\hat f_j$ der in Stufe $j$ erreichte Wert ist. Gurobi setzt das als Mehrzieloptimierung mit fallenden
+Prioritäten um (\code{setObjectiveN}). Die Toleranzen $\alpha_j$ (\code{abstol}) sind:
+\begin{center}
+\small
+\begin{tabular}{l l l}
+\hline
+Stufe & Gesamtspielraum $\varepsilon_j$ (\code{stage\_slack}) & $\alpha_j = \varepsilon_j/2$ \\
+\hline
+$f_4$ \code{gap\_spread} & $2$ & $1$ \\
+$f_5$ \code{staffing\_spread} & $|U^{D}| \cdot n / 7$ & $|U^{D}| \cdot n / 14$ \\
+$f_9$ \code{shift\_balance} & $2\,|U^{D}| \cdot n / 7$ & $|U^{D}| \cdot n / 7$ \\
+alle anderen & -- & $10^{-6}$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Erklärung.}
+Eine spätere Stufe darf eine frühere nur um deren Toleranz verschlechtern. Bei den drei Verteilungsstufen $f_4$,
+$f_5$ und $f_9$ ist das bewusst etwas Spielraum, damit die späteren Stufen noch Wahlmöglichkeiten haben; die
+andere Hälfte des Spielraums erlaubt einen frühen Abbruch der Stufe (siehe unten). Insgesamt liegt der Endwert
+einer solchen Stufe höchstens $\varepsilon_j$ über dem bestmöglichen Wert. Alle anderen Stufen halten ihren Wert
+praktisch exakt.
+
+\textbf{Abbruchkriterien.}
+\begin{center}
+\small
+\begin{tabular}{l l}
+\hline
+Kriterium & Wert \\
+\hline
+Gesamtzeit $T$ (\code{SOLVER\_MAX\_TIME\_SECONDS}) & in der Demo fest 30\,s \\
+relative Optimalitätslücke (\code{MIPGap}) & 3\,\%; exakt (0) für $f_1$, $f_2$, $f_3$, $f_6$ und $f_8$ \\
+absolute Optimalitätslücke (\code{MIPGapAbs}) & $\varepsilon_j/2$ für $f_4$, $f_5$, $f_9$ \\
+Zeitlimit einzelner Stufen (\code{stage\_time\_share}) & $0{,}15\,T$ für $f_5$, $0{,}10\,T$ für $f_6$, $f_8$ und $f_9$ \\
+Watchdog & beendet die Rechnung spätestens 5\,s nach $T$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Erklärung.}
+$f_1$ und $f_3$ werden exakt gelöst: 3\,\% eines großen Werts (ein unerreichbares Konto oder viele Lücken) würden
+weitere Konten außerhalb des Bands oder vermeidbare Lücken zulassen; ebenso die kleine Zahl $f_2$ der geteilten
+Wochenenden am Monatsanfang. Auch $f_6$ wird exakt gelöst, weil schon ein Samstag mehr oder weniger zählt, und
+$f_8$, weil der Wert in die Hunderte geht und 3\,\% davon eine Person in vielen Fenstern ohne Nachtdienst lassen
+könnten. Die Zeitlimits schützen die folgenden Stufen: Bei $f_5$, $f_6$, $f_8$ und $f_9$ kann die Schranke den
+erreichbaren Wert verfehlen (Bruchteile von Personen, durch Abwesenheiten oder die Wochenendregeln unerreichbare
+Werte), sodass Gurobi die Stufe sonst bis zur Gesamtzeit weiterrechnen würde. Die übrigen Stufen laufen, bis sie bewiesen sind oder $T$ erreicht
+ist. Ist $T$ erreicht, gilt der beste bis dahin gefundene Plan; spätere Stufen kommen dann nicht mehr an die
+Reihe.
 
 %==========================================================================================================
 \section{Nach dem Lösen}
 
-Aus der Lösung werden die Dienste $\{(i,s,d,u) : x_{isdu} = 1\}$ mit der Qualifikation $\lambda_{iud}$
-übernommen. Die gemeldeten Lücken werden nicht aus $g$ gelesen, sondern aus den Diensten berechnet,
-$\max(0,\, r_{sdul} - \sum_{i \in I_{udl}} x_{isdu})$, ebenso die angezeigten Werte von $f_1$, $f_3$, $f_4$ und
-$f_6$. So stimmen sie genau mit dem unabhängigen Schedule-Check des Projekts überein, auch wenn Hilfsvariablen
-wegen der Toleranzen \eqref{obj:lex} über ihrem echten Wert liegen. Der Schedule-Check prüft den fertigen Plan
-anschließend gegen alle harten Regeln des Projekts, darunter auch die 11-h-Ruhezeit, die das Modell nur weich
-behandelt \eqref{obj:ltoe}.
+\textbf{Ergebnis.} Aus der Lösung werden die Dienste $\{(i,s,d,u) : x_{isdu} = 1\}$ mit der Qualifikation
+$\lambda_{iud}$ übernommen, nur für Tage des Monats: Ein mitgeplanter Sonntag gehört nicht zum Plan. Die
+gemeldeten Lücken werden nicht aus $g$ gelesen, sondern aus den Diensten berechnet, $\max(0,\, r_{sdul} - \sum_{i
+\in I_{udl}} x_{isdu})$, ebenso die angezeigten Werte von $f_3$, $f_4$, $f_5$, $f_6$, $f_8$ und $f_9$. So stimmen
+sie genau mit der unabhängigen Prüfung überein, auch wenn Hilfsvariablen wegen der Toleranzen \eqref{obj:lex} über
+ihrem echten Wert liegen.
 
-\textbf{Zeitumstellung.} Modell und Prüfung ignorieren die Zeitumstellung: Eine Schicht zählt für die tägliche
-Höchstarbeitszeit und die Pausen mit ihren geplanten Zeiten, auch die Nacht der Umstellung im Oktober, die
-tatsächlich eine Stunde länger dauert.
-
-\textbf{Ersatzruhetag.} Die Demo-Version prüft nicht, ob jeder gearbeitete Sonn- oder Feiertag durch einen freien
-Werktag ausgeglichen wird (ArbZG §11 Abs.~3); das Modell bildet diese Regel ebenfalls nicht ab.
+\textbf{Unabhängige Prüfung.} Die Prüfung (\code{api/app/domain/acceptance.py}) übernimmt vom Solver nichts außer
+den Diensten. Sie rechnet mit den echten Uhrzeiten und den Diensten des Vormonats und prüft unter anderem:
+Mindestbesetzung und gemeldete Lücken, Zugehörigkeit und Qualifikation, Einschränkungen samt keiner Nacht vor einem
+Abwesenheitstag und keinem Spätdienst vor Urlaubsbeginn oder Fortbildung \eqref{eq:NN}, \eqref{eq:NS}, einen Dienst
+pro Tag,
+den Monatssaldo innerhalb $\pm\tau$, tägliche Höchstarbeitszeit, Pausen und den Durchschnitt von 8\,h je Werktag,
+11\,h Ruhezeit, höchstens $N^{max}$ Nächte in Folge und 48\,h Erholung nach der letzten Nacht. Dazu kommen die
+Regeln des Hauses: höchstens $K^{S}$ Arbeitstage am Stück (Fortbildung zählt mit), am Wochenende dieselbe Schicht an
+beiden Tagen und nie zwei gearbeitete Wochenenden in Folge, jeweils auch über den Monatswechsel, sofern der
+Vormonat geladen ist. Ein Wochenende über den Monatswechsel, das \eqref{obj:weekend} nicht fortführen konnte, wird
+also abgelehnt. Abweichend vom Gesetzestext gilt in der Demo-Version:
+\begin{itemize}
+  \item \textbf{Spät $\to$ Früh} am Folgetag ist von der 11-h-Ruhezeit ausgenommen. Das Modell hält diese Wechsel
+        über \eqref{obj:ltoe} klein, die Prüfseite zählt sie als Kennzahl. Jede andere Ruhezeit unter 11\,h wird
+        abgelehnt.
+  \item \textbf{Erholung nach Nächten}: Auch eine Fortbildung an einem der $L^{N}$ Tage nach der letzten Nacht
+        ist ein Verstoß, passend zu \eqref{con:recoverytraining}. Ein Nachtdienst-Wunsch in den $L^{N}$ Tagen vor
+        einer Fortbildung gilt deshalb als nicht erfüllbar, ebenso nach \eqref{eq:NS} ein Spätdienst-Wunsch am Tag
+        davor.
+  \item \textbf{Zeitumstellung}: Modell und Prüfung ignorieren sie. Eine Schicht zählt für die tägliche
+        Höchstarbeitszeit und die Pausen mit ihren geplanten Zeiten, auch die Nacht der Umstellung im Oktober,
+        die tatsächlich eine Stunde länger dauert.
+  \item \textbf{Ersatzruhetag}: Ob jeder gearbeitete Sonn- oder Feiertag durch einen freien Werktag ausgeglichen
+        wird (ArbZG §11 Abs.~3), prüft die Demo-Version nicht; das Modell bildet diese Regel ebenfalls nicht ab.
+\end{itemize}
 
 \end{document}
