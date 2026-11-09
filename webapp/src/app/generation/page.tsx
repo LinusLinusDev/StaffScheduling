@@ -5,22 +5,31 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getLatestGeneration } from "@/lib/api";
 import { selectionMonthLabel } from "@/lib/labels";
 import { loadPlanningScope, type ScopeSearchParams } from "@/lib/scope";
+import { selectionMonth } from "@/lib/selection";
+import type { GenerationJob } from "@/lib/types";
 import { GenerationForm } from "./generation-form";
 import { JobPanel } from "./job-panel";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Dienstplan erstellen · Schichtplan Manager" };
 
+/**
+ * The job's month as `YYYY-MM`. The page shows a finished job only in its own month, so a plan of another month is
+ * never taken for the selected one; a running job shows everywhere, since it blocks starting another.
+ */
+const jobMonth = (job: GenerationJob) =>
+  selectionMonth(job.request.planning_month.year, job.request.planning_month.month);
+
 // What the Gurobi model (api/app/solver/milp/service.py) actually reads and enforces; keep in step with it.
+// The demo plans one station without a previous month, so station transfers and the days before the month are left out.
 const USED = [
-  "Mindestbesetzung je Station, Schicht und Qualifikation; was fehlt, wird als Lücke ausgewiesen",
+  "Mindestbesetzung je Schicht und Qualifikation; was fehlt, wird als Lücke ausgewiesen",
   "Urlaub, Fortbildung, freie Tage und Einschränkungen werden immer eingehalten",
   "Monatskonten: Sollzeit und Gutschriften, Saldo möglichst innerhalb ±7:40 Std.",
-  "Wünsche und Einsatz auf der Stammstation, so weit möglich",
+  "Wünsche, so weit möglich",
   "Nachtdienste in Blöcken von 2–3 Nächten, danach 2 freie Tage",
   "Höchstens 10 Arbeitstage am Stück und nie zwei Wochenenden in Folge",
   "Gleichmäßige Besetzung über alle Tage und Schichten, möglichst wenige Spät-Früh-Wechsel",
-  "Dienste der Tage vor dem Monat, damit die Regeln auch am Monatswechsel gelten",
 ];
 
 export default async function GenerationPage({ searchParams }: { searchParams: Promise<ScopeSearchParams> }) {
@@ -78,15 +87,15 @@ export default async function GenerationPage({ searchParams }: { searchParams: P
 
         {"error" in latest ? (
           <LoadError title="Berechnung nicht geladen" message={latest.error} />
-        ) : latest.job ? (
+        ) : latest.job && (running || jobMonth(latest.job) === scope.month) ? (
           <JobPanel job={latest.job} units={scope.stations} />
         ) : (
           <Card aria-label="Letzte Berechnung" className="border-dashed shadow-none">
             <CardContent className="text-sm">
               <h2 className="text-lg font-semibold">Letzte Berechnung</h2>
               <p className="text-muted-foreground">
-                Noch kein Dienstplan berechnet. Mit „Dienstplan erstellen“ starten; die Berechnung dauert etwa eine
-                halbe Minute.
+                Für {period.name} noch kein Dienstplan berechnet. Mit „Dienstplan erstellen“ starten; die Berechnung
+                dauert etwa eine halbe Minute.
               </p>
             </CardContent>
           </Card>

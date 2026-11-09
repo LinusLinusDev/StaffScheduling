@@ -77,7 +77,6 @@ coverage/
 # Browser test artifacts
 playwright-report/
 test-results/
-api/notebooks/MILP_alt.ipynb
 Demo Pratke/model/model.aux
 Demo Pratke/model/model.out
 Demo Pratke/model/model.synctex.gz

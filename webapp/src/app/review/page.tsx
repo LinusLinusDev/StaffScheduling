@@ -3,7 +3,7 @@ import { LoadError } from "@/components/load-error";
 import { PageHeader } from "@/components/page-header";
 import { buttonVariants } from "@/components/ui/button-variants";
 import { Card, CardContent } from "@/components/ui/card";
-import { REVIEW_FILES, getReview } from "@/lib/api";
+import { getReview } from "@/lib/api";
 import { monthLabel } from "@/lib/labels";
 import { loadPlanningScope, type PlanningScope, type ScopeSearchParams } from "@/lib/scope";
 import { selectionMonth, selectionSearch } from "@/lib/selection";
@@ -44,7 +44,7 @@ export default async function ReviewPage({ searchParams }: { searchParams: Promi
   const review = "review" in current ? current.review : null;
   const own = review && reviewScope(review);
   const matches = own !== null && isSelected(own, scope);
-  const actions = <ReviewActions hasReview={matches} files={REVIEW_FILES} />;
+  const actions = <ReviewActions hasReview={matches} />;
 
   return (
     <div className="py-6">

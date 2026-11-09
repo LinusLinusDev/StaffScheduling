@@ -14,11 +14,9 @@ from app.domain import (
     SchedulingDataset,
     ShiftType,
     check_schedule,
-    duty_times,
 )
 from app.domain.rules import BLOCKING_AVAILABILITY
 from app.settings import Settings
-from app.solver.model.candidates import _pattern_problem  # the daily work and break rules of one duty
 from app.solver.models import RunConfiguration, Solution, SolutionStatus, SolverUnavailable, StageReport
 
 # Gurobi errors that mean the license cannot be used (no license, size limit, no network, rejected, session overage),
@@ -150,14 +148,6 @@ class GurobiSolverService:
                     if (i, next_day) in vacation and (i, d) not in vacation:
                         for s in S_late:
                             not_allowed.add((i, s, d))
-            # a shift whose own work and breaks break the daily rules on a date is never assigned there, as in the
-            # CP-SAT model: the night of the October clock change lasts an hour longer, over ten hours of work
-            for shift in dataset.shifts:
-                for d in D:
-                    if _pattern_problem(duty_times(d, shift)):
-                        for i in I:
-                            not_allowed.add((i, shift.shift_id, d))
-
             transfer_penalty = 10
             wish_reward = 30
 
@@ -374,7 +364,14 @@ class GurobiSolverService:
                     if d + timedelta(days=L_n+1) in D_set:
                         schedule.addConstr(n_end[i, d] + early[i, d + timedelta(days=L_n+1)] <= 1)
             # same shifts on weekends
-            schedule.addConstrs((shift_on(i, s, d) == shift_on(i, s, d + one_day) for i in I for s in S for d in D_s));
+            # at the month start the Saturday before only ties the first Sunday when it was worked: a free Saturday
+            # before the month leaves the Sunday open, instead of keeping everybody off on the 1st
+            for d in D_s:
+                for i in I:
+                    if d in D_prev_set and (i, d) not in past_shifts:
+                        continue
+                    for s in S:
+                        schedule.addConstr(shift_on(i, s, d) == shift_on(i, s, d + one_day))
             # min days between nightshift block (only blocks starting in the month)
             for i in I:
                 for d in D_prev[-Dist_n:] + D:
@@ -417,6 +414,11 @@ class GurobiSolverService:
             for n, (name, _, _) in enumerate(objectives):
                 if name in stage_slack:
                     schedule.getMultiobjEnv(n).setParam("MIPGapAbs", stage_slack[name] / 2)
+            # gaps and balance are solved exactly: a relative gap of 3 % of a large stage value (many gaps, or one
+            # account that cannot be reached) would let avoidable gaps or other accounts outside the band pass
+            for n, (name, _, _) in enumerate(objectives):
+                if name in ("gaps", "balance_violation"):
+                    schedule.getMultiobjEnv(n).setParam("MIPGap", 0.0)
             # the time limit is a promise to the user: should a pass overrun it, stop the whole run shortly after
             deadline = started + timeout + WATCHDOG_GRACE_SECONDS
 

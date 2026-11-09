@@ -1,6 +1,6 @@
 "use client";
 
-import { type MouseEvent, useState, useTransition } from "react";
+import { type MouseEvent, type ReactNode, useRef, useState, useTransition } from "react";
 import { Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,15 @@ function shared<T>(entries: (T | undefined)[], content: (entry: T) => unknown): 
   return rest.every((entry) => entry && JSON.stringify(content(entry)) === text) ? first : undefined;
 }
 
+/** A key as printed on the keyboard, e.g. ⇧ or ⌃ ctrl on a German Mac keyboard. */
+function Key({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="inline-flex min-w-6 items-center justify-center rounded border border-b-2 bg-background px-1.5 font-sans text-[11px] font-medium text-foreground">
+      {children}
+    </kbd>
+  );
+}
+
 /** The selected dates as a title: one date, a gapless range, or a count with first and last date. */
 function selectionTitle(dates: string[], all: string[]) {
   if (dates.length === 1) return formatDate(dates[0]);
@@ -46,9 +55,12 @@ export function AvailabilityCalendar({ calendar }: { calendar: EmployeeCalendar 
   const days = calendar.calendar;
   const order = days.map((day) => day.date);
   // The first day of the month is open for editing until another day is chosen. Shift-click selects the range from
-  // the last clicked day, Ctrl/Cmd-click adds or removes single days; the forms then apply to every selected day.
+  // the last clicked day, control-click (or command-click) adds or removes single days; the forms then apply to every
+  // selected day.
   const [selected, setSelected] = useState<string[]>([days[0].date]);
   const [anchor, setAnchor] = useState(days[0].date);
+  // The last added or removed day: one control-click may arrive as a context menu and as a click, toggling it once.
+  const lastToggle = useRef<{ date: string; at: number } | null>(null);
   const absences = new Map(calendar.absences.map((row) => [row.date, row]));
   const availability = new Map(calendar.availability.map((row) => [row.date, row]));
   const wishes = new Map(calendar.wishes.map((row) => [row.date, row]));
@@ -62,6 +74,9 @@ export function AvailabilityCalendar({ calendar }: { calendar: EmployeeCalendar 
       return;
     }
     if (event.ctrlKey || event.metaKey) {
+      const at = event.timeStamp;
+      if (lastToggle.current?.date === date && at - lastToggle.current.at < 400) return;
+      lastToggle.current = { date, at };
       const next = isSelected.has(date) ? selected.filter((day) => day !== date) : [...selected, date];
       // At least one day stays selected, so the forms always have a date.
       if (next.length) setSelected(order.filter((day) => next.includes(day)));
@@ -76,10 +91,23 @@ export function AvailabilityCalendar({ calendar }: { calendar: EmployeeCalendar 
       <Card>
         <CardHeader>
           <CardTitle>Monatskalender</CardTitle>
-          <CardDescription>
-            Einen Tag wählen, um Einschränkung oder Wunsch zu bearbeiten. Mit Umschalt-Klick einen Zeitraum wählen, mit
-            Strg-Klick einzelne Tage hinzufügen oder entfernen.
-          </CardDescription>
+          <CardDescription>Tage anklicken, um Einschränkung oder Wunsch zu bearbeiten.</CardDescription>
+          <ul
+            aria-label="Tage auswählen"
+            className="flex flex-wrap gap-x-5 gap-y-1.5 pt-1 text-xs text-muted-foreground"
+          >
+            <li className="flex items-center gap-1.5">
+              <span className="font-medium text-foreground">Klick</span> einen Tag wählen
+            </li>
+            <li className="flex items-center gap-1.5">
+              <Key>⌃ ctrl</Key> + <span className="font-medium text-foreground">Klick</span> weitere Tage einzeln dazu
+              oder weg
+            </li>
+            <li className="flex items-center gap-1.5">
+              <Key>⇧</Key> + <span className="font-medium text-foreground">Klick</span> Zeitraum vom zuletzt
+              angeklickten Tag bis hier
+            </li>
+          </ul>
           <div className="flex flex-wrap gap-2 pt-1 text-xs">
             {calendar.absences.length > 0 && <Badge variant="secondary">Abwesenheit (TimeOffice)</Badge>}
             <Badge className="bg-red-100 text-red-800">Einschränkung</Badge>
@@ -107,6 +135,12 @@ export function AvailabilityCalendar({ calendar }: { calendar: EmployeeCalendar 
                   aria-label={formatDate(date)}
                   aria-pressed={isSelected.has(date)}
                   onClick={(event) => choose(date, event)}
+                  onContextMenu={(event) => {
+                    // A Mac turns control-click into a right click without a click event: select here, no menu.
+                    if (!event.ctrlKey) return;
+                    event.preventDefault();
+                    choose(date, event);
+                  }}
                   className={cn(
                     "flex min-h-20 select-none flex-col gap-0.5 rounded-md border p-1 text-left text-[11px] transition-colors hover:bg-muted",
                     isSelected.has(date) && "ring-2 ring-ring",

@@ -3,14 +3,11 @@ import { MONTHS, selectionMonth } from "@/lib/selection";
 import type {
   AvailabilityType,
   CheckStatus,
-  ObjectiveTier,
   Rule,
   ScheduleCheck,
-  ScoreName,
   ShiftType,
   Solution,
   SolutionStatus,
-  Stage,
   StaffLevel,
   WishStatus,
   WishType,
@@ -61,54 +58,6 @@ export const CHECK_STATUS: Record<CheckStatus, [string, string]> = {
   rejected: ["Regelverstöße", "Der Plan ist nicht verwendbar"],
   incomplete: ["Unvollständig geprüft", "Für eine Regel fehlen Eingaben"],
 };
-
-const NUMBER = new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 });
-
-/** The solver status with its explanation, e.g. "Lösung gefunden (Optimum nicht nachgewiesen)". */
-export function solverStatusText(status: SolutionStatus) {
-  const [value, detail] = SOLVER_STATUS[status];
-  return `${value} (${detail})`;
-}
-
-/** The schedule check's scores, named for the staff admin. */
-export const SCORE_LABELS: Record<ScoreName, string> = {
-  gaps: "Lücken",
-  health_events: "Gesundheitsereignisse",
-  station_transfers: "Einsätze anderer Station",
-  wish_cost: "Wunschkosten (Fairness)",
-  balance_deviation_minutes: "Abweichung der Monatskonten (Minuten)",
-  surplus_intermediate_duties: "Überzählige Zwischendienste",
-};
-
-/** The objective tiers of both solvers, named for the staff admin. */
-export const OBJECTIVE_LABELS: Record<ObjectiveTier, string> = {
-  ...SCORE_LABELS,
-  balance_violation: "Überschreitung des Monatssaldos über ±7:40 h (Minuten)",
-  gap_spread: "Verteilung der Lücken über die Tage",
-  staffing_spread: "Gleichmäßiger Besetzungsgrad über die Tage",
-  wishes: "Wünsche und Einsätze auf der Stammstation",
-  shift_balance: "Verteilung der Überbesetzung auf die Schichten",
-  Min_L_to_E: "Wechsel vom Spät- in den Frühdienst",
-  cons: "Gleiche Schichten und freie Tage am Stück",
-};
-
-/** One stage's value and whether it is proven best, e.g. "870 (Schranke 0, nicht nachgewiesen)". */
-export function formatStage(stage: Stage) {
-  if (stage.status === "optimal") return `${stage.value} (optimal)`;
-  const bound = stage.best_bound === null ? "" : `Schranke ${NUMBER.format(stage.best_bound)}, `;
-  return `${stage.value} (${bound}nicht nachgewiesen)`;
-}
-
-/** How many objective stages proved their optimum, e.g. "4 von 6 optimal". */
-export function formatStages(stages: Stage[]) {
-  if (stages.length === 0) return "–";
-  return `${stages.filter((stage) => stage.status === "optimal").length} von ${stages.length} optimal`;
-}
-
-/** Solver search time used against its limit, e.g. "3,1 von 30 s". */
-export function formatSearchTime(seconds: number, limit: number) {
-  return `${NUMBER.format(seconds)} von ${limit} s`;
-}
 
 /**
  * The check's rules that the input cannot decide, as "rule date–date": `missing` lacks input and blocks

@@ -150,7 +150,8 @@ class _Duty:
     in_month: bool
 
 
-ASSESSED = tuple(rule for rule in Rule if rule != Rule.ANNUAL_FREE_SUNDAYS)
+# Not assessed: annual free Sundays need the whole year; replacement rest is left out by the demo version.
+ASSESSED = tuple(rule for rule in Rule if rule not in {Rule.ANNUAL_FREE_SUNDAYS, Rule.REPLACEMENT_REST})
 
 
 def check_schedule(
@@ -175,7 +176,15 @@ def check_schedule(
     for timeline in timelines.values():
         check.rest(timeline)
         check.nights(timeline)
-        check.replacement_rest(timeline)
+    check.not_assessed.append(
+        NotAssessed(
+            rule=Rule.REPLACEMENT_REST,
+            reason="The demo version does not check replacement rest days for worked Sundays and holidays.",
+            blocking=False,
+            start=dataset.planning_month.start,
+            end=dataset.planning_month.end,
+        )
+    )
     check.not_assessed.append(
         NotAssessed(
             rule=Rule.ANNUAL_FREE_SUNDAYS,
@@ -366,7 +375,7 @@ class _Check:
         total = Counter[int]()
         for duty in duties:
             total[duty.assignment.employee_id] += duty.times.work_minutes
-            if problem := _daily_work_problem(duty.times):
+            if problem := _daily_work_problem(_planned_times(duty.shift)):
                 self.fail(Rule.WORK_AND_BREAKS, problem, duty.assignment)
         average = POLICY.average_daily_work_minutes
         working_days = sum(is_working_day(day) for day in self.month.dates)
@@ -454,31 +463,6 @@ class _Check:
                         later.assignment if later.in_month else night.assignment,
                     )
 
-    def replacement_rest(self, timeline: list[_Duty]) -> None:
-        """Match each worked Sunday/holiday of the month to its own free Werktag of the month inside its window.
-
-        Taking obligations by their window's end and the earliest free date that fits finds a match
-        for all of them whenever one exists.
-        """
-        worked = {day for day in self.month.dates if any(duty.times.touches(day) for duty in timeline)}
-        free = [day for day in self.month.dates if day not in worked and is_working_day(day)]
-        windows = [
-            (day + timedelta(days=days), day - timedelta(days=days), day)
-            for day in sorted(worked)
-            if (days := POLICY.replacement_days(day)) is not None
-        ]
-        for end, start, day in sorted(windows):
-            match = next((free_day for free_day in free if start <= free_day <= end), None)
-            if match is None:
-                self.fail(
-                    Rule.REPLACEMENT_REST,
-                    f"No free Werktag of the month left between {start} and {end} as replacement rest.",
-                    employee_id=timeline[0].assignment.employee_id,
-                    date=day,
-                )
-            else:
-                free.remove(match)
-
     def possible(self, employee_id: int, day: Date, shift: Shift) -> bool:
         """Whether some station could receive this duty: an active membership, availability and the
         shift's own work pattern allow it; the other rules depend on the rest of the schedule."""
@@ -488,7 +472,7 @@ class _Check:
                 for m in self.dataset.planning_unit_memberships
             )
             and not self.availability_problems(employee_id, day, shift)
-            and _daily_work_problem(duty_times(day, shift)) is None
+            and _daily_work_problem(_planned_times(shift)) is None
         )
 
     def wishes(self, timelines: dict[int, list[_Duty]]) -> tuple[WishOutcome, ...]:
@@ -574,6 +558,19 @@ class _Check:
             balance_deviation_minutes=sum(abs(balance) for _, balance in self.balances(duties)),
             surplus_intermediate_duties=sum(max(0, count - required[key]) for key, count in intermediate.items()),
         )
+
+
+# A date without a clock change, on which a shift's times are exactly its plan.
+PLANNED_DATE = Date(2026, 1, 5)
+
+
+def _planned_times(shift: Shift) -> DutyTimes:
+    """The shift's times as planned, whatever date it is worked on.
+
+    The daily work and break rules judge a shift by its plan and ignore clock changes: the night of the October
+    change, an hour longer in elapsed time, counts with its planned hours (a decision of the demo version).
+    """
+    return duty_times(PLANNED_DATE, shift)
 
 
 def _daily_work_problem(times: DutyTimes) -> str | None:

@@ -369,6 +369,8 @@ export interface ScheduleReview {
   solution: Solution & { check: ScheduleCheck; configuration: RunConfiguration };
   tables: { duties: DutyRow[]; employees: EmployeeRow[]; coverage: CoverageRow[] };
   metrics: ScheduleMetrics;
+  /** Which schedule of its month this is; it names the saved file. */
+  version: number;
 }
 
 /** Plain counts of the schedule as a ward reads it, whichever solver made it; computed by the backend, never here. */

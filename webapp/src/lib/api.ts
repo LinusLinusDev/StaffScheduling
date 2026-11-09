@@ -215,32 +215,27 @@ export async function getReview(): Promise<ScheduleReview | null> {
 }
 
 const IMPORT_PROBLEMS: Record<BundleProblem, string> = {
-  malformed: "Das sind keine gespeicherten Dienstplan-Dateien. Bitte input.json und result.json eines Plans wählen.",
-  mismatch:
-    "Die beiden Dateien gehören zu verschiedenen Dienstplänen. Bitte input.json und result.json desselben Plans wählen.",
-  no_schedule: "result.json enthält keinen Dienstplan.",
-  references: "Die Dateien gehören nicht zu dieser Station. Bitte einen hier gespeicherten Dienstplan wählen.",
-  policy: "Die Dateien stammen aus einer anderen Version der Anwendung.",
-  check: "Die Dateien stammen aus einer anderen Version der Anwendung.",
+  malformed: "Das ist keine gespeicherte Dienstplan-Datei. Bitte eine Datei „Dienstplan … - Version ….json“ wählen.",
+  mismatch: "Die Datei ist beschädigt und kann nicht geladen werden.",
+  no_schedule: "Die Datei enthält keinen Dienstplan.",
+  references: "Die Datei enthält Dienste, die nicht zu ihrem Monat oder ihrer Station passen.",
+  policy: "Die Datei stammt aus einer anderen Version der Anwendung.",
+  check: "Die Datei stammt aus einer anderen Version der Anwendung.",
 };
 
-/** Review an uploaded `input`/`result` pair; a rejected pair leaves the current review unchanged. */
-export function importReview(files: FormData) {
-  return request<ScheduleReview>("POST", "/review/import", {
+/** Review an uploaded plan file (form field `plan`); a rejected file leaves the current review unchanged. */
+export function importPlan(files: FormData) {
+  return request<ScheduleReview>("POST", "/review/import-plan", {
     body: files,
     invalid: IMPORT_PROBLEMS.malformed,
     problems: IMPORT_PROBLEMS,
   });
 }
 
-/** The downloadable files of the schedule under review: the pair that saves it, to import it again later. */
-export const REVIEW_FILES = ["input.json", "result.json"] as const;
-export type ReviewFile = (typeof REVIEW_FILES)[number];
-
-/** One file of the schedule under review as the API's attachment response, or `null` without a review. */
-export async function getReviewFile(name: ReviewFile): Promise<Response | null> {
+/** The schedule under review as one plan file with the API's attachment headers, or `null` without a review. */
+export async function getPlanFile(): Promise<Response | null> {
   try {
-    return await send("GET", `/review/files/${name}`);
+    return await send("GET", "/review/plan");
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;

@@ -1,12 +1,12 @@
 "use server";
 
-import { importReview } from "@/lib/api";
+import { importPlan } from "@/lib/api";
 import { writeResult } from "@/lib/write-result";
 
-/** Review an uploaded `input`/`result` pair; success means the backend validated and re-checked it. */
-export async function importFiles(files: FormData) {
+/** Load a saved plan file (form field `plan`); success means the backend validated and re-checked it. */
+export async function loadPlan(files: FormData) {
   // The page reloads the review itself, so the large review is not sent back to the browser.
   return writeResult(async () => {
-    await importReview(files);
+    await importPlan(files);
   }, "/review");
 }

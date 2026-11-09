@@ -65,10 +65,12 @@ def test_valid_month_is_accepted_with_its_open_obligations_listed() -> None:
 
     assert check.status == CheckStatus.ACCEPTED
     assert check.findings == ()
-    # Later obligations are named with their window and do not block; nothing is presented as passed.
+    # Later obligations are named with their window and do not block; nothing is presented as passed. The demo
+    # leaves replacement rest out, also named and not blocking.
     assert {(row.rule, row.blocking) for row in check.not_assessed} == {
         (Rule.REST, False),
         (Rule.ANNUAL_FREE_SUNDAYS, False),
+        (Rule.REPLACEMENT_REST, False),
     }
     assert Rule.ANNUAL_FREE_SUNDAYS not in check.rules
 
@@ -374,30 +376,16 @@ def test_monthly_work_averages_at_most_eight_hours_per_werktag() -> None:
     assert all(row.rule != Rule.WORK_AVERAGE for row in check(20).not_assessed)
 
 
-def replacement_missing(data: SchedulingDataset, assignments: list[Assignment]) -> set[date | None]:
-    return {row.date for row in check_schedule(data, assignments).findings if row.rule == Rule.REPLACEMENT_REST}
-
-
-def test_each_worked_sunday_and_holiday_needs_its_own_free_werktag_of_the_month() -> None:
+def test_the_demo_leaves_replacement_rest_unchecked_and_says_so() -> None:
+    # New Year and all four Sundays are worked and the month has no free Werktag to replace them.
     every_day = [duty(1, jan(day), EARLY) for day in range(1, 32)]
     data = dataset(memberships=member(1), accounts=[account(1, 31 * 420)])
-    # New Year and all four Sundays are worked and the month has no free Werktag.
-    assert replacement_missing(data, every_day) == {jan(1), jan(4), jan(11), jan(18), jan(25)}
-    assert all(row.rule != Rule.REPLACEMENT_REST for row in check_schedule(data, every_day).not_assessed)
+    result = check_schedule(data, every_day)
 
-    # One free Wednesday serves one of them, never two.
-    free_wednesday = [row for row in every_day if row.date != jan(7)]
-    data = dataset(memberships=member(1), accounts=[account(1, 30 * 420)])
-    assert len(replacement_missing(data, free_wednesday)) == 4
-
-
-@pytest.mark.parametrize(("saturday", "sunday_worked"), [(LATE, False), (NIGHT, True)])
-def test_a_saturday_night_is_sunday_work(saturday: Shift, sunday_worked: bool) -> None:
-    # Every Werktag from January 2 to 24 is worked, so Sunday January 11 has no free Werktag in its window.
-    werktage = [duty(1, jan(day), EARLY) for day in range(2, 25) if day not in (4, 10, 11, 18)]
-    schedule = [*werktage, duty(1, jan(10), saturday)]
-    data = dataset(memberships=member(1), accounts=balanced(1, schedule))
-    assert (jan(11) in replacement_missing(data, schedule)) == sunday_worked
+    assert Rule.REPLACEMENT_REST not in result.rules
+    assert all(row.rule != Rule.REPLACEMENT_REST for row in result.findings)
+    [unchecked] = [row for row in result.not_assessed if row.rule == Rule.REPLACEMENT_REST]
+    assert (unchecked.blocking, unchecked.start, unchecked.end) == (False, jan(1), jan(31))
 
 
 def test_daylight_saving_changes_elapsed_work_but_not_paid_minutes() -> None:
@@ -408,6 +396,15 @@ def test_daylight_saving_changes_elapsed_work_but_not_paid_minutes() -> None:
         local_instant(date(2026, 3, 29), hm(2, 30))
     with pytest.raises(ValueError, match="skipped or repeated"):
         local_instant(date(2026, 10, 25), hm(2, 30))
+
+
+def test_the_daily_work_rules_ignore_the_october_clock_change() -> None:
+    # Elapsed, the night of October 24, 2026 works an hour more, 6 h 40 min without a break; as planned it keeps
+    # the rules, and the demo judges a shift by its plan.
+    october = PlanningMonth(year=2026, month=10)
+    data = dataset(memberships=member(1), accounts=[account(1, 555, month=october)], month=october)
+    assert duty_times(date(2026, 10, 24), NIGHT).work_minutes == 555 + 60
+    assert Rule.WORK_AND_BREAKS not in rules(data, [duty(1, date(2026, 10, 24), NIGHT)])
 
 
 def test_rest_and_recovery_count_elapsed_hours_across_clock_changes() -> None:

@@ -26,6 +26,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     source = TimeOfficeService(engine) if engine is not None else DemoPlanningSource()
     if settings.solver_backend == "gurobi":
         from app.solver.milp.service import GurobiSolverService  # nur laden, wenn gebraucht
+
         solver = GurobiSolverService(settings)
     else:
         solver = SolverService(settings)

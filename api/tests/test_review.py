@@ -203,6 +203,33 @@ def test_metrics_count_balances_and_late_to_early_with_the_trusted_context() -> 
     )
 
 
+def test_plan_files_save_and_load_a_schedule_with_the_version_of_its_month() -> None:
+    data = january()
+    review = Review()
+    review.generated(data, found(data, JANUARY_DUTIES))
+    review.generated(data, found(data, JANUARY_DUTIES))
+    saved = review.plan_file()
+    assert saved is not None
+    name, content = saved
+    assert name == "Dienstplan Januar 2026 - Version 2.json"
+
+    other = Review()
+    shown = other.imported_plan(content)
+    first = review.current()
+    assert first is not None
+    assert (shown.version, shown.tables) == (2, first.tables)
+    # The next schedule of the month counts on from the loaded version.
+    other.generated(data, found(data, JANUARY_DUTIES))
+    later = other.current()
+    assert later is not None
+    assert later.version == 3
+
+    with pytest.raises(InvalidBundle) as caught:
+        other.imported_plan(b'{"format": "something else"}')
+    assert caught.value.problem == BundleProblem.MALFORMED
+    assert other.current() == later
+
+
 def test_bundle_files_carry_every_field_and_read_back() -> None:
     bundle = bundle_of(january(), JANUARY_DUTIES)
     files = bundle.files
@@ -535,3 +562,12 @@ def test_http_review_downloads_and_imports_only_valid_pairs(
     # The rejected pair leaves the imported review and its files in place.
     assert http.get("/review").json()["received_at"] == imported.json()["received_at"]
     assert http.get(f"/review/files/{SCHEDULE_FILE}").content == files[SCHEDULE_FILE]
+
+    # One plan file saves the schedule under a German name and loads it again.
+    plan = http.get("/review/plan")
+    assert plan.status_code == 200
+    assert "filename*=UTF-8''Dienstplan%20Januar%202026%20-%20Version" in plan.headers["content-disposition"]
+    loaded = http.post("/review/import-plan", files={"plan": ("plan.json", plan.content)})
+    assert loaded.status_code == 200
+    assert loaded.json()["tables"] == generated["tables"]
+    assert http.post("/review/import-plan", files={"plan": ("x.json", b"{}")}).json()["problem"] == "malformed"

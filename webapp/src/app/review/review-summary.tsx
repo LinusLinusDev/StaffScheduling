@@ -100,7 +100,8 @@ export function ReviewSummary({ review, actions }: { review: ScheduleReview; act
               {period.name} · {stations.map((unit) => unit.display_name).join(", ")}
             </h2>
             <p className="text-muted-foreground">
-              {SOURCES[review.source]} {TIME.format(new Date(review.received_at))} Uhr · {tables.duties.length} Dienste
+              Version {review.version} · {SOURCES[review.source]} {TIME.format(new Date(review.received_at))} Uhr ·{" "}
+              {tables.duties.length} Dienste
             </p>
             <StatusLine tone={TONES[check.status]} title={checkValue} hint={hint} />
           </div>
