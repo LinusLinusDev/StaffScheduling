@@ -73,6 +73,19 @@ class PlanFile(BaseModel):
     """result.json as saved, character for character."""
 
 
+def read_plan(content: bytes) -> tuple[ScheduleBundle, int]:
+    """A saved plan file's validated bundle and version; raises InvalidBundle for anything else.
+
+    The bundle passes every check of an imported pair: the input's digest, the rule settings, the references and a
+    schedule check equal to an independent re-check.
+    """
+    try:
+        plan = PlanFile.model_validate_json(content)
+    except ValidationError as error:
+        raise InvalidBundle(BundleProblem.MALFORMED, "Not a saved schedule file.") from error
+    return ScheduleBundle.read(plan.input.encode(), plan.result.encode()), plan.version
+
+
 class ScheduleReview(SchedulingBaseModel):
     """What the review page shows: the bundle's scope, solution and check, its readable tables and counts."""
 
@@ -122,11 +135,8 @@ class Review:
 
     def imported_plan(self, content: bytes) -> ScheduleReview:
         """Review a saved plan file; raises InvalidBundle (`malformed`) for anything else."""
-        try:
-            plan = PlanFile.model_validate_json(content)
-        except ValidationError as error:
-            raise InvalidBundle(BundleProblem.MALFORMED, "Not a saved schedule file.") from error
-        return self.imported(plan.input.encode(), plan.result.encode(), plan.version)
+        bundle, version = read_plan(content)
+        return self._show(bundle, ReviewSource.IMPORT, version)
 
     def current(self) -> ScheduleReview | None:
         return self._current[1] if self._current else None

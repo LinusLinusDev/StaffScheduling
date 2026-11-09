@@ -13,6 +13,7 @@ from threading import Lock
 
 from app.domain import (
     POLICY,
+    Assignment,
     Availability,
     AvailabilityEntry,
     AvailabilityType,
@@ -33,6 +34,7 @@ from app.domain import (
     PlanningUnitMembership,
     PlanningUnitType,
     ScheduleContext,
+    SchedulingBaseModel,
     SchedulingDataset,
     Shift,
     ShiftOption,
@@ -165,6 +167,18 @@ def default_demand(month: PlanningMonth) -> MonthlyDemand:
     return expand_pattern(DemandPattern(planning_unit_id=STATION_ID, planning_month=month, cells=cells))
 
 
+class HistorySummary(SchedulingBaseModel):
+    """The saved schedule of the month before, loaded as history of a month."""
+
+    planning_month: PlanningMonth
+    """The month this history precedes."""
+    previous_month: PlanningMonth
+    version: int
+    """The version of the loaded plan file."""
+    duties: int
+    """Duties of the month before."""
+
+
 def _month_of(day: date) -> PlanningMonth:
     return PlanningMonth(year=day.year, month=day.month)
 
@@ -181,6 +195,8 @@ class DemoPlanningSource:
         self._wishes: dict[tuple[int, date], WishEntry] = {}
         self._demand: dict[tuple[int, int], MonthlyDemand] = {}
         self._prefilled: set[tuple[int, int]] = set()
+        # The loaded schedule of the month before, by the month it precedes: its duties and its summary.
+        self._history: dict[tuple[int, int], tuple[tuple[Assignment, ...], HistorySummary]] = {}
 
     def get_planning_options(self, *, planning_month: PlanningMonth) -> PlanningOptions:
         return PlanningOptions(planning_month=planning_month, planning_units=(STATION,))
@@ -225,10 +241,16 @@ class DemoPlanningSource:
                 for (employee_id, day), entry in sorted(self._availability.items())
                 if day == after
             )
-        # The preceding days are known and free, so the rules at the month start are checked, not left open.
+            history = self._history.get((planning_month.year, planning_month.month))
+        # With the loaded month before, its duties are the history of the rules at the month start (nights, rest,
+        # days in a row, weekends). Without it the preceding days count as known and free, so the rules at the
+        # month start are still checked, not left open.
         context = ScheduleContext(
-            covered_from=planning_month.start - timedelta(days=POLICY.preceding_context_days),
+            covered_from=planning_month.previous.start
+            if history
+            else planning_month.start - timedelta(days=POLICY.preceding_context_days),
             covered_until=planning_month.end,
+            duties=history[0] if history else (),
             availability=following,
         )
         return build_scheduling_dataset(
@@ -238,6 +260,38 @@ class DemoPlanningSource:
             context=context,
             wishes=self._month_wishes(planning_month),
         )
+
+    def get_history(self, *, planning_month: PlanningMonth) -> HistorySummary | None:
+        """The month before loaded as this month's history, if any."""
+        with self._lock:
+            history = self._history.get((planning_month.year, planning_month.month))
+        return history[1] if history else None
+
+    def set_history(
+        self, *, planning_month: PlanningMonth, assignments: tuple[Assignment, ...], version: int
+    ) -> HistorySummary:
+        """Load the duties of the month before as this month's history; the caller has validated the schedule.
+
+        Raises InvalidSelection unless every duty lies in the month before and belongs to the demo station, its
+        team and the reference shifts.
+        """
+        previous = planning_month.previous
+        for row in assignments:
+            _require_station((row.planning_unit_id,))
+            _require_employee(row.employee_id)
+            _require_shifts((row.shift_id,))
+            if row.date not in previous:
+                raise InvalidSelection("A duty of the history lies outside the month before.")
+        summary = HistorySummary(
+            planning_month=planning_month, previous_month=previous, version=version, duties=len(assignments)
+        )
+        with self._lock:
+            self._history[planning_month.year, planning_month.month] = (assignments, summary)
+        return summary
+
+    def clear_history(self, *, planning_month: PlanningMonth) -> None:
+        with self._lock:
+            self._history.pop((planning_month.year, planning_month.month), None)
 
     def list_employees(
         self, *, planning_unit_ids: tuple[int, ...], planning_month: PlanningMonth

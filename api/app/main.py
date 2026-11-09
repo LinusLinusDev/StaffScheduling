@@ -4,7 +4,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.api import availability, demand, generation, planning, publication, review
+from app.api import availability, demand, generation, history, planning, publication, review
+from app.api.history import HistoryRejected
 from app.demo import DemoPlanningSource
 from app.domain import PublicationRejected
 from app.logging import configure_logging
@@ -56,6 +57,9 @@ app.include_router(review.router)
 # Publishing writes to TimeOffice; the demo station has nothing to publish to.
 if settings.data_source == "timeoffice":
     app.include_router(publication.router)
+else:
+    # The demo station takes the saved schedule of the month before as a month's history.
+    app.include_router(history.router)
 
 
 @app.exception_handler(TimeOfficeUnavailable)
@@ -68,6 +72,11 @@ async def timeoffice_unavailable(_request: Request, error: TimeOfficeUnavailable
 
 @app.exception_handler(InvalidBundle)
 async def invalid_bundle(_request: Request, error: InvalidBundle) -> JSONResponse:
+    return JSONResponse(status_code=422, content={"detail": str(error), "problem": error.problem})
+
+
+@app.exception_handler(HistoryRejected)
+async def history_rejected(_request: Request, error: HistoryRejected) -> JSONResponse:
     return JSONResponse(status_code=422, content={"detail": str(error), "problem": error.problem})
 
 

@@ -383,6 +383,17 @@ export interface ScheduleMetrics {
   late_to_early: number;
 }
 
+/** The saved schedule of the month before, loaded as a month's history so the rules hold across the boundary. */
+export interface HistorySummary {
+  planning_month: PlanningMonth;
+  previous_month: PlanningMonth;
+  version: number;
+  duties: number;
+}
+
+/** Why the backend refused a plan file as a month's history, beyond the problems of loading it. */
+export type HistoryProblem = "wrong_month" | "not_accepted" | "foreign";
+
 /** Why the backend refused an uploaded pair of files. */
 export type BundleProblem = "malformed" | "mismatch" | "no_schedule" | "policy" | "references" | "check";
 

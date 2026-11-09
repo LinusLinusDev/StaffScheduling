@@ -16,32 +16,34 @@
 \assistent{Linus Palm}
 \contact{palm@combi.rwth-aachen.de}
 \title{Modell -- Kurzfassung}
-\date{04. November 2026}
+\date{09. November 2026}
 \maketitle
 
-Der Schichtplan Manager erstellt für einen Monat und eine oder mehrere Stationen automatisch einen
-Dienstplan. Dabei hält er feste Regeln immer ein und verfolgt mehrere Ziele in einer festen Rangfolge.
+Der Schichtplan Manager erstellt für einen Monat und eine Station automatisch einen Dienstplan. In der Demo
+ist das die fiktive Musterstation. Dabei hält er feste Regeln immer ein und verfolgt mehrere Ziele in einer festen Rangfolge.
 
 \section{Eingaben}
 
 \begin{itemize}
   \item \textbf{Monat}, für den geplant wird. Die Rechenzeit ist fest: \textbf{30 Sekunden}.
-  \item \textbf{Mitarbeitende}: auf welchen Stationen sie in welchem Zeitraum arbeiten dürfen, mit welcher
-        Qualifikation (Fachkraft, Hilfskraft, Azubi, MFA) und welche davon ihre Stammstation ist.
-  \item \textbf{Sollzeit und Gutschriften} je Person; Urlaub und Fortbildung werden mit dem Tagessoll gutgeschrieben.
+  \item \textbf{Mitarbeitende} mit ihrer Qualifikation: 9 Fachkräfte (drei davon in Teilzeit mit 80 bis 90\,\%),
+        eine Hilfskraft und zwei Azubis.
+  \item \textbf{Sollzeit und Gutschriften} je Person: 38,5 Stunden je Woche, in Teilzeit anteilig; Urlaub und
+        Fortbildung werden mit dem Tagessoll gutgeschrieben.
   \item \textbf{Schichten} mit Uhrzeiten und anrechenbaren Stunden: Früh (F), Zwischen (Z), Spät (S), Nacht (N).
-  \item \textbf{Mindestbesetzung} je Station, Tag, Schicht und Qualifikation.
+  \item \textbf{Mindestbesetzung} je Tag, Schicht und Qualifikation, jeweils 0 bis 5 Personen.
   \item \textbf{Einschränkungen}: Urlaub, Fortbildung, freier Tag, nicht verfügbar, „nur bestimmte Schichten“.
   \item \textbf{Wünsche}: freier Tag, bestimmte Schicht frei, Wunschtag oder Wunschschicht.
-  \item \textbf{Dienste der Tage vor dem Monat}, damit die Regeln auch über den Monatswechsel gelten.
+  \item Optional der gespeicherte \textbf{Dienstplan des Vormonats}, damit die Regeln auch über den Monatswechsel
+        gelten. Er muss unverändert, genau der Vormonat und angenommen sein. Ohne ihn gelten die Tage vor dem Monat
+        als frei.
 \end{itemize}
 
 \section{Feste Regeln}
 
 Jeder erstellte Dienstplan hält diese Regeln ein:
 \begin{itemize}
-  \item Höchstens \textbf{ein Dienst pro Person und Tag}, nur auf Stationen mit gültiger Zuordnung; der Dienst zählt
-        mit der dort hinterlegten Qualifikation.
+  \item Höchstens \textbf{ein Dienst pro Person und Tag}; der Dienst zählt mit der Qualifikation der Person.
   \item \textbf{Einschränkungen} gelten immer. Vor einem Abwesenheitstag gibt es keinen Nachtdienst, am Tag vor
         Urlaubsbeginn keinen Spätdienst.
   \item Höchstens \textbf{10 Arbeitstage in Folge}; Fortbildungstage zählen mit.
@@ -50,7 +52,9 @@ Jeder erstellte Dienstplan hält diese Regeln ein:
   \item \textbf{Wochenenden}: Samstag und Sonntag dieselbe Schicht oder beide frei; nie zwei Wochenenden in Folge,
         auch nicht über den Monatswechsel. Ein Wochenende gilt als gearbeitet, wenn am Samstag oder Sonntag ein
         Dienst beginnt; ein Nachtdienst am Freitag allein zählt nicht.
-  \item Dienste vor dem Monat werden \textbf{nicht verändert}, zählen aber bei allen Regeln mit.
+  \item Dienste des Vormonats werden \textbf{nicht verändert}, zählen aber bei den Regeln mit. Was dort schon
+        feststeht, erzwingt im neuen Monat nichts: Nach einem gearbeiteten Samstag hat der Sonntag am Ersten dieselbe
+        Schicht oder ist frei, nach einem freien Samstag ist er offen.
 \end{itemize}
 
 Mindestbesetzung, Sollzeit und der Wechsel vom Spät- in den Frühdienst sind bewusst \emph{keine} festen
@@ -59,13 +63,13 @@ Regeln, sondern Ziele. So entsteht auch bei Personalmangel ein Plan, und was feh
 \section{Ziele in ihrer Rangfolge}
 
 Die Ziele werden nacheinander verbessert. Ein späteres Ziel darf ein früheres nicht verschlechtern; nur bei den
-Zielen 3, 4 und 6 ist ein kleiner Spielraum erlaubt, damit die folgenden Ziele noch Wahlmöglichkeiten haben.
+Zielen c), d) und f) ist ein kleiner Spielraum erlaubt, damit die folgenden Ziele noch Wahlmöglichkeiten haben.
 \begin{enumerate}
   \item \textbf{Möglichst wenige Lücken}, also unbesetzte Pflichtstellen.
   \item \textbf{Sollzeit einhalten}: Am Monatsende liegt jede Person höchstens 7:40 Stunden über oder unter ihrem Soll.
   \item \textbf{Lücken gleichmäßig verteilen}: Bleiben Lücken, fallen sie gemessen am Bedarf gleichmäßig auf die Tage.
   \item \textbf{Gleichmäßig besetzte Tage}: Jeder Tag ist im gleichen Verhältnis zu seiner Mindestbesetzung besetzt.
-  \item \textbf{Wünsche erfüllen} und Einsätze außerhalb der Stammstation vermeiden (Springer sind davon ausgenommen).
+  \item \textbf{Wünsche erfüllen}.
   \item \textbf{Gleichmäßig besetzte Schichten}: Zusätzliches Personal eines Tages verteilt sich im Verhältnis
         der Mindestbesetzung auf die Schichten.
   \item \textbf{Möglichst wenige Wechsel vom Spät- in den Frühdienst}.
@@ -77,14 +81,18 @@ Ist die Rechenzeit abgelaufen, wird der beste bis dahin gefundene Plan ausgegebe
 \section{Ausgabe}
 
 \begin{itemize}
-  \item \textbf{Der Dienstplan}: für jede Person und jeden Tag Schicht, Station und Qualifikation.
-  \item \textbf{Besetzung und Lücken}: je Station, Tag und Schicht die Besetzung im Vergleich zur Mindestbesetzung
+  \item \textbf{Der Dienstplan}: für jede Person und jeden Tag die Schicht.
+  \item \textbf{Besetzung und Lücken}: je Tag und Schicht die Besetzung im Vergleich zur Mindestbesetzung
         (Ist/Soll) und welche Pflichtstellen mit welcher Qualifikation offen bleiben.
   \item \textbf{Monatskonten}: Soll, Gutschriften, geplante Stunden und Saldo je Person.
   \item \textbf{Unabhängige Prüfung} des Plans gegen gesetzliche und betriebliche Regeln, z.\,B. 11 Stunden Ruhezeit
         zwischen zwei Diensten. Ergebnis: \emph{angenommen}, \emph{abgelehnt} (mit Person, Datum und Regel) oder
-        \emph{unvollständig geprüft}. Nur ein angenommener Plan kann veröffentlicht werden.
-  \item \textbf{Kennzahlen} zu jedem Ziel und welche Wünsche erfüllt wurden.
+        \emph{unvollständig geprüft}. Nur ein angenommener Plan kann als Vormonat für den nächsten Monat
+        geladen werden.
+  \item \textbf{Kennzahlen}: Lücken, wie viele Monatssalden außerhalb von $\pm$\,7:40 Stunden liegen und die größte
+        Abweichung, erfüllte Wünsche und Wechsel vom Spät- in den Frühdienst.
+  \item Der Plan lässt sich als \textbf{eine Datei speichern} („Dienstplan \textless Monat\textgreater{}
+        \textless Jahr\textgreater{} - Version \textless n\textgreater.json“) und später wieder laden.
 \end{itemize}
 
 \end{document}

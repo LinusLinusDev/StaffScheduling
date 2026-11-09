@@ -2,12 +2,13 @@ import { BulletList } from "@/components/bullet-list";
 import { LoadError } from "@/components/load-error";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
-import { getLatestGeneration } from "@/lib/api";
-import { selectionMonthLabel } from "@/lib/labels";
+import { getHistory, getLatestGeneration } from "@/lib/api";
+import { monthLabel, selectionMonthLabel } from "@/lib/labels";
 import { loadPlanningScope, type ScopeSearchParams } from "@/lib/scope";
 import { selectionMonth } from "@/lib/selection";
 import type { GenerationJob } from "@/lib/types";
 import { GenerationForm } from "./generation-form";
+import { HistoryPanel } from "./history-panel";
 import { JobPanel } from "./job-panel";
 import type { Metadata } from "next";
 
@@ -30,6 +31,7 @@ const USED = [
   "Nachtdienste in Blöcken von 2–3 Nächten, danach 2 freie Tage",
   "Höchstens 10 Arbeitstage am Stück und nie zwei Wochenenden in Folge",
   "Gleichmäßige Besetzung über alle Tage und Schichten, möglichst wenige Spät-Früh-Wechsel",
+  "Dienstplan des Vormonats, wenn geladen: die Regeln gelten dann auch über den Monatswechsel",
 ];
 
 export default async function GenerationPage({ searchParams }: { searchParams: Promise<ScopeSearchParams> }) {
@@ -45,6 +47,10 @@ export default async function GenerationPage({ searchParams }: { searchParams: P
   const selectedIds = new Set(scope.stationIds);
   const selected = scope.stations.filter((unit) => selectedIds.has(unit.planning_unit_id));
   const period = selectionMonthLabel(scope.month);
+  // The month before by name; its saved plan, if loaded, is this month's history.
+  const [year, monthNumber] = scope.month.split("-").map(Number);
+  const previousName = monthLabel(monthNumber === 1 ? year - 1 : year, monthNumber === 1 ? 12 : monthNumber - 1).name;
+  const history = await getHistory(scope.month).catch(() => null);
 
   return (
     <div className="py-6">
@@ -74,6 +80,7 @@ export default async function GenerationPage({ searchParams }: { searchParams: P
                 </div>
               }
             />
+            <HistoryPanel month={scope.month} previousName={previousName} history={history} running={running} />
             <div className="space-y-1.5 border-t pt-3 text-muted-foreground">
               <p className="font-medium text-foreground">Berücksichtigt</p>
               <BulletList

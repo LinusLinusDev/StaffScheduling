@@ -340,20 +340,25 @@ class GurobiSolverService:
                 for d in D_prev[-K_s:] + D[:-K_s]:
                     window = [d + timedelta(days=k) for k in range(K_s + 1)]
                     fixed = len(training[i].intersection(window))
-                    schedule.addConstr(gp.quicksum(at(work, i, day) for day in window) + fixed <= K_s)
+                    worked = gp.quicksum(at(work, i, day) for day in window) + fixed
+                    # days fixed already (worked before the month, training) may reach the limit alone: then no more
+                    schedule.addConstr(worked <= max(K_s, worked.getConstant()))
             # define L_to_E
             schedule.addConstrs(L_to_E[i, d] >= at(late, i, d - one_day) + early[i, d] - 1 for i in I for d in D);
             # max consecutive nights
             for i in I:
                 for d in D_prev[-POLICY.max_consecutive_nights:]+ D[:-POLICY.max_consecutive_nights]:
                     window = [d + timedelta(days=k) for k in range(POLICY.max_consecutive_nights + 1)]
-                    schedule.addConstr(gp.quicksum(at(night, i, day) for day in window) <= POLICY.max_consecutive_nights)
+                    nights = gp.quicksum(at(night, i, day) for day in window)
+                    # nights before the month may reach the limit alone: then no more
+                    schedule.addConstr(nights <= max(POLICY.max_consecutive_nights, nights.getConstant()))
             # define beginning and end of nightshiftblock; lower bounds suffice, because n_beg and n_end
             # appear only in <= 1 constraints with positive sign and in no objective
             schedule.addConstrs((n_beg[i,d] >= night[i, d] - at(night, i, d - one_day) for i in I for d in D_prev[-1:] + D));
             schedule.addConstrs((n_end[i,d] >= night[i, d] - at(night, i, d + one_day) for i in I for d in D_end));
-            # no nightshift block starts and ends on the same day
-            schedule.addConstrs(n_beg[i,d]+n_end[i,d]<=1 for i in I for d in D_prev[-1:] + D[:-1]);
+            # no nightshift block starts and ends on the same day; a single night on the last day before the month is
+            # not forced to go on (a vacation or the night limit may forbid a second night on the 1st)
+            schedule.addConstrs(n_beg[i,d]+n_end[i,d]<=1 for i in I for d in D[:-1]);
             # ensure recovery days after nightshift block (only month days: the past is never constrained against itself)
             for i in I:
                 for d in D_prev[-(L_n+1):] + D[:-1]:
@@ -363,12 +368,17 @@ class GurobiSolverService:
                     # no early shift after recovery days
                     if d + timedelta(days=L_n+1) in D_set:
                         schedule.addConstr(n_end[i, d] + early[i, d + timedelta(days=L_n+1)] <= 1)
-            # same shifts on weekends
-            # at the month start the Saturday before only ties the first Sunday when it was worked: a free Saturday
-            # before the month leaves the Sunday open, instead of keeping everybody off on the 1st
+            # same shifts on weekends. At the month start the known Saturday before only bounds the first Sunday: after
+            # a worked Saturday the Sunday keeps its shift or stays free, never forced (a vacation on the 1st or a fourth
+            # night would make the month infeasible); after a free Saturday the Sunday is open.
             for d in D_s:
                 for i in I:
-                    if d in D_prev_set and (i, d) not in past_shifts:
+                    if d in D_prev_set:
+                        if (i, d) in past_shifts:
+                            for s in S:
+                                sunday = shift_on(i, s, d + one_day)
+                                if s != past_shifts[i, d] and sunday.size() > 0:
+                                    schedule.addConstr(sunday <= 0)
                         continue
                     for s in S:
                         schedule.addConstr(shift_on(i, s, d) == shift_on(i, s, d + one_day))
@@ -385,7 +395,10 @@ class GurobiSolverService:
                 sunday = saturday + one_day
                 if sunday in D_prev_set:
                     return gp.LinExpr(int((i, saturday) in past_shifts or (i, sunday) in past_shifts))
-                if saturday in D_set or saturday in D_prev_set:
+                if saturday in D_prev_set:
+                    # the weekend across the month start: a worked Saturday before it, or a duty on Sunday the 1st
+                    return gp.LinExpr(1) if (i, saturday) in past_shifts else at(work, i, sunday)
+                if saturday in D_set:
                     return at(work, i, saturday)
                 # the Saturday lies before the known days: a month starting on a Sunday without past duties
                 return at(work, i, sunday)
@@ -393,8 +406,11 @@ class GurobiSolverService:
             # only pairs whose later weekend touches the month: the past is never constrained against itself
             for earlier, later in zip(W, W[1:], strict=False):
                 if later in D_set or later + one_day in D_set:
-                    schedule.addConstrs((weekend(i, earlier) + weekend(i, later) <= 1 for i in I),
-                                        name=f"two_weekends[{later}]")
+                    for i in I:
+                        pair = weekend(i, earlier) + weekend(i, later)
+                        # two weekends both fixed by the past (a worked Saturday before the month) stay as they were
+                        if pair.size() > 0:
+                            schedule.addConstr(pair <= 1, name=f"two_weekends[{later},{i}]")
             # solve
             schedule.Params.TimeLimit = timeout
             schedule.Params.MIPGap = 0.03

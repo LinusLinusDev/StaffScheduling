@@ -11,6 +11,8 @@ import type {
   PlanningInspection,
   PlanningOptions,
   BundleProblem,
+  HistoryProblem,
+  HistorySummary,
   ScheduleReview,
   WishEntry,
   WriteProblem,
@@ -230,6 +232,34 @@ export function importPlan(files: FormData) {
     invalid: IMPORT_PROBLEMS.malformed,
     problems: IMPORT_PROBLEMS,
   });
+}
+
+const HISTORY_PROBLEMS: Record<BundleProblem | HistoryProblem, string> = {
+  ...IMPORT_PROBLEMS,
+  malformed: "Das ist keine gespeicherte Dienstplan-Datei.",
+  wrong_month: "Das ist nicht der Dienstplan des Vormonats.",
+  not_accepted: "Dieser Dienstplan hält nicht alle Regeln ein und kann nicht als Vormonat dienen.",
+  foreign: "Dieser Dienstplan gehört zu einer anderen Station oder anderen Mitarbeitern.",
+};
+
+/** The month before loaded as this month's history, or `null` without one. */
+export function getHistory(month: string) {
+  return request<HistorySummary | null>("GET", "/history", { params: monthQuery(month) });
+}
+
+/** Load a saved plan file of the month before (form field `plan`) as this month's history; checked by the backend. */
+export function putHistory(month: string, files: FormData) {
+  return request<HistorySummary>("PUT", "/history", {
+    params: monthQuery(month),
+    body: files,
+    invalid: HISTORY_PROBLEMS.malformed,
+    problems: HISTORY_PROBLEMS,
+  });
+}
+
+/** Stop using a month before as this month's history. */
+export function deleteHistory(month: string) {
+  return request<void>("DELETE", "/history", { params: monthQuery(month) });
 }
 
 /** The schedule under review as one plan file with the API's attachment headers, or `null` without a review. */

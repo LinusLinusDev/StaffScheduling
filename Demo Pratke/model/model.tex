@@ -20,14 +20,15 @@
 \assistent{Linus Palm}
 \contact{palm@combi.rwth-aachen.de}
 \title{Modell}
-\date{04. November 2026}
+\date{09. November 2026}
 \maketitle
 
 Dieses Dokument beschreibt das gemischt-ganzzahlige lineare Programm (MILP), mit dem der Gurobi-Solver
 (\code{api/app/solver/milp/service.py}, Klasse \code{GurobiSolverService}) den Dienstplan eines Monats
 erstellt. Jeder Abschnitt gibt zuerst die mathematische Formulierung und darunter die Erklärung mit Verweis
 auf die Gleichungen. In Klammern steht jeweils der Name im Code. Werte, die im Projekt fest gesetzt sind,
-stehen bei den Parametern; Werte, die aus TimeOffice bzw. der Webapp kommen, sind Eingabedaten des Monats.
+stehen bei den Parametern; Werte, die aus der Webapp kommen, sind Eingabedaten des Monats. In der Demo stammen
+sie von der fiktiven Musterstation (\code{api/app/demo.py}) und den Eingaben auf den Seiten der Webapp.
 
 %==========================================================================================================
 \section{Mengen und Indizes}
@@ -53,13 +54,15 @@ Springerpools, $U$ (\code{U}) alle Planungseinheiten. Dienste gibt es nur auf St
 (\code{S\_early}, \code{S\_late}, \code{S\_night}) sorgen dafür, dass jede Regel für alle Schichten eines
 Typs gilt, unabhängig vom Kürzel.
 \eqref{set:D}, \eqref{set:Dm}: Tage werden fortlaufend nummeriert. $D$ (\code{D}) ist der Monat, $\Dm$
-(\code{D\_prev}) sind die Vortage, für die die tatsächlichen Dienste bekannt sind (in der Regel $m = 5$). Auf
+(\code{D\_prev}) sind die Vortage, für die die tatsächlichen Dienste bekannt sind. Ist der Dienstplan des
+Vormonats geladen, ist $\Dm$ der ganze Vormonat; sonst sind es die $m = 5$ Tage davor, an denen niemand gearbeitet
+hat. Auf
 diesen Tagen gibt es keine Entscheidungsvariablen, die Dienste dort sind feste Werte, siehe \eqref{eq:X}.
 \eqref{set:DSa}, \eqref{set:W}: $D^{Sa}$ (\code{D\_s}) enthält die Samstage, deren Sonntag im Monat liegt;
 $W$ (\code{W}) jedes Wochenende, dessen Samstag oder Sonntag im Monat oder in den Vortagen liegt, durch seinen
 Samstag und aufsteigend; damit gehört das letzte Wochenende vor dem Monat dazu, gleich an welchem Wochentag der
 Monat beginnt.
-Ist der letzte Vortag ein Samstag, gehört er für die Personen zu $D^{Sa}$, die an ihm gearbeitet haben.
+Ist der letzte Vortag ein Samstag, gilt für ihn \eqref{con:weekendstart}.
 \eqref{set:Dend}: $D^{end}$ (\code{D\_end}) sind die Tage, für die ein Blockende in den Nachtregeln
 gebraucht wird.
 Allgemein gilt: Alle Tagesbereiche, die in die Vortage reichen (nicht-positive $d$), sind mit $\Dm$
@@ -92,14 +95,15 @@ Abgeleitet aus dem Bedarf:
 
 \textbf{Erklärung.}
 \eqref{par:r} (\code{R\_min}) stammt aus der Seite „Mindestbesetzung“.
-\eqref{par:h} (\code{h}) sind die Netto-Minuten der Schicht, die auf das Monatskonto gebucht werden. In den
-Beispieldaten: F 05:55--13:25 (420\,min), Z 08:30--14:15 (345\,min), S 13:15--21:00 (435\,min),
+\eqref{par:h} (\code{h}) sind die Netto-Minuten der Schicht, die auf das Monatskonto gebucht werden. In der
+Demo: F 05:55--13:25 (420\,min), Z 08:30--14:15 (345\,min), S 13:15--21:00 (435\,min),
 N 20:10--06:10 (555\,min).
-\eqref{par:t} (\code{t}, \code{credits}): Soll und Gutschriften kommen aus TimeOffice; für Urlaub und
-Fortbildung, die in der Webapp eingetragen werden, wird vorübergehend das Tagessoll gutgeschrieben.
+\eqref{par:t} (\code{t}, \code{credits}): In der Demo ist das Tagessoll einer Vollzeitkraft 462\,min
+(38,5\,h je Woche) an jedem Werktag von Montag bis Freitag, der kein Feiertag ist; Teilzeitkräfte haben es
+anteilig. Für Urlaub und Fortbildung an diesen Tagen wird das Tagessoll gutgeschrieben.
 \eqref{par:lambda} (\code{level\_at}): Ein Dienst zählt mit der Qualifikation der Stationszugehörigkeit,
 nicht mit der der Person.
-\eqref{par:y0} (\code{past\_shifts}) sind die Dienste der Vortage aus dem Kontext.
+\eqref{par:y0} (\code{past\_shifts}) sind die Dienste des geladenen Vormonats; ohne Vormonat sind alle 0.
 \eqref{par:T} (\code{training}), \eqref{par:B} (\code{blocked}, \code{vacation}): $B$ enthält alle Tage
 mit Urlaub, freiem Tag, Fortbildung oder „nicht verfügbar“, $V$ nur die Urlaubstage. Beide umfassen auch den
 Tag $n+1$ nach dem Monat (\code{context.availability}), in den eine Nacht vom letzten Monatstag hineinreicht:
@@ -218,7 +222,7 @@ nach oben bzw. unten begrenzt werden und die Optimierung sie an diese Grenze dr�
 
 \textbf{Erklärung.}
 \eqref{eq:X}: $X_{isd}$ ist 1, wenn $i$ an $d$ Schicht $s$ arbeitet, egal auf welcher Station. Auf den
-Vortagen ist es der feste Dienst aus dem Kontext, außerhalb des bekannten Zeitraums 0. Dadurch wirken alle
+Vortagen ist es der feste Dienst aus dem Vormonat, außerhalb des bekannten Zeitraums 0. Dadurch wirken alle
 Regeln über den Monatswechsel, ohne dass die Vergangenheit verändert werden kann.
 \eqref{eq:Y}: $Y_{id}$ ist 1, wenn $i$ an $d$ irgendeinen Dienst hat, $Y^{F}$, $Y^{S}$, $Y^{N}$ entsprechend
 für Früh-, Spät- und Nachtdienst.
@@ -348,8 +352,8 @@ unvermeidbar; die Stufe hat deshalb ein Zeitlimit statt eines Optimalitätsbewei
 \begin{align}
   & v_{isd} \le X_{isd},\qquad v_{isd} \le X_{is,d-1} && \forall i \in I,\ s \in S,\ d \in D \label{con:cons}\\
   & z_{id} \ge Y^{S}_{i,d-1} + Y^{F}_{id} - 1 && \forall i \in I,\ d \in D \label{con:ltoe}\\
-  & \textstyle\sum_{d' = d}^{d + K^{S}} Y_{id'} + |T_i \cap \{d,\dots,d+K^{S}\}| \le K^{S}
-    && \forall i \in I,\ d \in \{1-\min(m,K^{S}),\dots,0\} \cup \{1,\dots,n-K^{S}\} \label{con:ks}
+  & \textstyle\sum_{d' = d}^{d + K^{S}} Y_{id'} + |T_i \cap \{d,\dots,d+K^{S}\}| \le \max\bigl(K^{S},\ \kappa_{id}\bigr)
+    && \forall i \in I,\ d \in \{1-\min(m,K^{S}),\dots,n-K^{S}\} \label{con:ks}
 \end{align}
 
 \textbf{Erklärung.}
@@ -359,27 +363,31 @@ wird; maximiert in \eqref{obj:cons}.
 folgt; minimiert in \eqref{obj:ltoe}.
 \eqref{con:ks}: In jedem Fenster von $K^{S}+1 = 11$ Tagen höchstens $K^{S} = 10$ Arbeitstage; Fortbildungstage
 zählen als Arbeitstage. Die Fenster beginnen schon in den Vortagen, damit die Regel über den Monatswechsel gilt.
+$\kappa_{id}$ ist der feste Teil des Fensters (Arbeitstage der Vortage und Fortbildungstage). Erreicht er die
+Grenze schon allein, ist im Fenster kein weiterer Dienst möglich, statt dass das Modell unlösbar wird.
 
 \subsection{Nachtdienste}
 
 \begin{align}
-  & \textstyle\sum_{d' = d}^{d + N^{max}} Y^{N}_{id'} \le N^{max}
+  & \textstyle\sum_{d' = d}^{d + N^{max}} Y^{N}_{id'} \le \max\bigl(N^{max},\ \nu_{id}\bigr)
     && \forall i \in I,\ d \in \{1-\min(m,N^{max}),\dots,0\} \cup \{1,\dots,n-N^{max}\} \label{con:nights}\\
   & b_{id} \ge Y^{N}_{id} - Y^{N}_{i,d-1} && \forall i \in I,\ d \in \{0\} \cup D \label{con:beg}\\
   & e_{id} \ge Y^{N}_{id} - Y^{N}_{i,d+1} && \forall i \in I,\ d \in D^{end} \label{con:end}\\
-  & b_{id} + e_{id} \le 1 && \forall i \in I,\ d \in \{0,\dots,n-1\} \label{con:single}\\
+  & b_{id} + e_{id} \le 1 && \forall i \in I,\ d \in \{1,\dots,n-1\} \label{con:single}\\
   & e_{id} + Y_{i,d+j} \le 1 && \forall i \in I,\ d \in \{-L^{N},\dots,n-1\},\ j = 1,\dots,L^{N},\ d+j \in D \label{con:recovery}\\
   & e_{id} + Y^{F}_{i,d+L^{N}+1} \le 1 && \forall i \in I,\ d \in \{-L^{N},\dots,n-1\},\ d+L^{N}+1 \in D \label{con:recoveryearly}\\
   & e_{id} + \textstyle\sum_{j = 1,\ d+j \in D}^{\Delta^{N}} b_{i,d+j} \le 1 && \forall i \in I,\ d \in \{1-\Delta^{N},\dots,n-1\} \cap D^{end} \label{con:distance}
 \end{align}
 
 \textbf{Erklärung.}
-\eqref{con:nights}: In jedem Fenster von $N^{max}+1 = 4$ Tagen höchstens $N^{max} = 3$ Nächte.
+\eqref{con:nights}: In jedem Fenster von $N^{max}+1 = 4$ Tagen höchstens $N^{max} = 3$ Nächte; $\nu_{id}$ sind
+die Nächte der Vortage im Fenster (wie bei \eqref{con:ks}).
 \eqref{con:beg}, \eqref{con:end} (\code{n\_beg}, \code{n\_end}): $b_{id}$ ist mindestens 1, wenn an $d$ ein
 Nachtblock beginnt (Nacht an $d$, keine an $d-1$), $e_{id}$, wenn einer endet. Untergrenzen genügen, weil $b$
 und $e$ nur in $\le 1$-Bedingungen mit positivem Vorzeichen und in keinem Ziel vorkommen.
-\eqref{con:single}: Beginn und Ende am selben Tag hieße Ein-Nacht-Block; der ist verboten. Für den letzten
-Vortag erzwingt das eine zweite Nacht am Monatsersten, wenn der Vortag eine einzelne Nacht war.
+\eqref{con:single}: Beginn und Ende am selben Tag hieße Ein-Nacht-Block; der ist im Monat verboten. Eine
+einzelne Nacht am letzten Vortag wird nicht zwangsweise fortgesetzt, weil eine Abwesenheit am Ersten oder die
+Nachtgrenze die zweite Nacht verbieten kann.
 \eqref{con:recovery}, \eqref{con:recoveryearly}: Nach dem letzten Nachtdienst eines Blocks $L^{N} = 2$ Tage
 frei und am dritten Tag kein Frühdienst. Das bildet die 48 Stunden Erholung ab: Die Nacht endet um 06:10, der
 Frühdienst am dritten Tag beginnt um 05:55. Nur Tage im Monat werden eingeschränkt, die Vergangenheit nie
@@ -390,28 +398,31 @@ Block beginnen; berücksichtigt werden nur Blockanfänge im Monat.
 \subsection{Wochenenden}
 
 \begin{align}
-  & X_{isd} = X_{is,d+1} && \forall i \in I,\ s \in S,\ d \in D^{Sa} \label{con:weekend}\\
+  & X_{isd} = X_{is,d+1} && \forall i \in I,\ s \in S,\ d \in D^{Sa} \cap D \label{con:weekend}\\
+  & X_{is1} \le X_{is0} && \forall i \in I,\ s \in S, \text{ falls } 0 \in D^{Sa},\ Y_{i0} = 1 \label{con:weekendstart}\\
   & \Omega_{iw} = \begin{cases}
-      \max\bigl(Y_{iw},\, Y_{i,w+1}\bigr) & w+1 \in \Dm\\
-      Y_{iw} & w \in \Db,\ w+1 \notin \Dm\\
-      Y_{i,w+1} & \text{sonst}
+      \max\bigl(Y_{iw},\, Y_{i,w+1}\bigr) & w \le 0\\
+      Y_{iw} & w \ge 1
     \end{cases} && \text{(\code{weekend})} \label{eq:Omega}\\
   & \Omega_{i,w_k} + \Omega_{i,w_{k+1}} \le 1 && \forall i \in I,\ k = 1,\dots,|W|-1 \text{ mit } w_{k+1} \ge 0
     \label{con:twoweekends}
 \end{align}
 
 \textbf{Erklärung.}
-\eqref{con:weekend}: Samstag und Sonntag haben dieselbe Schicht, oder beide sind frei. Ist der letzte Vortag
-ein Samstag mit Dienst, erzwingt das denselben Dienst am Monatsersten; war er frei, ist der Sonntag offen. Sonst
-müsste in einem Monat, der an einem Sonntag beginnt, jeder am Ersten frei haben, dessen Samstag davor frei war.
+\eqref{con:weekend}: Samstag und Sonntag haben dieselbe Schicht, oder beide sind frei.
+\eqref{con:weekendstart}: Über den Monatswechsel (der Monat beginnt an einem Sonntag) bindet der bekannte Samstag
+den Sonntag nur schwach: Nach einem gearbeiteten Samstag hat der Sonntag dieselbe Schicht oder ist frei; erzwungen
+wird nichts, weil eine Abwesenheit am Ersten oder die Nachtgrenze den Dienst verbieten kann. War der Samstag frei,
+ist der Sonntag offen; sonst müsste jeder am Ersten frei haben, dessen Samstag davor frei war.
 \eqref{eq:Omega}: $\Omega_{iw}$ gibt an, ob $i$ das Wochenende mit dem Samstag $w$ arbeitet. Gearbeitet ist es
 mit einem Dienst am Samstag oder Sonntag; eine Nacht vom Freitag allein lässt es frei. Im Monat haben Samstag
-und Sonntag dieselbe Schicht \eqref{con:weekend}, also entscheidet der Samstag. Ein Wochenende in den Vortagen
-ist bekannt, $\Omega$ dort also eine Konstante. Liegt der Samstag vor den bekannten Tagen (Monatsbeginn an einem
-Sonntag ohne Vortage), entscheidet der Sonntag.
+und Sonntag dieselbe Schicht \eqref{con:weekend}, also entscheidet der Samstag ($w \ge 1$). Für $w \le 0$ liegt
+der Samstag vor dem Monat und $Y_{iw}$ fest (außerhalb der bekannten Tage 0); das Maximum ist dann linear: 1 nach
+einem gearbeiteten Samstag, sonst $Y_{i,w+1}$.
 \eqref{con:twoweekends}: Keine zwei Wochenenden in Folge, auch nicht über den Monatswechsel. Geprüft werden nur
 Paare, deren späteres Wochenende den Monat berührt ($w_{k+1} \ge 0$, sein Sonntag liegt also im Monat); die
-Vergangenheit wird nie gegen sich selbst geprüft. Daraus
+Vergangenheit wird nie gegen sich selbst geprüft, auch nicht ein Paar, das nach einem gearbeiteten Samstag vor
+dem Monat schon ganz feststeht. Daraus
 folgt zugleich, dass höchstens jedes zweite Wochenende gearbeitet wird.
 
 %==========================================================================================================

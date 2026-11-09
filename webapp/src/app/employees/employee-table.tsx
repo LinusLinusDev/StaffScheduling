@@ -5,7 +5,6 @@ import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Employee, PlanningInspection, PlanningUnit, WorkCredit } from "@/lib/types";
 import { AVAILABILITY_LABELS, STAFF_LEVEL_LABELS, formatDate, formatHours } from "@/lib/labels";
@@ -16,7 +15,6 @@ const CREDIT_LABELS: Record<WorkCredit["kind"], string> = {
   approved_absence: "Genehmigte Abwesenheit",
   trusted_work: "Anerkannte Arbeit",
 };
-const ALL_UNITS = "all";
 
 function formatMonth(value: string) {
   const [year, month] = value.split("-");
@@ -25,25 +23,18 @@ function formatMonth(value: string) {
 
 export function EmployeeTable({ inspection }: { inspection: PlanningInspection }) {
   const [search, setSearch] = useState("");
-  const [unitFilter, setUnitFilter] = useState(ALL_UNITS);
   const [expanded, setExpanded] = useState<number | null>(null);
   const units = new Map(inspection.planning_units.map((unit) => [unit.planning_unit_id, unit]));
-  const unitName = (id: number) => units.get(id)?.display_name ?? `Einheit ${id}`;
+  const unitName = (id: number) => units.get(id)?.display_name ?? `Station ${id}`;
   const shiftCode = (id: number) => inspection.shifts.find((shift) => shift.shift_id === id)?.code ?? String(id);
   const stations = inspection.selected_station_ids.map(unitName).join(", ");
   const needle = search.toLocaleLowerCase("de-DE");
-  const filtered = inspection.employees.filter(
-    (employee) =>
-      (unitFilter === ALL_UNITS || employee.memberships.some((row) => row.planning_unit_id === Number(unitFilter))) &&
-      [
-        employee.employee_id,
-        employee.display_name,
-        STAFF_LEVEL_LABELS[employee.staff_level],
-        ...employee.memberships.map((row) => unitName(row.planning_unit_id)),
-      ]
-        .join(" ")
-        .toLocaleLowerCase("de-DE")
-        .includes(needle),
+  // The demo has one station, so the search looks at name, ID and qualification only.
+  const filtered = inspection.employees.filter((employee) =>
+    [employee.employee_id, employee.display_name, STAFF_LEVEL_LABELS[employee.staff_level]]
+      .join(" ")
+      .toLocaleLowerCase("de-DE")
+      .includes(needle),
   );
 
   return (
@@ -56,36 +47,21 @@ export function EmployeeTable({ inspection }: { inspection: PlanningInspection }
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-3">
-            <div className="relative min-w-64 flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                aria-label="Mitarbeiter suchen"
-                placeholder="Suche nach Name, ID, Qualifikation oder Einheit…"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                className="pl-9"
-              />
-            </div>
-            <Select value={unitFilter} onValueChange={setUnitFilter}>
-              <SelectTrigger className="w-56" aria-label="Einheit filtern">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL_UNITS}>Alle Einheiten</SelectItem>
-                {inspection.planning_units.map((unit) => (
-                  <SelectItem key={unit.planning_unit_id} value={String(unit.planning_unit_id)}>
-                    {unit.display_name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="relative min-w-64">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              aria-label="Mitarbeiter suchen"
+              placeholder="Suche nach Name, ID oder Qualifikation…"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="pl-9"
+            />
           </div>
 
           {!inspection.employees.length ? (
-            <p className="py-12 text-center text-muted-foreground">Keine Mitarbeiter für diese Auswahl vorhanden.</p>
+            <p className="py-12 text-center text-muted-foreground">Keine Mitarbeiter vorhanden.</p>
           ) : !filtered.length ? (
-            <p className="py-12 text-center text-muted-foreground">Keine Mitarbeiter für diesen Filter gefunden.</p>
+            <p className="py-12 text-center text-muted-foreground">Keine Mitarbeiter für diese Suche gefunden.</p>
           ) : (
             <div className="rounded-md border">
               <Table>
@@ -95,7 +71,7 @@ export function EmployeeTable({ inspection }: { inspection: PlanningInspection }
                     <TableHead>ID</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Qualifikation</TableHead>
-                    <TableHead>Einheiten</TableHead>
+                    <TableHead>Station</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

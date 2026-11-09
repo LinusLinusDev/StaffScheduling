@@ -1,23 +1,31 @@
 """The fictional demo station: a valid planning input for every month, with the webapp's entries kept in memory."""
 
+import io
 from datetime import date
 
 import pytest
+from fastapi import UploadFile
+from test_review import JANUARY_DUTIES, found, january
 
+from app.api.history import HistoryProblem, HistoryRejected, put_history
 from app.demo import EARLY, LATE, NIGHT, STATION_ID, TEAM, DemoPlanningSource, default_demand
 from app.domain import (
+    Assignment,
     AvailabilityEntry,
     AvailabilityType,
     DemandCell,
     InvalidSelection,
     MonthlyDemand,
     PlanningMonth,
+    SchedulingDataset,
     StaffLevel,
     WishEntry,
     WishType,
     check_schedule,
     public_holiday,
 )
+from app.solver.bundle import InvalidBundle
+from app.solver.review import Review
 
 STATION = (STATION_ID,)
 
@@ -112,3 +120,62 @@ def test_only_the_station_its_team_and_the_reference_shifts_are_accepted() -> No
         source.set_wish(employee_id=1, day=date(2027, 1, 5), entry=WishEntry(type=WishType.FREE_SHIFT, shift_id=1))
     assert source.get_planning_options(planning_month=january).planning_units[0].planning_unit_id == STATION_ID
     assert EARLY.net_work_minutes == 420
+
+
+def plan_file(data: SchedulingDataset, duties: tuple[Assignment, ...]) -> bytes:
+    review = Review()
+    review.generated(data, found(data, duties))
+    saved = review.plan_file()
+    assert saved is not None
+    return saved[1]
+
+
+def load_history(content: bytes, year: int, month: int, source: DemoPlanningSource) -> None:
+    put_history(plan=UploadFile(io.BytesIO(content), filename="plan.json"), year=year, month=month, source=source)
+
+
+def test_history_takes_only_an_accepted_plan_of_the_month_before_and_of_the_station() -> None:
+    source = DemoPlanningSource()
+    # January 2026 at another station (101), accepted; and the same month without its duties, rejected.
+    accepted, rejected = plan_file(january(), JANUARY_DUTIES), plan_file(january(), ())
+
+    for content, month, problem in [
+        (accepted, 3, HistoryProblem.WRONG_MONTH),
+        (rejected, 2, HistoryProblem.NOT_ACCEPTED),
+        (accepted, 2, HistoryProblem.FOREIGN),
+    ]:
+        with pytest.raises(HistoryRejected) as caught:
+            load_history(content, 2026, month, source)
+        assert caught.value.problem == problem
+    with pytest.raises(InvalidBundle):
+        load_history(b"{}", 2026, 2, source)
+    assert source.get_history(planning_month=PlanningMonth(year=2026, month=2)) is None
+
+
+def test_the_duties_of_the_month_before_become_the_history_of_the_month() -> None:
+    source = DemoPlanningSource()
+    february = PlanningMonth(year=2027, month=2)
+
+    def night(employee_id: int, day: date) -> Assignment:
+        return Assignment(
+            employee_id=employee_id,
+            date=day,
+            planning_unit_id=STATION_ID,
+            shift_id=NIGHT.shift_id,
+            staff_level=StaffLevel.PROFESSIONAL,
+        )
+
+    duties = (night(1, date(2027, 1, 30)), night(1, date(2027, 1, 31)))
+    summary = source.set_history(planning_month=february, assignments=duties, version=3)
+    assert (summary.previous_month, summary.version, summary.duties) == (PlanningMonth(year=2027, month=1), 3, 2)
+    dataset = source.read_generation_input(planning_unit_ids=STATION, planning_month=february)
+    # The whole month before is known: its duties, and free where it has none.
+    assert (dataset.context.covered_from, dataset.context.duties) == (date(2027, 1, 1), duties)
+
+    # Only the station's team, in the month before.
+    with pytest.raises(InvalidSelection):
+        source.set_history(planning_month=february, assignments=(night(99, date(2027, 1, 31)),), version=1)
+    with pytest.raises(InvalidSelection):
+        source.set_history(planning_month=february, assignments=(night(1, date(2026, 12, 31)),), version=1)
+    source.clear_history(planning_month=february)
+    assert source.read_generation_input(planning_unit_ids=STATION, planning_month=february).context.duties == ()

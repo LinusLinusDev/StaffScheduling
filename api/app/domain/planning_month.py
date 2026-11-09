@@ -31,6 +31,13 @@ class PlanningMonth(SchedulingBaseModel):
         return tuple(self.start + timedelta(days=offset) for offset in range(self.end.day))
 
     @property
+    def previous(self) -> PlanningMonth:
+        """The month before this one."""
+        if self.month == 1:
+            return PlanningMonth(year=self.year - 1, month=12)
+        return PlanningMonth(year=self.year, month=self.month - 1)
+
+    @property
     def label(self) -> str:
         """`YYYY-MM`, the month's folder and CSV notation."""
         return f"{self.year}-{self.month:02d}"
