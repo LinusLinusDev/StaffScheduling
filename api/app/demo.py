@@ -121,8 +121,13 @@ DEFAULT_PATTERN: tuple[tuple[tuple[DayType, ...], Shift, StaffLevel, int], ...] 
     (WORKDAYS, LATE, TRAINEE, 1),
 )
 
-# Credited like an approved absence: the employee's daily target on Monday to Friday dates without a holiday.
-CREDITED = {AvailabilityType.VACATION: "Urlaub", AvailabilityType.TRAINING: "Fortbildung"}
+# Credited like an approved absence: the employee's daily target on Monday to Friday dates without a holiday. The
+# demo shows "unavailable" as sick ("Krank"), which is credited as well.
+CREDITED = {
+    AvailabilityType.VACATION: "Urlaub",
+    AvailabilityType.TRAINING: "Fortbildung",
+    AvailabilityType.UNAVAILABLE: "Krankheit",
+}
 
 
 def _on_or_after(day: date, weekday: int) -> date:
@@ -391,7 +396,8 @@ class DemoPlanningSource:
 
 
 def _account(member: TeamMember, month: PlanningMonth, availability: tuple[Availability, ...]) -> MonthlyWorkAccount:
-    """The monthly target of the member's share of full time, with a credit for every vacation or training date."""
+    """The monthly target of the member's share of full time, with a credit for every vacation, training or sick
+    date."""
     bookable = [day for day in month.dates if day.isoweekday() <= 5 and public_holiday(day) is None]
     daily = round(FULL_TIME_DAILY_MINUTES * member.part_time)
     return MonthlyWorkAccount(

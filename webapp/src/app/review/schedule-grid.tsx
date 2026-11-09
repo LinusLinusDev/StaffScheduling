@@ -21,11 +21,12 @@ const SHIFT_COLORS: Record<ShiftType, string> = {
 };
 // Weekends and public holidays in pink, as in the practice partner's program.
 const WEEKEND = "bg-[#fbd9fb] dark:bg-[#3d1f3d]";
-// Vacation, training and shift restrictions without a duty read in red, as in the practice partner's program.
+// Vacation, training, sickness and shift restrictions without a duty read in red, as in the practice partner's program.
 const RED_TEXT = "font-semibold text-red-600";
-const RED_TYPES = new Set<Availability["availability_type"]>(["vacation", "training", "available_only"]);
+const RED_TYPES = new Set<Availability["availability_type"]>(["vacation", "training", "unavailable", "available_only"]);
 const AVAILABILITY_SHORT: Record<Availability["availability_type"], string> = {
-  unavailable: "–",
+  // the demo shows "unavailable" as sick
+  unavailable: "K",
   vacation: "U",
   training: "FB",
   free_day: "Fr",

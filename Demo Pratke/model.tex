@@ -147,12 +147,13 @@ Demo: F 05:55--13:25 (420\,min), Z 08:30--14:15 (345\,min), S 13:15--21:00 (435\
 N 20:10--06:10 (555\,min).
 \eqref{par:t} (\code{t}, \code{credits}): In der Demo ist das Tagessoll einer Vollzeitkraft 462\,min
 (38,5\,h je Woche) an jedem Werktag von Montag bis Freitag, der kein Feiertag ist; Teilzeitkräfte haben es
-anteilig. Für Urlaub und Fortbildung an diesen Tagen wird das Tagessoll gutgeschrieben.
+anteilig. Für Urlaub, Fortbildung und Krankheit an diesen Tagen wird das Tagessoll gutgeschrieben, für freie
+Tage nicht. Krankheit ist in der Demo die Einschränkung „krank“ (intern \code{unavailable}).
 \eqref{par:lambda} (\code{level\_at}): Ein Dienst zählt mit der Qualifikation der Stationszugehörigkeit,
 nicht mit der der Person.
 \eqref{par:y0} (\code{past\_shifts}) sind die Dienste des geladenen Vormonats; ohne Vormonat sind alle 0.
 \eqref{par:T} (\code{training}, \code{training\_days}), \eqref{par:B} (\code{blocked}, \code{vacation}): $B$
-enthält alle Tage mit Urlaub, freiem Tag, Fortbildung oder „nicht verfügbar“, $V$ nur die Urlaubstage. Alle drei
+enthält alle Tage mit Urlaub, freiem Tag, Fortbildung oder „krank“, $V$ nur die Urlaubstage. Alle drei
 umfassen auch den Folgetag $n+1$ (\code{context.availability}).
 \eqref{par:home} (\code{home\_of}) ist die Einheit der an $d$ gültigen Stammzugehörigkeit.
 \eqref{par:R}--\eqref{par:Iudl}: $R_{usd}$, $R_{ud}$, $R_u$ (\code{required\_usd}, \code{required\_ud},
@@ -196,7 +197,7 @@ $\omega$ & \code{wish\_reward} & 30 & Gewicht eines Wunsches \\
 \textbf{Erklärung.}
 Statt diese Regeln als Nebenbedingungen zu formulieren, werden verbotene Dienste gar nicht erst als Variable
 angelegt (\code{not\_allowed}, Liste beim Anlegen von \code{assignment}).
-\eqref{eq:NV}: Urlaub, freier Tag, Fortbildung und „nicht verfügbar“ verbieten alle Schichten, „nur
+\eqref{eq:NV}: Urlaub, freier Tag, Fortbildung und „krank“ verbieten alle Schichten, „nur
 bestimmte Schichten“ verbietet die übrigen. Für einen mitgeplanten Sonntag gelten die Einträge, die der Folgemonat
 für ihn schon hat.
 \eqref{eq:NN}: Eine Nacht reicht in den Folgetag; vor einem blockierten Tag ist sie verboten, am letzten
@@ -380,8 +381,8 @@ Gutschriften minus Soll, genau wie das Monatskonto im Projekt. Ein mitgeplanter 
 $\pm\tau = \pm 240$ liegt; im Optimum ist $o_i = \max(0, |\eta_i| - \tau)$.
 \eqref{obj:balance}: Dieses Ziel steht ganz oben, noch vor den Lücken. Können alle Salden im Band liegen, ist
 $\hat f_1 = 0$, und jede spätere Stufe muss $f_1 = 0$ halten \eqref{obj:lex}: Das Band wirkt dann wie eine feste
-Regel, auch wenn dafür eine Lücke offen bleibt. Ist es für jemanden unerreichbar (z.\,B.\ den halben Monat nicht
-verfügbar), entsteht trotzdem ein Plan mit möglichst kleiner Überschreitung, statt dass das Modell unlösbar wird.
+Regel, auch wenn dafür eine Lücke offen bleibt. Ist es für jemanden unerreichbar (z.\,B.\ den halben Monat frei,
+freie Tage werden nicht gutgeschrieben), entsteht trotzdem ein Plan mit möglichst kleiner Überschreitung, statt dass das Modell unlösbar wird.
 
 \subsection{Rang 2: Wochenende über den Monatswechsel}\label{sec:z:wochenende}
 
@@ -577,7 +578,7 @@ Stufe & Gesamtspielraum $\varepsilon_j$ (\code{stage\_slack}) & $\alpha_j = \var
 $f_4$ \code{gap\_spread} & $2$ & $1$ \\
 $f_5$ \code{staffing\_spread} & $|U^{D}| \cdot n / 7$ & $|U^{D}| \cdot n / 14$ \\
 $f_9$ \code{shift\_balance} & $2\,|U^{D}| \cdot n / 7$ & $|U^{D}| \cdot n / 7$ \\
-alle anderen & -- & $10^{-6}$ \\
+alle anderen (ganzzahlige Werte) & -- & $0{,}5$ \\
 \hline
 \end{tabular}
 \end{center}
@@ -586,8 +587,10 @@ alle anderen & -- & $10^{-6}$ \\
 Eine spätere Stufe darf eine frühere nur um deren Toleranz verschlechtern. Bei den drei Verteilungsstufen $f_4$,
 $f_5$ und $f_9$ ist das bewusst etwas Spielraum, damit die späteren Stufen noch Wahlmöglichkeiten haben; die
 andere Hälfte des Spielraums erlaubt einen frühen Abbruch der Stufe (siehe unten). Insgesamt liegt der Endwert
-einer solchen Stufe höchstens $\varepsilon_j$ über dem bestmöglichen Wert. Alle anderen Stufen halten ihren Wert
-praktisch exakt.
+einer solchen Stufe höchstens $\varepsilon_j$ über dem bestmöglichen Wert. Alle anderen Stufen haben ganzzahlige
+Werte (Minuten, Lücken, Anzahlen, Quadrate, Wunschpunkte) und halten ihren Bestwert exakt; die Toleranz $0{,}5$
+fängt nur Rundungsfehler ab. Mit einer winzigen Toleranz wie $10^{-6}$ würde ein als $294{,}000004$ gemeldeter
+Bestwert jeden ganzzahligen Plan mit $294$ ausschließen, und die folgenden Stufen fänden keinen anderen Plan mehr.
 
 \textbf{Abbruchkriterien.}
 \begin{center}
@@ -599,7 +602,7 @@ Kriterium & Wert \\
 Gesamtzeit $T$ (\code{SOLVER\_MAX\_TIME\_SECONDS}) & in der Demo fest 30\,s \\
 relative Optimalitätslücke (\code{MIPGap}) & 3\,\%; exakt (0) für $f_1$, $f_2$, $f_3$, $f_6$ und $f_8$ \\
 absolute Optimalitätslücke (\code{MIPGapAbs}) & $\varepsilon_j/2$ für $f_4$, $f_5$, $f_9$ \\
-Zeitlimit einzelner Stufen (\code{stage\_time\_share}) & $0{,}15\,T$ für $f_5$, $0{,}10\,T$ für $f_6$, $f_8$ und $f_9$ \\
+Zeitlimit einzelner Stufen (\code{stage\_time\_share}) & $0{,}15\,T$ für $f_5$ und $f_7$, $0{,}10\,T$ für $f_6$, $f_8$, $f_9$ \\
 Watchdog & beendet die Rechnung spätestens 5\,s nach $T$ \\
 \hline
 \end{tabular}
@@ -612,8 +615,9 @@ Wochenenden am Monatsanfang. Auch $f_6$ wird exakt gelöst, weil schon ein Samst
 $f_8$, weil der Wert in die Hunderte geht und 3\,\% davon eine Person in vielen Fenstern ohne Nachtdienst lassen
 könnten. Die Zeitlimits schützen die folgenden Stufen: Bei $f_5$, $f_6$, $f_8$ und $f_9$ kann die Schranke den
 erreichbaren Wert verfehlen (Bruchteile von Personen, durch Abwesenheiten oder die Wochenendregeln unerreichbare
-Werte), sodass Gurobi die Stufe sonst bis zur Gesamtzeit weiterrechnen würde. Die übrigen Stufen laufen, bis sie bewiesen sind oder $T$ erreicht
-ist. Ist $T$ erreicht, gilt der beste bis dahin gefundene Plan; spätere Stufen kommen dann nicht mehr an die
+Werte), sodass Gurobi die Stufe sonst bis zur Gesamtzeit weiterrechnen würde. Bei den Wünschen $f_7$ schließt
+sich die Lücke mit vielen Wünschen nur langsam; ohne Zeitlimit kämen Rotation, Schichtverteilung, Spät$\to$Früh
+und Folgen dann gar nicht an die Reihe. Die übrigen Stufen laufen, bis sie bewiesen sind oder $T$ erreicht ist. Ist $T$ erreicht, gilt der beste bis dahin gefundene Plan; spätere Stufen kommen dann nicht mehr an die
 Reihe.
 
 %==========================================================================================================

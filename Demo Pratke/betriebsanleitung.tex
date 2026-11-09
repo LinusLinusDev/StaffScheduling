@@ -92,7 +92,7 @@ Zeigt die zwölf Mitarbeiter der Musterstation, nur zum Ansehen.
         (Soll und Gutschriften mit Datum) und die \textbf{Verfügbarkeit} im Monat.
 \end{itemize}
 Das Soll ergibt sich aus der Arbeitszeit (Vollzeit 38,5 Stunden pro Woche, Teilzeit anteilig) und den Werktagen
-des Monats. Urlaub und Fortbildung werden mit dem Tagessoll gutgeschrieben.
+des Monats. Urlaub, Fortbildung und Krankheit werden mit dem Tagessoll gutgeschrieben, freie Tage nicht.
 
 %==========================================================================================================
 \section{Verfügbarkeit: Einschränkungen und Wünsche}
@@ -100,7 +100,7 @@ des Monats. Urlaub und Fortbildung werden mit dem Tagessoll gutgeschrieben.
 Hier werden für einen Mitarbeiter (Auswahl oben auf der Seite) \textbf{Einschränkungen} und \textbf{Wünsche}
 im Monatskalender gepflegt. Der Kalender zeigt je Tag zwei Dinge:
 \begin{itemize}
-  \item \textbf{Einschränkung}, rot: \emph{Nicht verfügbar}, \emph{Urlaub}, \emph{Fortbildung}, \emph{Frei}
+  \item \textbf{Einschränkung}, rot: \emph{Krank}, \emph{Urlaub}, \emph{Fortbildung}, \emph{Frei}
         oder \emph{Nur bestimmte Schichten} mit den erlaubten Schichten, dazu ein optionaler Grund.
         Einschränkungen werden bei der Planung \textbf{immer} eingehalten.
   \item \textbf{Wunsch}, grün: freier Tag, bestimmte Schicht frei, Wunschtag oder Wunschschicht. Wünsche werden
@@ -187,7 +187,7 @@ Zeigt den zuletzt erstellten oder geladenen Dienstplan. Von oben nach unten:
   \item \textbf{Dienstplan}: eine Zeile je Mitarbeiter mit Name, Qualifikation und Station, eine Spalte je Tag.
         Die Schichten stehen in ihrer Farbe: F gelb, Z türkis, S orange, N schwarz. Zeigt man auf einen Dienst,
         erscheinen Uhrzeit und Qualifikation. Kürzel zeigen Einschränkungen, rot hervorgehoben \code{U} Urlaub,
-        \code{FB} Fortbildung und z.\,B.\ \code{nur F,S} für nur bestimmte Schichten. Wochenenden sind rosa
+        \code{FB} Fortbildung, \code{K} krank und z.\,B.\ \code{nur F,S} für nur bestimmte Schichten. Wochenenden sind rosa
         hinterlegt. Die Suche (Name, Personalnummer oder Qualifikation, z.\,B.\ \emph{Azubi}) und
         \knopf{Vollbild} helfen bei großen Plänen.
   \item \textbf{Besetzung} unter dem Plan: je Schicht und Tag \emph{Ist/Soll}, z.\,B.\ \code{3/2}.

@@ -22,7 +22,7 @@ export const STAFF_LEVEL_LABELS = {
 } as const satisfies Record<StaffLevel, string>;
 
 export const AVAILABILITY_LABELS: Record<AvailabilityType, string> = {
-  unavailable: "Nicht verfügbar",
+  unavailable: "Krank",
   vacation: "Urlaub",
   training: "Fortbildung",
   free_day: "Frei",

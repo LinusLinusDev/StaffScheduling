@@ -326,7 +326,7 @@ class GurobiSolverService:
             # (name, expression, maximize), highest priority first
             objectives = [
                 # the balance band comes first, before the gaps: whenever every balance can lie within it, every
-                # schedule keeps it, like a hard rule; when it cannot (e.g. unavailable for half the month), the
+                # schedule keeps it, like a hard rule; when it cannot (e.g. free days for half the month), the
                 # month still gets a schedule with the least excess instead of none
                 ("balance_violation", over.sum(), False),
                 # right after it, the same for the weekend across the month start: kept whenever possible, while a
@@ -357,9 +357,13 @@ class GurobiSolverService:
                 "shift_balance": 2 * len(required_u) * len(D) / 7,
             }
             abstol = {name: slack / 2 for name, slack in stage_slack.items()}
+            # every other stage has whole values (minutes, gaps, weekends, squares, wish scores, counts), so it stays at
+            # its optimum with any tolerance below 1. Half a unit absorbs the rounding of a sum over many binaries: with
+            # 1e-6, an optimum reported as 294.000004 bars every whole schedule worth 294, and the later stages either
+            # find nothing else or nothing at all ("Root relaxation: infeasible") and keep the schedule they get.
             for n, (name, expr, maximize) in enumerate(objectives):
                 schedule.setObjectiveN(-expr if maximize else expr, index=n, priority=len(objectives) - 1 - n,
-                                       abstol=abstol.get(name, 1e-6), name=name)
+                                       abstol=abstol.get(name, 0.5), name=name)
             schedule.ModelSense = GRB.MINIMIZE
             # Constraints
             # one shift per day
@@ -509,7 +513,10 @@ class GurobiSolverService:
             # rotation: its bound counts every type a person could work, also one that blocked days rule out, so it
             # may never prove its value either; the share keeps it from taking the time of the stages after it
             # saturdays: solved exactly below; the share only guards against a bound that the rules keep out of reach
-            stage_time_share = {"shift_balance": 0.1, "staffing_spread": 0.15, "rotation": 0.1, "saturdays": 0.1}  # e.g. {"gap_spread": 0.15, "Min_L_to_E": 0.2}
+            # wishes: with many wishes (or a flood of them) its gap closes slowly and it would take all the time left,
+            # so rotation, shift balance, late-to-early and cons would never run
+            stage_time_share = {"shift_balance": 0.1, "staffing_spread": 0.15, "rotation": 0.1, "saturdays": 0.1,
+                                "wishes": 0.15}  # e.g. {"gap_spread": 0.15, "Min_L_to_E": 0.2}
             for n, (name, _, _) in enumerate(objectives):
                 if name in stage_time_share:
                     # pass n is objective n, since the priorities fall with the index
