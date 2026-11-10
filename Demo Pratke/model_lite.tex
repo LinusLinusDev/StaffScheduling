@@ -28,7 +28,7 @@ mathematische Beschreibung steht im Dokument \emph{Modell}.
 \begin{enumerate}
   \item \textbf{Eingaben sammeln}: Team, Sollzeiten, Schichten, Mindestbesetzung, Einschränkungen, Wünsche und
         optional der Dienstplan des Vormonats (Abschnitt~\ref{sec:eingaben}).
-  \item \textbf{Rechnen}, fest \textbf{40 Sekunden}: Der Solver hält die festen Regeln immer ein
+  \item \textbf{Rechnen}, fest \textbf{30 Sekunden}: Der Solver hält die festen Regeln immer ein
         (Abschnitt~\ref{sec:regeln}) und verbessert die Ziele in einer festen Rangfolge
         (Abschnitt~\ref{sec:ziele}). Ist die Zeit um, gilt der beste bis dahin gefundene Plan.
   \item \textbf{Unabhängig prüfen}: Ein eigenes Prüfprogramm kontrolliert den fertigen Plan noch einmal gegen die
@@ -139,15 +139,14 @@ besetzte Schichten) ist ein kleiner Spielraum erlaubt, damit die folgenden Ziele
         Wünsche einträgt, bekommt pro Wunsch weniger und gewinnt so keinen größeren Einfluss auf den Plan.
   \item \textbf{Abwechslung}: In jedem Zeitraum von 28 Tagen hat jede Person möglichst jede Schichtart, die sie
         arbeiten kann (mit der Vorgabe: Fachkräfte Früh, Spät und Nacht, Azubis Früh und Spät).
-        Der Zwischendienst zählt dabei nicht mit. Mit Vormonat reichen diese Zeiträume in den Vormonat zurück; was
+        Ein Zwischendienst zählt dabei als Frühdienst. Mit Vormonat reichen diese Zeiträume in den Vormonat zurück; was
         dort schon gearbeitet wurde, zählt mit.
   \item \textbf{Gleichmäßig besetzte Schichten}: Zusätzliches Personal eines Tages verteilt sich im Verhältnis
         der Mindestbesetzung auf die Schichten.
   \item \textbf{Möglichst wenige Wechsel vom Spät- in den Frühdienst}: Zwischen 21:00 und 05:55 liegen nur knapp
         9 Stunden.
-  \item \textbf{Möglichst oft dieselbe Schicht wie am Vortag}, damit ruhige Folgen entstehen. Früh- und
-        Zwischendienst gelten dabei als dieselbe Schicht, beide beginnen am Morgen; ein Zwischendienst unterbricht
-        so keine Folge von Frühdiensten.
+  \item \textbf{Möglichst oft dieselbe Schicht wie am Vortag}, damit ruhige Folgen entstehen. Jede der vier
+        Schichten bildet dabei eigene Blöcke, auch der Zwischendienst.
 \end{enumerate}
 
 %==========================================================================================================

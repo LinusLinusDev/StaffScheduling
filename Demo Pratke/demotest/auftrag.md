@@ -10,7 +10,7 @@ Der **Schichtplan Manager** ist ein Prototyp des Lehrstuhls für Kombinatorische
 erstellt den Dienstplan einer Krankenhausstation für einen Monat. Die Demo-Version („Lite“) wird bald auf einer
 Messe bzw. beim Praxispartner (St. Marien-Hospital Düren) gezeigt. Besucher (Pflegedienstleitungen, Ärztinnen,
 Stationsleitungen, IT-Leute) probieren ihn etwa 20 Minuten lang an einem Laptop aus. Der Prototyp soll
-**idiotensicher** sein: keine Abstürze, keine provozierbaren Fehler, in 40 Sekunden ein plausibler Plan.
+**idiotensicher** sein: keine Abstürze, keine provozierbaren Fehler, in 30 Sekunden ein plausibler Plan.
 
 Deine Aufgabe: **Spiele 25 Minuten lang solche Besucher** und mache Eingaben, wie sie über die Oberfläche möglich
 sind. Überwiegend sinnvoll, teils leicht zufällig, vereinzelt grenzwertig. Melde alles, was schiefgeht oder einer
@@ -37,7 +37,7 @@ Pflegedienstleitung seltsam vorkäme.
   (nur mit Vormonat) · 3 wenige Lücken · 4 Lücken verteilen · 5 Tage gleichmäßig besetzen · 6 Samstage je
   Qualifikation gleich verteilen · 7 Wünsche · 8 Rotation (jede Schichtart in jedem 28-Tage-Fenster) ·
   9 Schichten gleichmäßig · 10 wenige Spät→Früh-Wechsel · 11 gleiche Schicht wie am Vortag (`cons`).
-  Rechenzeit fest 40 s.
+  Rechenzeit fest 30 s.
 - Danach prüft ein **unabhängiges Prüfprogramm** den Plan: *angenommen* oder *abgelehnt* (mit Regel, Person,
   Datum). Spät→Früh ist erlaubt und wird nur gezählt.
 
@@ -105,7 +105,7 @@ Gib während der Arbeit nach jedem Lauf die Zeile von `generate` aus. **Sofort h
 1. **kein Plan** entsteht, der Plan leer ist oder ein HTTP-Fehler / eine unklare Meldung auftritt,
 2. der Plan die **Prüfung nicht besteht** (Regel, Person, Datum notieren und die vermutete Ursache),
 3. die letzte Stufe **`cons` nicht erreicht** wird (die Auswertung sagt es dir),
-4. sonst etwas auffällt: viele Spät→Früh-Wechsel (> 10), Lücken trotz Standardbedarf, Laufzeit > 50 s,
+4. sonst etwas auffällt: viele Spät→Früh-Wechsel (> 10), Lücken trotz Standardbedarf, Laufzeit > 40 s,
    unplausible Pläne (z. B. jemand im Dienst ohne Bedarf, während Bedarf offen bleibt; deutlich ungleiche
    Wochenenden; leicht erfüllbare Wünsche nicht erfüllt).
 

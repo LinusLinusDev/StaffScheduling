@@ -55,10 +55,10 @@ Rang & Ziel & Code & Abschnitt \\
 5 & Tage gleichmäßig besetzen & \code{staffing\_spread} & \ref{sec:z:tage} \\
 6 & Samstage je Qualifikation gleichmäßig verteilen & \code{saturdays} & \ref{sec:z:samstage} \\
 7 & Wünsche erfüllen, je Person gleich gewichtet & \code{wishes} & \ref{sec:z:wuensche} \\
-8 & Rotation: Früh, Spät, Nacht in jedem 28-Tage-Fenster & \code{rotation} & \ref{sec:z:rotation} \\
+8 & Rotation: Früh (oder Zwischen), Spät, Nacht je 28 Tage & \code{rotation} & \ref{sec:z:rotation} \\
 9 & Schichten eines Tages gleichmäßig besetzen & \code{shift\_balance} & \ref{sec:z:schichten} \\
 10 & möglichst wenige Wechsel Spät $\to$ Früh & \code{Min\_L\_to\_E} & \ref{sec:z:spaetfrueh} \\
-11 & möglichst oft dieselbe Schichtart wie am Vortag & \code{cons} & \ref{sec:z:folgen} \\
+11 & möglichst oft dieselbe Schicht wie am Vortag & \code{cons} & \ref{sec:z:folgen} \\
 \hline
 \end{tabular}
 \end{center}
@@ -80,8 +80,8 @@ die Formeln und darunter die Erklärung mit Verweis auf die Gleichungsnummern; i
   & s \in S && \text{Schichten} \label{set:S}\\
   & \theta \in \Theta = \{\text{Früh}, \text{Zwischen}, \text{Spät}, \text{Nacht}\},\quad S^{\theta} \subseteq S
     && \text{Schichtarten und ihre Schichten} \label{set:Theta}\\
-  & \vartheta \in \Theta^{c} = \{FZ, S, N\},\quad S^{FZ} = S^{F} \cup S^{Z}
-    && \text{Schichtarten für Folgen} \label{set:Thetac}\\
+  & \Theta^{R} = \{\text{Früh}, \text{Spät}, \text{Nacht}\},\quad \bar S^{\text{Früh}} = S^{F} \cup S^{Z}
+    && \text{Schichtarten der Rotation} \label{set:ThetaR}\\
   & l \in L = \{\text{Fachkraft}, \text{Hilfskraft}, \text{Azubi}, \text{MFA}\} && \text{Qualifikationen} \label{set:L}\\
   & d \in D = \{1,\dots,n\},\quad \Dp = D \cup \{n+1\} && \text{Tage des Monats, dazu der Folgetag} \label{set:D}\\
   & \hat D = \{1,\dots,\hat n\} && \text{Planungstage: der Monat, ggf.\ mit Sonntag} \label{set:Dhat}\\
@@ -100,8 +100,10 @@ Springerpools, $U$ (\code{U}) alle Planungseinheiten. Dienste gibt es nur auf St
 \eqref{set:S}, \eqref{set:Theta}: Jede Schicht hat eine Art. Kurz geschrieben sind $S^{F}$, $S^{S}$, $S^{N}$ die
 Früh-, Spät- und Nachtschichten (\code{S\_early}, \code{S\_late}, \code{S\_night}). Jede Regel gilt so für alle
 Schichten einer Art, unabhängig vom Kürzel. In der Demo hat jede Art genau eine Schicht: F, Z, S und N.
-\eqref{set:Thetac} (\code{block\_kinds}): Für die Folgen gleicher Schichten (Rang 11) zählen die Früh- und die
-Zwischenschichten $S^{Z}$ als eine Art $FZ$, weil beide am Morgen beginnen.
+\eqref{set:ThetaR} (\code{rotation\_type}): Nur für die Rotation (Rang 8) zählt der Zwischendienst als
+Frühdienst: $\bar S^{\text{Früh}}$ umfasst die Früh- und die Zwischenschichten $S^{Z}$, für Spät und Nacht ist
+$\bar S^{\theta} = S^{\theta}$. Überall sonst, auch bei den Folgen gleicher Schichten (Rang 11), bleibt der
+Zwischendienst eine eigene Schicht.
 \eqref{set:D}, \eqref{set:Dm}: $D$ (\code{D}) ist der Monat. $\Dm$ (\code{D\_prev}) sind die Vortage, für die
 die tatsächlichen Dienste bekannt sind: Ist der Dienstplan des Vormonats geladen, ist $\Dm$ der ganze Vormonat;
 sonst sind es die $m = 5$ Tage davor, an denen niemand gearbeitet hat. Der Folgetag $n+1$ in $\Dp$ zählt für
@@ -234,7 +236,7 @@ gefordert ist, keine Nächte für Azubis, wenn nie Azubi-Nachtbedarf besteht).
   & b_{id} \in [0,1] && i \in I,\ d \in \{0\} \cup D && \text{Beginn eines Nachtblocks } (\code{n\_beg}) \label{var:b}\\
   & e_{id} \in [0,1] && i \in I,\ d \in D^{end} && \text{Ende eines Nachtblocks } (\code{n\_end}) \label{var:e}\\
   & z_{id} \in [0,1] && i \in I,\ d \in D && \text{Spät- vor Frühdienst } (\code{L\_to\_E}) \label{var:z}\\
-  & v_{i\vartheta d} \in [0,1] && i \in I,\ \vartheta \in \Theta^{c},\ d \in D && \text{gleiche Schichtart wie am Vortag } (\code{cons\_s}) \label{var:v}
+  & v_{isd} \in [0,1] && i \in I,\ s \in S,\ d \in D && \text{gleiche Schicht wie am Vortag } (\code{cons\_s}) \label{var:v}
 \end{align}
 
 \textbf{Erklärung.}
@@ -505,20 +507,21 @@ mit nur einer Station kommt das nicht vor.
 
 \begin{align}
   & \Wr = \{w \in \Db : 1 \le w + \Delta^{R} - 1 \le n\},\qquad [w] = \{w,\dots,w + \Delta^{R} - 1\} \label{set:Wr}\\
-  & \Psi = \bigl\{(i,w,\theta) : w \in \Wr,\ \ \theta \in \Theta \setminus \{\text{Zwischen}\},
+  & \Psi = \bigl\{(i,w,\theta) : w \in \Wr,\ \ \theta \in \Theta^{R},
     \label{set:Psi}\\
   & \hphantom{\Psi = \bigl\{(i,w,\theta) :{}}
-    y^{0}_{isd} = 0\ \forall s \in S^{\theta},\ d \in [w] \cap \Dm, \notag\\
+    y^{0}_{isd} = 0\ \forall s \in \bar S^{\theta},\ d \in [w] \cap \Dm, \notag\\
   & \hphantom{\Psi = \bigl\{(i,w,\theta) :{}}
-    \exists\,(i,s,d,u) \in A \text{ mit } s \in S^{\theta},\ d \in [w] \cap D\bigr\} \notag\\
-  & \psi_{iw\theta} \le \textstyle\sum_{d \in [w] \cap D} \sum_{s \in S^{\theta}} X_{isd} && \forall (i,w,\theta) \in \Psi \label{con:rotation}\\
+    \exists\,(i,s,d,u) \in A \text{ mit } s \in \bar S^{\theta},\ d \in [w] \cap D\bigr\} \notag\\
+  & \psi_{iw\theta} \le \textstyle\sum_{d \in [w] \cap D} \sum_{s \in \bar S^{\theta}} X_{isd} && \forall (i,w,\theta) \in \Psi \label{con:rotation}\\
   & f_8 = \textstyle\sum_{(i,w,\theta) \in \Psi} \psi_{iw\theta} \to \max && \text{(\code{rotation})} \label{obj:rotation}
 \end{align}
 
 \textbf{Erklärung.}
 Niemand soll wochenlang nur dieselbe Schicht haben: In jedem Fenster von $\Delta^{R} = 28$ Tagen soll jede Person
-möglichst jede Schichtart haben, die sie arbeiten kann. Gezählt werden nur Früh, Spät und Nacht; der
-Zwischendienst ist ein kurzer Zusatzdienst, in den niemand der Abwechslung wegen gedrängt werden soll.
+möglichst jede Schichtart haben, die sie arbeiten kann. Gezählt werden Früh, Spät und Nacht \eqref{set:ThetaR};
+ein Zwischendienst zählt als Frühdienst. So wird niemand der Abwechslung wegen in einen Zwischendienst gedrängt,
+und wer Zwischendienste hat, braucht keinen zusätzlichen Frühdienst.
 \eqref{set:Wr} (\code{window\_starts}): $\Wr$ sind die ersten Tage aller Fenster, die im Monat enden und an
 einem bekannten Tag beginnen. Mit geladenem Vormonat reichen sie bis zu 27 Tage in ihn zurück, sodass die
 Rotation über den Monatswechsel weiterläuft; ohne ihn beginnen sie frühestens $m = 5$ Tage vor dem Monat (ein
@@ -528,8 +531,8 @@ Person diese Art im Fensterteil des Monats überhaupt arbeiten kann, also eine V
 Spät kann jede Qualifikation \eqref{eq:A}; Azubis werden aber nicht in Nächte gedrängt, wenn nie
 Azubi-Nachtbedarf besteht, und „nur bestimmte Schichten“ lässt die übrigen Arten aus. Hat die Person die Art im Fensterteil vor dem Monat schon gearbeitet, ist das Paar erfüllt und
 braucht keine Variable.
-\eqref{con:rotation}: $\psi_{iw\theta}$ kann nur 1 sein, wenn $i$ im Fenster ab $w$ mindestens eine Schicht der Art
-$\theta$ arbeitet.
+\eqref{con:rotation}: $\psi_{iw\theta}$ kann nur 1 sein, wenn $i$ im Fenster ab $w$ mindestens eine Schicht aus
+$\bar S^{\theta}$ arbeitet.
 \eqref{obj:rotation}: Die Zahl der erfüllten Paare aus Person, Fenster und Schichtart wird maximiert. Ohne
 Vormonat überdecken alle Fenster die Monatsmitte; dann genügt eine Schicht jeder Art dort für alle Fenster.
 
@@ -562,22 +565,18 @@ folgt, auch über den Monatswechsel.
 Schichtzeiten der Demo und den Nachtregeln ist das der einzige mögliche Fall unter 11\,h Ruhezeit. Er ist bewusst
 erlaubt, wird aber so selten wie möglich geplant.
 
-\subsection{Rang 11: Dieselbe Schichtart wie am Vortag}\label{sec:z:folgen}
+\subsection{Rang 11: Dieselbe Schicht wie am Vortag}\label{sec:z:folgen}
 
 \begin{align}
-  & v_{i\vartheta d} \le \textstyle\sum_{s \in S^{\vartheta}} X_{isd},\qquad
-    v_{i\vartheta d} \le \textstyle\sum_{s \in S^{\vartheta}} X_{is,d-1}
-    && \forall i \in I,\ \vartheta \in \Theta^{c},\ d \in D \label{con:cons}\\
-  & f_{11} = \textstyle\sum_{i \in I} \sum_{\vartheta \in \Theta^{c}} \sum_{d \in D} v_{i\vartheta d} \to \max
-    && \text{(\code{cons})} \label{obj:cons}
+  & v_{isd} \le X_{isd},\qquad v_{isd} \le X_{is,d-1} && \forall i \in I,\ s \in S,\ d \in D \label{con:cons}\\
+  & f_{11} = \textstyle\sum_{i \in I} \sum_{s \in S} \sum_{d \in D} v_{isd} \to \max && \text{(\code{cons})} \label{obj:cons}
 \end{align}
 
 \textbf{Erklärung.}
-\eqref{con:cons} (\code{cons\_today}, \code{cons\_before}): $v_{i\vartheta d}$ darf nur 1 sein, wenn an $d$ und
-$d-1$ eine Schicht derselben Art $\vartheta$ \eqref{set:Thetac} gearbeitet wird. Früh und Zwischen sind dabei eine
-Art: Ein Zwischendienst mitten in einer Folge von Frühdiensten unterbricht sie nicht, sonst würde er die
-Blockstruktur des Plans zerreißen.
-\eqref{obj:cons}: Möglichst oft dieselbe Schichtart wie am Vortag, damit ruhige Folgen entstehen.
+\eqref{con:cons} (\code{cons\_s}): $v_{isd}$ darf nur 1 sein, wenn an $d$ und $d-1$ dieselbe Schicht gearbeitet
+wird. Jede Schicht zählt für sich, auch der Zwischendienst: So entstehen Blöcke aller vier Schichten, und ein
+Zwischendienst nach einem Frühdienst ist ein Wechsel.
+\eqref{obj:cons}: Möglichst oft dieselbe Schicht wie am Vortag, damit ruhige Folgen entstehen.
 
 %==========================================================================================================
 \section{Lexikografisches Lösen}\label{sec:lex}
@@ -619,10 +618,10 @@ Bestwert jeden ganzzahligen Plan mit $294$ ausschließen, und die folgenden Stuf
 \hline
 Kriterium & Wert \\
 \hline
-Gesamtzeit $T$ (\code{SOLVER\_MAX\_TIME\_SECONDS}) & in der Demo fest 40\,s \\
+Gesamtzeit $T$ (\code{SOLVER\_MAX\_TIME\_SECONDS}) & in der Demo fest 30\,s \\
 relative Optimalitätslücke (\code{MIPGap}) & 3\,\%; exakt (0) für $f_1$, $f_2$, $f_3$, $f_6$ und $f_8$ \\
 absolute Optimalitätslücke (\code{MIPGapAbs}) & $\varepsilon_j/2$ für $f_4$, $f_5$, $f_9$ \\
-Zeitlimit einzelner Stufen (\code{stage\_time\_share}) & $0{,}15\,T$ für $f_5$ und $f_7$, $0{,}10\,T$ für $f_6$, $f_8$, $f_9$ \\
+Zeitlimit einzelner Stufen (\code{stage\_time\_share}) & $0{,}15\,T$ für $f_5$, $f_7$, $f_{10}$; $0{,}10\,T$ für $f_6$, $f_8$, $f_9$ \\
 Watchdog & beendet die Rechnung spätestens 5\,s nach $T$ \\
 \hline
 \end{tabular}
@@ -637,8 +636,11 @@ könnten. Die Zeitlimits schützen die folgenden Stufen: Bei $f_5$, $f_6$, $f_8$
 erreichbaren Wert verfehlen (Bruchteile von Personen, durch Abwesenheiten oder die Wochenendregeln unerreichbare
 Werte), sodass Gurobi die Stufe sonst bis zur Gesamtzeit weiterrechnen würde. Bei den Wünschen $f_7$ schließt
 sich die Lücke mit vielen Wünschen nur langsam; ohne Zeitlimit kämen Rotation, Schichtverteilung, Spät$\to$Früh
-und Folgen dann gar nicht an die Reihe. Die übrigen Stufen laufen, bis sie bewiesen sind oder $T$ erreicht ist. Ist $T$ erreicht, gilt der beste bis dahin gefundene Plan; spätere Stufen kommen dann nicht mehr an die
-Reihe.
+und Folgen dann gar nicht an die Reihe. Bei Spät$\to$Früh $f_{10}$ bleibt die Schranke meist bei 0, sodass ein
+Wert wie 1 kaum je bewiesen wird; ohne Zeitlimit nahm die Stufe in Tests bis zur ganzen restlichen Zeit, und die
+Folgen $f_{11}$ kamen nicht mehr an die Reihe. Mit dem Limit bleibt dafür vereinzelt ein Wechsel stehen, den
+längeres Suchen noch beseitigt hätte. Die übrigen Stufen laufen, bis sie bewiesen sind oder $T$ erreicht ist. Ist
+$T$ erreicht, gilt der beste bis dahin gefundene Plan; spätere Stufen kommen dann nicht mehr an die Reihe.
 
 %==========================================================================================================
 \section{Nach dem Lösen}

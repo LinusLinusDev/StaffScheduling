@@ -173,7 +173,7 @@ def load_plan(path):
 
 
 def generate(label, year, month):
-    """Wie "Dienstplan erstellen": rechnet 40 s, wartet und gibt eine Auswertung aus; gibt den Job zurück."""
+    """Wie "Dienstplan erstellen": rechnet 30 s, wartet und gibt eine Auswertung aus; gibt den Job zurück."""
     if not NAMES:
         _load_names()
     started = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

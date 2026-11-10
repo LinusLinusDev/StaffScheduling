@@ -231,14 +231,7 @@ class GurobiSolverService:
             hour = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour")
             # minutes by which a balance leaves the band of ±POLICY.balance_tolerance_minutes
             over = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=0.0, name="over")
-            # cons counts a duty that continues the kind of shift of the day before. Early and intermediate are one
-            # kind, so an intermediate duty within a run of early ones does not break the block; every other type is
-            # a kind of its own
-            block_kinds = defaultdict(list)
-            for shift in dataset.shifts:
-                kind = ShiftType.EARLY if shift.type == ShiftType.INTERMEDIATE else shift.type
-                block_kinds[kind.value].append(shift.shift_id)
-            cons_s = schedule.addVars(I, list(block_kinds), D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_s")
+            cons_s = schedule.addVars(I, S, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_s")
             L_to_E = schedule.addVars(I,D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="L_to_E")
             # shift balance: minimum demand per (station, shift, day) over all qualifications, and per (station, day)
             required_usd = defaultdict(int)
@@ -289,14 +282,17 @@ class GurobiSolverService:
 
             # rotation: in every window of Rot_w days that ends in the month and starts on a known day (the month and
             # the days before it, the whole month before when it is loaded), every person works each shift type
-            # (early, late, night; not intermediate, which is a short extra rather than a rotation shift) at least once
-            # if possible. rotation[i, w, k] can be 1 only if i works a shift of type k in the window starting on w.
-            # Only types i can work this month count, those with a duty variable: a trainee is not pushed into nights
-            # nobody asks of trainees, and "only certain shifts" leaves the other types out. A type worked already on the window's days before the month needs nothing more.
+            # at least once if possible. An intermediate shift counts as an early one here (and only here; cons keeps
+            # it apart), so nobody needs an extra early shift beside intermediate ones. rotation[i, w, k] can be 1
+            # only if i works a shift of type k in the window starting on w. Only types i can work this month count,
+            # those with a duty variable: a trainee is not pushed into nights nobody asks of trainees, and "only
+            # certain shifts" leaves the other types out. A type worked already on the window's days before the month
+            # needs nothing more.
+            rotation_type = {shift.shift_id: ShiftType.EARLY if shift.type == ShiftType.INTERMEDIATE else shift.type
+                             for shift in dataset.shifts}
             shift_types = defaultdict(list)
-            for shift in dataset.shifts:
-                if shift.type != ShiftType.INTERMEDIATE:
-                    shift_types[shift.type].append(shift.shift_id)
+            for shift_id, kind in rotation_type.items():
+                shift_types[kind].append(shift_id)
             window_starts = [w for w in D_prev + D
                              if D[0] <= w + timedelta(days=Rot_w - 1) <= D[-1]]
             worked_type = {}
@@ -425,13 +421,11 @@ class GurobiSolverService:
                 deviation = staff_of_day[u, d] - share * staff_of_month[u]
                 schedule.addConstr(day_dev[u, d] >= deviation, name=f"day_dev_up[{u},{d}]")
                 schedule.addConstr(day_dev[u, d] >= -deviation, name=f"day_dev_down[{u},{d}]")
-            # define cons_s: a duty of kind k on day d and on the day before
+            # define cons_s: the same shift on day d and on the day before; every shift is its own, so an intermediate
+            # duty after an early one breaks the block (rotation alone counts intermediate as early)
             one_day = timedelta(days=1)
-            # (loop over the keys only: addConstrs names each constraint after the loop variables)
-            schedule.addConstrs((cons_s[i, k, d] <= total(block_kinds[k], i, d)
-                                 for i in I for k in block_kinds for d in D), name="cons_today")
-            schedule.addConstrs((cons_s[i, k, d] <= total(block_kinds[k], i, d - one_day)
-                                 for i in I for k in block_kinds for d in D), name="cons_before")
+            schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d) for i in I for s in S for d in D));
+            schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d - one_day) for i in I for s in S for d in D));
             # max consecutive workdays
             for i in I:
                 for d in D_prev[-K_s:] + D_plan[:-K_s]:
@@ -533,8 +527,10 @@ class GurobiSolverService:
             # saturdays: solved exactly below; the share only guards against a bound that the rules keep out of reach
             # wishes: with many wishes (or a flood of them) its gap closes slowly and it would take all the time left,
             # so rotation, shift balance, late-to-early and cons would never run
+            # Min_L_to_E: its bound mostly stays at 0, so it rarely proves a value such as 1 and would take all the
+            # time left, so cons would never run (measured on the demo: up to all of it, at 30 s as at 40 s)
             stage_time_share = {"shift_balance": 0.1, "staffing_spread": 0.15, "rotation": 0.1, "saturdays": 0.1,
-                                "wishes": 0.15}  # e.g. {"gap_spread": 0.15, "Min_L_to_E": 0.2}
+                                "wishes": 0.15, "Min_L_to_E": 0.15}  # e.g. {"gap_spread": 0.15}
             for n, (name, _, _) in enumerate(objectives):
                 if name in stage_time_share:
                     # pass n is objective n, since the priorities fall with the index
@@ -611,8 +607,7 @@ class GurobiSolverService:
                     abs(staff_count[u, d] - required_ud.get((u, d), 0) / required_month * month_staff) for d in D
                 )
             # rotation: the (person, window, type) of the stage whose type the schedule has in the window
-            type_of = {shift.shift_id: shift.type for shift in dataset.shifts}
-            worked_on = {(a.employee_id, a.date): type_of[a.shift_id] for a in assignments}
+            worked_on = {(a.employee_id, a.date): rotation_type[a.shift_id] for a in assignments}
             rotation_value = sum(
                 any(worked_on.get((i, w + timedelta(days=j))) == k for j in range(Rot_w))
                 for (i, w, k) in worked_type
