@@ -5,7 +5,7 @@ import { Maximize, Minimize, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { AVAILABILITY_LABELS, SHIFT_TYPE_LABELS, WEEKDAYS } from "@/lib/labels";
+import { AVAILABILITY_LABELS, SHIFT_TYPE_LABELS, STAFF_LEVEL_LABELS, WEEKDAYS } from "@/lib/labels";
 import type { Availability, DutyRow, ScheduleReview, ShiftType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -140,7 +140,11 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
   );
   const needle = search.toLocaleLowerCase("de-DE");
   const employees = tables.employees
-    .filter((row) => `${row.employee_id} ${row.employee_name}`.toLocaleLowerCase("de-DE").includes(needle))
+    .filter((row) =>
+      `${row.employee_id} ${row.employee_name} ${STAFF_LEVEL_LABELS[row.staff_level]}`
+        .toLocaleLowerCase("de-DE")
+        .includes(needle),
+    )
     .sort((a, b) => a.employee_name.localeCompare(b.employee_name, "de-DE"));
   // Every home unit of the month (the backend only lists memberships of the schedule's units); a duty's own
   // dated origin decides whether it is a transfer.
@@ -156,6 +160,9 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
       ].join(", "),
     ]),
   );
+  // The row's second line: qualification and home station, e.g. "Fachkraft · Station 3A".
+  const detailOf = (employee: (typeof employees)[number]) =>
+    [STAFF_LEVEL_LABELS[employee.staff_level], homeOf.get(employee.employee_id)].filter(Boolean).join(" · ");
   // Staffing per station, shift and date: all assigned staff against the required count (Ist/Soll, e.g. 3/2 with a
   // surplus), and the gap: the slots missing per qualification, marked apart because another qualification never
   // fills them and a surplus never covers another's gap (e.g. 2/2 −1); the tooltip lists every qualification.
@@ -220,7 +227,7 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 aria-label="Mitarbeiter im Dienstplan suchen"
-                placeholder="Suche nach Name oder ID…"
+                placeholder="Suche nach Name, ID oder Qualifikation…"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 className="pl-9"
@@ -262,12 +269,12 @@ export function ScheduleGrid({ review }: { review: ScheduleReview }) {
                     >
                       {/* The column fits its longest name up to a cap; longer names are cut, the full text on hover. */}
                       <div
-                        title={`${employee.employee_id} ${employee.employee_name} · ${homeOf.get(employee.employee_id)}`}
+                        title={`${employee.employee_id} ${employee.employee_name} · ${detailOf(employee)}`}
                         className={NAME_CELL}
                       >
                         <span className="text-muted-foreground">{employee.employee_id}</span> {employee.employee_name}
                       </div>
-                      <div className={cn(NAME_CELL, "text-muted-foreground")}>{homeOf.get(employee.employee_id)}</div>
+                      <div className={cn(NAME_CELL, "text-muted-foreground")}>{detailOf(employee)}</div>
                     </th>
                     {calendar.map((day) => {
                       const duty = duties.get(key(employee.employee_id, day.date));

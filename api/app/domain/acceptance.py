@@ -23,7 +23,7 @@ from app.domain.demand import DemandKey, Gap
 from app.domain.duty import DutyTimes, duty_times
 from app.domain.monthly_work_account import MonthlyWorkAccount
 from app.domain.planning_unit import home_unit_id
-from app.domain.rules import APPROVED_FREE, BLOCKING_AVAILABILITY, POLICY
+from app.domain.rules import APPROVED_FREE, BLOCKING_AVAILABILITY, NO_LATE_BEFORE, POLICY
 from app.domain.shift import Shift, ShiftType
 from app.domain.wish import FREE_WISHES, Wish, WishType
 
@@ -54,6 +54,9 @@ class Rule(StrEnum):
     REST = "rest"
     CONSECUTIVE_NIGHTS = "consecutive_nights"
     NIGHT_RECOVERY = "night_recovery"
+    CONSECUTIVE_DAYS = "consecutive_days"
+    WEEKEND_SHIFT = "weekend_shift"
+    CONSECUTIVE_WEEKENDS = "consecutive_weekends"
     REPLACEMENT_REST = "replacement_rest"
     ANNUAL_FREE_SUNDAYS = "annual_free_sundays"
 
@@ -150,7 +153,8 @@ class _Duty:
     in_month: bool
 
 
-ASSESSED = tuple(rule for rule in Rule if rule != Rule.ANNUAL_FREE_SUNDAYS)
+# Not assessed: annual free Sundays need the whole year; replacement rest is left out by the demo version.
+ASSESSED = tuple(rule for rule in Rule if rule not in {Rule.ANNUAL_FREE_SUNDAYS, Rule.REPLACEMENT_REST})
 
 
 def check_schedule(
@@ -172,10 +176,20 @@ def check_schedule(
     check.work(duties)
     timelines = check.timelines(duties)
     check.boundary_coverage()
-    for timeline in timelines.values():
+    for employee_id, timeline in timelines.items():
         check.rest(timeline)
         check.nights(timeline)
-        check.replacement_rest(timeline)
+        check.consecutive_days(employee_id, timeline)
+        check.weekends(employee_id, timeline)
+    check.not_assessed.append(
+        NotAssessed(
+            rule=Rule.REPLACEMENT_REST,
+            reason="The demo version does not check replacement rest days for worked Sundays and holidays.",
+            blocking=False,
+            start=dataset.planning_month.start,
+            end=dataset.planning_month.end,
+        )
+    )
     check.not_assessed.append(
         NotAssessed(
             rule=Rule.ANNUAL_FREE_SUNDAYS,
@@ -209,6 +223,12 @@ class _Check:
         self.month = dataset.planning_month
         self.context = dataset.context
         self.shifts = {row.shift_id: row for row in dataset.shifts}
+        # Training dates, also the trusted ones after the month: a training day is no recovery day after nights.
+        self.training = {
+            (row.employee_id, row.date)
+            for row in (*dataset.availability, *dataset.context.availability)
+            if row.availability_type == AvailabilityType.TRAINING
+        }
         self.findings: list[Finding] = []
         self.not_assessed: list[NotAssessed] = []
 
@@ -322,7 +342,8 @@ class _Check:
 
     def availability_problems(self, employee_id: int, day: Date, shift: Shift) -> list[str]:
         """Blocking availability on any date the duty touches, every allowed-shift restriction of its start
-        date (several narrow, never widen) and no night before an approved free date."""
+        date (several narrow, never widen), no night before an approved free date and no late duty on the date
+        before vacation or training begins."""
         times = duty_times(day, shift)
         following = day + timedelta(days=1)
         problems = [
@@ -342,6 +363,13 @@ class _Check:
             entry.availability_type in APPROVED_FREE for entry in self.dataset.availability_on(employee_id, following)
         ):
             problems.append(f"A night duty may not precede the approved free day {following}.")
+        if shift.type == ShiftType.LATE:
+            today = {entry.availability_type for entry in self.dataset.availability_on(employee_id, day)}
+            problems.extend(
+                f"A late duty may not precede the start of {entry.availability_type.value} on {following}."
+                for entry in self.dataset.availability_on(employee_id, following)
+                if entry.availability_type in NO_LATE_BEFORE and entry.availability_type not in today
+            )
         return problems
 
     def monthly_balance(self, duties: list[_Duty]) -> None:
@@ -366,7 +394,7 @@ class _Check:
         total = Counter[int]()
         for duty in duties:
             total[duty.assignment.employee_id] += duty.times.work_minutes
-            if problem := _daily_work_problem(duty.times):
+            if problem := _daily_work_problem(_planned_times(duty.shift)):
                 self.fail(Rule.WORK_AND_BREAKS, problem, duty.assignment)
         average = POLICY.average_daily_work_minutes
         working_days = sum(is_working_day(day) for day in self.month.dates)
@@ -424,6 +452,8 @@ class _Check:
                 gap = earlier.times.minutes_until(later.times)
                 if gap >= minimum:
                     break
+                if _late_to_early(earlier, later):
+                    continue
                 if earlier.in_month or later.in_month:
                     self.fail(
                         Rule.REST,
@@ -445,6 +475,11 @@ class _Check:
             if day + timedelta(days=1) in nights:
                 continue
             recovery_end = night.times.end + timedelta(minutes=POLICY.night_recovery_minutes)
+            # the whole recovery days after the final night are free of training as well
+            if night.in_month and self.training_in_recovery(night.assignment.employee_id, day):
+                self.fail(
+                    Rule.NIGHT_RECOVERY, "Training within the recovery days after the final night.", night.assignment
+                )
             for later in timeline:
                 if night.times.end <= later.times.start < recovery_end and (night.in_month or later.in_month):
                     self.fail(
@@ -454,41 +489,106 @@ class _Check:
                         later.assignment if later.in_month else night.assignment,
                     )
 
-    def replacement_rest(self, timeline: list[_Duty]) -> None:
-        """Match each worked Sunday/holiday of the month to its own free Werktag of the month inside its window.
+    def consecutive_days(self, employee_id: int, timeline: list[_Duty]) -> None:
+        """At most `max_consecutive_work_days` dates in a row with a duty start or training.
 
-        Taking obligations by their window's end and the earliest free date that fits finds a match
-        for all of them whenever one exists.
+        Only runs that exceed the limit on a month date are judged; trusted duties before the month take part, so the
+        rule holds across the month start.
         """
-        worked = {day for day in self.month.dates if any(duty.times.touches(day) for duty in timeline)}
-        free = [day for day in self.month.dates if day not in worked and is_working_day(day)]
-        windows = [
-            (day + timedelta(days=days), day - timedelta(days=days), day)
-            for day in sorted(worked)
-            if (days := POLICY.replacement_days(day)) is not None
-        ]
-        for end, start, day in sorted(windows):
-            match = next((free_day for free_day in free if start <= free_day <= end), None)
-            if match is None:
+        limit = POLICY.max_consecutive_work_days
+        one = timedelta(days=1)
+        starts = {duty.assignment.date: duty for duty in timeline}
+        worked = set(starts) | {day for employee, day in self.training if employee == employee_id}
+        for day in sorted(worked):
+            if day - one in worked:
+                continue
+            run = [day]
+            while run[-1] + one in worked:
+                run.append(run[-1] + one)
+            beyond = [date for date in run[limit:] if date in self.month]
+            if beyond:
+                duty = starts.get(beyond[0])
                 self.fail(
-                    Rule.REPLACEMENT_REST,
-                    f"No free Werktag of the month left between {start} and {end} as replacement rest.",
-                    employee_id=timeline[0].assignment.employee_id,
-                    date=day,
+                    Rule.CONSECUTIVE_DAYS,
+                    f"{len(run)} dates in a row with a duty or training.",
+                    duty.assignment if duty else None,
+                    employee_id=employee_id,
+                    date=beyond[0],
                 )
-            else:
-                free.remove(match)
+
+    def weekends(self, employee_id: int, timeline: list[_Duty]) -> None:
+        """Saturday and Sunday carry the same shift or are both free, and no two weekends in a row are worked.
+
+        A weekend is worked with a duty starting on its Saturday or Sunday; a Friday night alone leaves it free. Only
+        weekends that reach into the month are judged. A Saturday before the month counts only with trusted duties of
+        the month before: without them the days before the month are merely assumed free.
+        """
+        one, week = timedelta(days=1), timedelta(days=7)
+        starts = {duty.assignment.date: duty for duty in timeline}
+        shift_on = {day: duty.shift.shift_id for day, duty in starts.items()}
+
+        def located(*days: Date) -> tuple[Assignment | None, Date]:
+            """The first month duty on these dates, else the first of them that lies in the month."""
+            duties = [starts[day] for day in days if day in starts and starts[day].in_month]
+            if duties:
+                return duties[0].assignment, duties[0].assignment.date
+            return None, next((day for day in days if day in self.month), days[0])
+
+        saturdays = [
+            day
+            for day in (self.month.start - one + timedelta(days=k) for k in range(self.month.end.day + 1))
+            if day.isoweekday() == 6 and (day in self.month or day + one in self.month)
+        ]
+        for saturday in saturdays:
+            sunday = saturday + one
+            if sunday in self.month and (saturday in self.month or bool(self.context.duties)):
+                if shift_on.get(saturday) != shift_on.get(sunday):
+                    assignment, date = located(sunday, saturday)
+                    self.fail(
+                        Rule.WEEKEND_SHIFT,
+                        "Saturday and Sunday differ.",
+                        assignment,
+                        employee_id=employee_id,
+                        date=date,
+                    )
+            earlier = saturday - week
+            days = (earlier, earlier + one, saturday, sunday)
+            if (
+                (earlier in starts or earlier + one in starts)
+                and (saturday in starts or sunday in starts)
+                and any(starts[day].in_month for day in days if day in starts)
+            ):
+                assignment, date = located(saturday, sunday, earlier, earlier + one)
+                self.fail(
+                    Rule.CONSECUTIVE_WEEKENDS,
+                    f"Works the weekends of {earlier} and {saturday}.",
+                    assignment,
+                    employee_id=employee_id,
+                    date=date,
+                )
 
     def possible(self, employee_id: int, day: Date, shift: Shift) -> bool:
         """Whether some station could receive this duty: an active membership, availability and the
-        shift's own work pattern allow it; the other rules depend on the rest of the schedule."""
+        shift's own work pattern allow it; the other rules depend on the rest of the schedule.
+
+        A night is never possible within the recovery days before a training day: no night may precede the training
+        day itself, so the block would have to end there, with the training among its recovery days.
+        """
         return (
             any(
                 m.employee_id == employee_id and m.planning_unit_id in self.dataset.station_ids and m.active_on(day)
                 for m in self.dataset.planning_unit_memberships
             )
             and not self.availability_problems(employee_id, day, shift)
-            and _daily_work_problem(duty_times(day, shift)) is None
+            and _daily_work_problem(_planned_times(shift)) is None
+            and not (shift.type == ShiftType.NIGHT and self.training_in_recovery(employee_id, day))
+        )
+
+    def training_in_recovery(self, employee_id: int, night: Date) -> bool:
+        """Whether a training day falls on one of the whole recovery days after a final night on `night`."""
+        return any(
+            (employee_id, night + timedelta(days=offset)) in self.training
+            for offset in range(1, POLICY.night_recovery_minutes // (24 * 60) + 1)
         )
 
     def wishes(self, timelines: dict[int, list[_Duty]]) -> tuple[WishOutcome, ...]:
@@ -574,6 +674,31 @@ class _Check:
             balance_deviation_minutes=sum(abs(balance) for _, balance in self.balances(duties)),
             surplus_intermediate_duties=sum(max(0, count - required[key]) for key, count in intermediate.items()),
         )
+
+
+def _late_to_early(earlier: _Duty, later: _Duty) -> bool:
+    """Whether a late duty is followed by an early one on the next date.
+
+    The demo version accepts this short rest: the model keeps such changes few, and the review counts them.
+    """
+    return (
+        earlier.shift.type == ShiftType.LATE
+        and later.shift.type == ShiftType.EARLY
+        and later.assignment.date == earlier.assignment.date + timedelta(days=1)
+    )
+
+
+# A date without a clock change, on which a shift's times are exactly its plan.
+PLANNED_DATE = Date(2026, 1, 5)
+
+
+def _planned_times(shift: Shift) -> DutyTimes:
+    """The shift's times as planned, whatever date it is worked on.
+
+    The daily work and break rules judge a shift by its plan and ignore clock changes: the night of the October
+    change, an hour longer in elapsed time, counts with its planned hours (a decision of the demo version).
+    """
+    return duty_times(PLANNED_DATE, shift)
 
 
 def _daily_work_problem(times: DutyTimes) -> str | None:

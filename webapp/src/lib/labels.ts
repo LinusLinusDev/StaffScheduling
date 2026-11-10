@@ -83,10 +83,13 @@ export const SCORE_LABELS: Record<ScoreName, string> = {
 /** The objective tiers of both solvers, named for the staff admin. */
 export const OBJECTIVE_LABELS: Record<ObjectiveTier, string> = {
   ...SCORE_LABELS,
-  balance_violation: "Überschreitung des Monatssaldos über ±7:40 h (Minuten)",
+  balance_violation: "Überschreitung des Monatssaldos über ±5 h (Minuten)",
+  weekend_start: "Geteilte Wochenenden über den Monatswechsel",
   gap_spread: "Verteilung der Lücken über die Tage",
   staffing_spread: "Gleichmäßiger Besetzungsgrad über die Tage",
+  saturdays: "Verteilung der Samstage je Qualifikation (Summe der Quadrate)",
   wishes: "Wünsche und Einsätze auf der Stammstation",
+  rotation: "Rotation: Schichtarten je Person und 28-Tage-Fenster",
   shift_balance: "Verteilung der Überbesetzung auf die Schichten",
   Min_L_to_E: "Wechsel vom Spät- in den Frühdienst",
   cons: "Gleiche Schichten und freie Tage am Stück",
@@ -159,6 +162,9 @@ export const RULES: Record<Rule, string> = {
   rest: "Ruhezeit",
   consecutive_nights: "Nächte in Folge",
   night_recovery: "Erholung nach Nachtdiensten",
+  consecutive_days: "Arbeitstage am Stück",
+  weekend_shift: "Gleiche Schicht am Wochenende",
+  consecutive_weekends: "Wochenenden in Folge",
   replacement_rest: "Ersatzruhetag",
   annual_free_sundays: "Freie Sonntage im Jahr",
 };

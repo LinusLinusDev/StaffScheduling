@@ -23,6 +23,14 @@ class SolutionStatus(StrEnum):
 FOUND = frozenset({SolutionStatus.OPTIMAL, SolutionStatus.FEASIBLE})
 
 
+class SolverUnavailable(RuntimeError):
+    """The solver cannot run at all, for example because its license server cannot be reached.
+
+    Unlike a model error it is not the input's fault and may pass, so the job reports it apart and a later
+    run tries again.
+    """
+
+
 class RunConfiguration(SchedulingBaseModel):
     """The effective settings of one solve, recorded for reproduction."""
 

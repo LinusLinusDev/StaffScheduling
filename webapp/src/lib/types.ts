@@ -185,6 +185,9 @@ export type Rule =
   | "rest"
   | "consecutive_nights"
   | "night_recovery"
+  | "consecutive_days"
+  | "weekend_shift"
+  | "consecutive_weekends"
   | "replacement_rest"
   | "annual_free_sundays";
 
@@ -253,9 +256,12 @@ export type ScoreName =
 export type ObjectiveTier =
   | ScoreName
   | "balance_violation"
+  | "weekend_start"
   | "gap_spread"
   | "staffing_spread"
+  | "saturdays"
   | "wishes"
+  | "rotation"
   | "shift_balance"
   | "Min_L_to_E"
   | "cons";
