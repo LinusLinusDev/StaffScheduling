@@ -231,7 +231,14 @@ class GurobiSolverService:
             hour = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=-GRB.INFINITY, name="hour")
             # minutes by which a balance leaves the band of ±POLICY.balance_tolerance_minutes
             over = schedule.addVars(I, vtype=GRB.CONTINUOUS, lb=0.0, name="over")
-            cons_s = schedule.addVars(I, S, D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_s")
+            # cons counts a duty that continues the kind of shift of the day before. Early and intermediate are one
+            # kind, so an intermediate duty within a run of early ones does not break the block; every other type is
+            # a kind of its own
+            block_kinds = defaultdict(list)
+            for shift in dataset.shifts:
+                kind = ShiftType.EARLY if shift.type == ShiftType.INTERMEDIATE else shift.type
+                block_kinds[kind.value].append(shift.shift_id)
+            cons_s = schedule.addVars(I, list(block_kinds), D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="cons_s")
             L_to_E = schedule.addVars(I,D, lb=0.0, ub=1.0, vtype=GRB.CONTINUOUS, name="L_to_E")
             # shift balance: minimum demand per (station, shift, day) over all qualifications, and per (station, day)
             required_usd = defaultdict(int)
@@ -418,10 +425,13 @@ class GurobiSolverService:
                 deviation = staff_of_day[u, d] - share * staff_of_month[u]
                 schedule.addConstr(day_dev[u, d] >= deviation, name=f"day_dev_up[{u},{d}]")
                 schedule.addConstr(day_dev[u, d] >= -deviation, name=f"day_dev_down[{u},{d}]")
-            # define cons_s and
+            # define cons_s: a duty of kind k on day d and on the day before
             one_day = timedelta(days=1)
-            schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d) for i in I for s in S for d in D));
-            schedule.addConstrs((cons_s[i,s,d] <= shift_on(i, s, d - one_day) for i in I for s in S for d in D));
+            # (loop over the keys only: addConstrs names each constraint after the loop variables)
+            schedule.addConstrs((cons_s[i, k, d] <= total(block_kinds[k], i, d)
+                                 for i in I for k in block_kinds for d in D), name="cons_today")
+            schedule.addConstrs((cons_s[i, k, d] <= total(block_kinds[k], i, d - one_day)
+                                 for i in I for k in block_kinds for d in D), name="cons_before")
             # max consecutive workdays
             for i in I:
                 for d in D_prev[-K_s:] + D_plan[:-K_s]:

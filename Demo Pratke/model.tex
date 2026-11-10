@@ -58,7 +58,7 @@ Rang & Ziel & Code & Abschnitt \\
 8 & Rotation: Früh, Spät, Nacht in jedem 28-Tage-Fenster & \code{rotation} & \ref{sec:z:rotation} \\
 9 & Schichten eines Tages gleichmäßig besetzen & \code{shift\_balance} & \ref{sec:z:schichten} \\
 10 & möglichst wenige Wechsel Spät $\to$ Früh & \code{Min\_L\_to\_E} & \ref{sec:z:spaetfrueh} \\
-11 & möglichst oft dieselbe Schicht wie am Vortag & \code{cons} & \ref{sec:z:folgen} \\
+11 & möglichst oft dieselbe Schichtart wie am Vortag & \code{cons} & \ref{sec:z:folgen} \\
 \hline
 \end{tabular}
 \end{center}
@@ -80,6 +80,8 @@ die Formeln und darunter die Erklärung mit Verweis auf die Gleichungsnummern; i
   & s \in S && \text{Schichten} \label{set:S}\\
   & \theta \in \Theta = \{\text{Früh}, \text{Zwischen}, \text{Spät}, \text{Nacht}\},\quad S^{\theta} \subseteq S
     && \text{Schichtarten und ihre Schichten} \label{set:Theta}\\
+  & \vartheta \in \Theta^{c} = \{FZ, S, N\},\quad S^{FZ} = S^{F} \cup S^{Z}
+    && \text{Schichtarten für Folgen} \label{set:Thetac}\\
   & l \in L = \{\text{Fachkraft}, \text{Hilfskraft}, \text{Azubi}, \text{MFA}\} && \text{Qualifikationen} \label{set:L}\\
   & d \in D = \{1,\dots,n\},\quad \Dp = D \cup \{n+1\} && \text{Tage des Monats, dazu der Folgetag} \label{set:D}\\
   & \hat D = \{1,\dots,\hat n\} && \text{Planungstage: der Monat, ggf.\ mit Sonntag} \label{set:Dhat}\\
@@ -98,6 +100,8 @@ Springerpools, $U$ (\code{U}) alle Planungseinheiten. Dienste gibt es nur auf St
 \eqref{set:S}, \eqref{set:Theta}: Jede Schicht hat eine Art. Kurz geschrieben sind $S^{F}$, $S^{S}$, $S^{N}$ die
 Früh-, Spät- und Nachtschichten (\code{S\_early}, \code{S\_late}, \code{S\_night}). Jede Regel gilt so für alle
 Schichten einer Art, unabhängig vom Kürzel. In der Demo hat jede Art genau eine Schicht: F, Z, S und N.
+\eqref{set:Thetac} (\code{block\_kinds}): Für die Folgen gleicher Schichten (Rang 11) zählen die Früh- und die
+Zwischenschichten $S^{Z}$ als eine Art $FZ$, weil beide am Morgen beginnen.
 \eqref{set:D}, \eqref{set:Dm}: $D$ (\code{D}) ist der Monat. $\Dm$ (\code{D\_prev}) sind die Vortage, für die
 die tatsächlichen Dienste bekannt sind: Ist der Dienstplan des Vormonats geladen, ist $\Dm$ der ganze Vormonat;
 sonst sind es die $m = 5$ Tage davor, an denen niemand gearbeitet hat. Der Folgetag $n+1$ in $\Dp$ zählt für
@@ -230,7 +234,7 @@ gefordert ist, keine Nächte für Azubis, wenn nie Azubi-Nachtbedarf besteht).
   & b_{id} \in [0,1] && i \in I,\ d \in \{0\} \cup D && \text{Beginn eines Nachtblocks } (\code{n\_beg}) \label{var:b}\\
   & e_{id} \in [0,1] && i \in I,\ d \in D^{end} && \text{Ende eines Nachtblocks } (\code{n\_end}) \label{var:e}\\
   & z_{id} \in [0,1] && i \in I,\ d \in D && \text{Spät- vor Frühdienst } (\code{L\_to\_E}) \label{var:z}\\
-  & v_{isd} \in [0,1] && i \in I,\ s \in S,\ d \in D && \text{gleiche Schicht wie am Vortag } (\code{cons\_s}) \label{var:v}
+  & v_{i\vartheta d} \in [0,1] && i \in I,\ \vartheta \in \Theta^{c},\ d \in D && \text{gleiche Schichtart wie am Vortag } (\code{cons\_s}) \label{var:v}
 \end{align}
 
 \textbf{Erklärung.}
@@ -558,17 +562,22 @@ folgt, auch über den Monatswechsel.
 Schichtzeiten der Demo und den Nachtregeln ist das der einzige mögliche Fall unter 11\,h Ruhezeit. Er ist bewusst
 erlaubt, wird aber so selten wie möglich geplant.
 
-\subsection{Rang 11: Dieselbe Schicht wie am Vortag}\label{sec:z:folgen}
+\subsection{Rang 11: Dieselbe Schichtart wie am Vortag}\label{sec:z:folgen}
 
 \begin{align}
-  & v_{isd} \le X_{isd},\qquad v_{isd} \le X_{is,d-1} && \forall i \in I,\ s \in S,\ d \in D \label{con:cons}\\
-  & f_{11} = \textstyle\sum_{i \in I} \sum_{s \in S} \sum_{d \in D} v_{isd} \to \max && \text{(\code{cons})} \label{obj:cons}
+  & v_{i\vartheta d} \le \textstyle\sum_{s \in S^{\vartheta}} X_{isd},\qquad
+    v_{i\vartheta d} \le \textstyle\sum_{s \in S^{\vartheta}} X_{is,d-1}
+    && \forall i \in I,\ \vartheta \in \Theta^{c},\ d \in D \label{con:cons}\\
+  & f_{11} = \textstyle\sum_{i \in I} \sum_{\vartheta \in \Theta^{c}} \sum_{d \in D} v_{i\vartheta d} \to \max
+    && \text{(\code{cons})} \label{obj:cons}
 \end{align}
 
 \textbf{Erklärung.}
-\eqref{con:cons} (\code{cons\_s}): $v_{isd}$ darf nur 1 sein, wenn an $d$ und $d-1$ dieselbe Schicht gearbeitet
-wird.
-\eqref{obj:cons}: Möglichst oft dieselbe Schicht wie am Vortag, damit ruhige Folgen entstehen.
+\eqref{con:cons} (\code{cons\_today}, \code{cons\_before}): $v_{i\vartheta d}$ darf nur 1 sein, wenn an $d$ und
+$d-1$ eine Schicht derselben Art $\vartheta$ \eqref{set:Thetac} gearbeitet wird. Früh und Zwischen sind dabei eine
+Art: Ein Zwischendienst mitten in einer Folge von Frühdiensten unterbricht sie nicht, sonst würde er die
+Blockstruktur des Plans zerreißen.
+\eqref{obj:cons}: Möglichst oft dieselbe Schichtart wie am Vortag, damit ruhige Folgen entstehen.
 
 %==========================================================================================================
 \section{Lexikografisches Lösen}\label{sec:lex}
@@ -610,7 +619,7 @@ Bestwert jeden ganzzahligen Plan mit $294$ ausschließen, und die folgenden Stuf
 \hline
 Kriterium & Wert \\
 \hline
-Gesamtzeit $T$ (\code{SOLVER\_MAX\_TIME\_SECONDS}) & in der Demo fest 30\,s \\
+Gesamtzeit $T$ (\code{SOLVER\_MAX\_TIME\_SECONDS}) & in der Demo fest 40\,s \\
 relative Optimalitätslücke (\code{MIPGap}) & 3\,\%; exakt (0) für $f_1$, $f_2$, $f_3$, $f_6$ und $f_8$ \\
 absolute Optimalitätslücke (\code{MIPGapAbs}) & $\varepsilon_j/2$ für $f_4$, $f_5$, $f_9$ \\
 Zeitlimit einzelner Stufen (\code{stage\_time\_share}) & $0{,}15\,T$ für $f_5$ und $f_7$, $0{,}10\,T$ für $f_6$, $f_8$, $f_9$ \\

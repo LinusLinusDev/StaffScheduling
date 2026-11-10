@@ -32,10 +32,10 @@ RUNS = os.path.expanduser("~/Desktop/demotest-laeufe.jsonl")
 # Schichten der Musterstation (IDs der Oberfläche)
 F, Z, S, N = 1113, 1453, 1605, 1690
 CODE = {F: "F", Z: "Z", S: "S", N: "N"}
-# Team: 1-9 Fachkräfte (7, 8, 9 in Teilzeit 80/85/90 %), 10 Hilfskraft, 11 und 12 Azubis
-FK, HK, AZ = list(range(1, 10)), [10], [11, 12]
-ALL = FK + HK + AZ
-LEVELS = ("professional", "assistant", "trainee")  # MFA ist in der Oberfläche ausgeblendet
+# Team: 1-9 Fachkräfte (7, 8, 9 in Teilzeit 80/85/90 %), 11 und 12 Azubis; keine Hilfskraft (ID 10 frei)
+FK, AZ = list(range(1, 10)), [11, 12]
+ALL = FK + AZ
+LEVELS = ("professional", "trainee")  # Hilfskraft und MFA sind in der Oberfläche ausgeblendet
 AVAILABILITY_TYPES = ("unavailable", "vacation", "training", "free_day", "available_only")  # unavailable = "Krank"
 WISH_TYPES = ("free_day", "free_shift", "preferred_day", "preferred_shift")
 NAMES = {}
@@ -173,7 +173,7 @@ def load_plan(path):
 
 
 def generate(label, year, month):
-    """Wie "Dienstplan erstellen": rechnet 30 s, wartet und gibt eine Auswertung aus; gibt den Job zurück."""
+    """Wie "Dienstplan erstellen": rechnet 40 s, wartet und gibt eine Auswertung aus; gibt den Job zurück."""
     if not NAMES:
         _load_names()
     started = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

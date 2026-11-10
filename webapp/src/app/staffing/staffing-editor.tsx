@@ -20,8 +20,10 @@ import {
   type DemandGrid,
 } from "./demand-grid";
 
-// The demo station's staff levels; MFA has no staff there, so it is not offered.
-const LEVELS = (Object.keys(STAFF_LEVEL_LABELS) as StaffLevel[]).filter((level) => level !== "mfa");
+// The demo station's staff levels; it has no assistants and no MFA, so they are not offered.
+const LEVELS = (Object.keys(STAFF_LEVEL_LABELS) as StaffLevel[]).filter(
+  (level) => level !== "mfa" && level !== "assistant",
+);
 const COUNTS = Array.from({ length: MAX_REQUIRED_COUNT + 1 }, (_, count) => count);
 // Counts are chosen from a list, so nothing invalid can be typed; centered under their shift heading.
 const COUNT_SELECT =
@@ -162,6 +164,7 @@ export function StaffingEditor({ month, configuration }: { month: string; config
           month={month}
           stationId={stationId}
           shifts={shifts}
+          defaultPattern={configuration.default_pattern}
           level={level}
           grid={grid}
           onApply={(next) => {
@@ -226,6 +229,7 @@ function PatternPanel({
   month,
   stationId,
   shifts,
+  defaultPattern,
   level,
   grid,
   onApply,
@@ -233,12 +237,18 @@ function PatternPanel({
   month: string;
   stationId: number;
   shifts: DemandConfiguration["shifts"];
+  defaultPattern: DemandConfiguration["default_pattern"];
   level: StaffLevel;
   grid: DemandGrid;
   onApply: (grid: DemandGrid) => void;
 }) {
-  const [pattern, setPattern] = useState<Record<string, number>>({});
   const patternKey = (type: DayType, shiftId: number) => `${level}|${type}|${shiftId}`;
+  // Starts with the weekly pattern of the default minimum staffing that every month begins with.
+  const [pattern, setPattern] = useState<Record<string, number>>(() =>
+    Object.fromEntries(
+      defaultPattern.map((cell) => [`${cell.staff_level}|${cell.day_type}|${cell.shift_id}`, cell.required_count]),
+    ),
+  );
   // A preview belongs to the grid and qualification it was computed from; after any later edit or tab change
   // it is no longer shown, so applying it can never undo newer edits.
   const [computed, setPreview] = useState<{

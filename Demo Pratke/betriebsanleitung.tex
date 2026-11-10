@@ -25,9 +25,9 @@
 \maketitle
 
 Der Schichtplan Manager plant den Dienstplan einer Station für einen ganzen Monat. Diese Demo-Version arbeitet
-mit einer erfundenen \textbf{Musterstation}: neun Fachkräfte (drei davon in Teilzeit), eine Hilfskraft und zwei
-Auszubildende. Sie nimmt Einschränkungen, Wünsche und die Mindestbesetzung auf und erstellt daraus in etwa
-30 Sekunden einen geprüften Dienstplan. Die Anwendung läuft lokal auf dem MacBook und wird im Browser bedient.
+mit einer erfundenen \textbf{Musterstation}: neun Fachkräfte (drei davon in Teilzeit) und zwei Auszubildende.
+Sie nimmt Einschränkungen, Wünsche und die Mindestbesetzung auf und erstellt daraus in etwa 40 Sekunden einen
+geprüften Dienstplan. Die Anwendung läuft lokal auf dem MacBook und wird im Browser bedient.
 Für die Berechnung braucht sie eine \textbf{Internetverbindung}, weil der Solver seine Lizenz online prüft.
 
 Die Anleitung folgt dem Ablauf einer Sitzung: starten (Abschnitt~\ref{sec:start}), Daten ansehen und pflegen
@@ -85,7 +85,7 @@ Mindestbesetzung.
 %==========================================================================================================
 \section{Mitarbeiter}
 
-Zeigt die zwölf Mitarbeiter der Musterstation, nur zum Ansehen.
+Zeigt die elf Mitarbeiter der Musterstation, nur zum Ansehen.
 \begin{itemize}
   \item Suche nach Name, Personalnummer oder Qualifikation.
   \item Eine Zeile aufklappen zeigt die \textbf{Zuordnung} mit der Qualifikation, das \textbf{Monatskonto}
@@ -129,11 +129,12 @@ Sie lassen sich wie jeder andere Eintrag ändern oder entfernen.
 Legt fest, wie viele Mitarbeiter je Tag, Schicht und Qualifikation mindestens im Dienst sein müssen. Jeder Monat
 beginnt mit einer Vorgabe, die zum Team passt (siehe \emph{Modell -- Kurzfassung}).
 \begin{itemize}
-  \item Reiter wählen die Qualifikation: \emph{Fachkraft}, \emph{Hilfskraft}, \emph{Azubi}.
+  \item Reiter wählen die Qualifikation: \emph{Fachkraft} oder \emph{Azubi}.
   \item Das Raster hat eine Zeile je Tag und eine Spalte je Schicht (F, Z, S, N). Wochenenden und Feiertage
         (NRW) sind hinterlegt. Jedes Feld bietet 0 bis 5 zur Auswahl; 0 heißt: niemand nötig.
   \item \textbf{Wochenmuster anwenden} füllt den Monat schnell: Werte für Montag bis Sonntag und für Feiertage
-        wählen, \knopf{Vorschau} zeigt die geänderten Tage, \knopf{Übernehmen} trägt sie ins Raster ein.
+        wählen, \knopf{Vorschau} zeigt die geänderten Tage, \knopf{Übernehmen} trägt sie ins Raster ein. Die
+        Felder sind mit der Vorgabe vorbelegt; unverändert übernommen, setzen sie den Monat auf die Vorgabe zurück.
   \item Geänderte Zellen sind orange umrandet. \knopf{Speichern} sichert den Monat, \knopf{Zurücksetzen} stellt
         den gespeicherten Stand wieder her.
 \end{itemize}
@@ -150,7 +151,7 @@ leisten kann, bleibt im Dienstplan als \textbf{Lücke} offen; es entsteht trotzd
         Abschnitt~\ref{sec:monate}.
   \item \knopf{Dienstplan erstellen} drücken.
 \end{enumerate}
-Die Berechnung dauert etwa 30 Sekunden; ein Balken zeigt die verbleibende Zeit. Die Seite darf währenddessen
+Die Berechnung dauert etwa 40 Sekunden; ein Balken zeigt die verbleibende Zeit. Die Seite darf währenddessen
 verlassen werden. Es läuft immer nur eine Berechnung gleichzeitig. Unter \emph{Letzte Berechnung} steht dann das
 Ergebnis, mit einer Überschrift, die sagt, was zu tun ist:
 \begin{itemize}

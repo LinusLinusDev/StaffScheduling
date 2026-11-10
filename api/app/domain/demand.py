@@ -86,16 +86,6 @@ class MonthlyDemand(SchedulingBaseModel):
         )
 
 
-class DemandConfiguration(SchedulingBaseModel):
-    """What the staffing editor shows for one station month; `demand` is None until a month is saved."""
-
-    planning_unit_id: PlanningUnitId
-    planning_month: PlanningMonth
-    demand: MonthlyDemand | None
-    calendar: tuple[CalendarDay, ...]
-    shifts: tuple[ShiftOption, ...]
-
-
 class PatternRequirement(SchedulingBaseModel):
     """One cell of a weekly pattern: how many of a qualification a shift needs on a day type."""
 
@@ -103,6 +93,20 @@ class PatternRequirement(SchedulingBaseModel):
     shift_id: ShiftId
     staff_level: StaffLevel
     required_count: int = Field(ge=0, le=MAX_REQUIRED_COUNT)
+
+
+class DemandConfiguration(SchedulingBaseModel):
+    """
+    What the staffing editor shows for one station month; `demand` is None until a month is saved.
+    `default_pattern` is the weekly pattern a new month starts with, the editor's starting values; empty if none.
+    """
+
+    planning_unit_id: PlanningUnitId
+    planning_month: PlanningMonth
+    demand: MonthlyDemand | None
+    calendar: tuple[CalendarDay, ...]
+    shifts: tuple[ShiftOption, ...]
+    default_pattern: tuple[PatternRequirement, ...] = ()
 
 
 class DemandPattern(SchedulingBaseModel):

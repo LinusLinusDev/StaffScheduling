@@ -10,7 +10,7 @@ Der **Schichtplan Manager** ist ein Prototyp des Lehrstuhls für Kombinatorische
 erstellt den Dienstplan einer Krankenhausstation für einen Monat. Die Demo-Version („Lite“) wird bald auf einer
 Messe bzw. beim Praxispartner (St. Marien-Hospital Düren) gezeigt. Besucher (Pflegedienstleitungen, Ärztinnen,
 Stationsleitungen, IT-Leute) probieren ihn etwa 20 Minuten lang an einem Laptop aus. Der Prototyp soll
-**idiotensicher** sein: keine Abstürze, keine provozierbaren Fehler, in 30 Sekunden ein plausibler Plan.
+**idiotensicher** sein: keine Abstürze, keine provozierbaren Fehler, in 40 Sekunden ein plausibler Plan.
 
 Deine Aufgabe: **Spiele 25 Minuten lang solche Besucher** und mache Eingaben, wie sie über die Oberfläche möglich
 sind. Überwiegend sinnvoll, teils leicht zufällig, vereinzelt grenzwertig. Melde alles, was schiefgeht oder einer
@@ -20,11 +20,11 @@ Pflegedienstleitung seltsam vorkäme.
 
 - Läuft lokal in Docker: API (FastAPI, `http://127.0.0.1:8000`) und Webapp (Next.js, `http://localhost:3000`).
   Der Solver ist Gurobi; er braucht Internet für seine Lizenz.
-- Eine fiktive **Musterstation** mit 12 Personen: IDs 1–9 Fachkräfte (7, 8, 9 in Teilzeit 80/85/90 %),
-  10 Hilfskraft, 11 und 12 Azubis. Monate: nur **2026 und 2027**.
+- Eine fiktive **Musterstation** mit 11 Personen: IDs 1–9 Fachkräfte (7, 8, 9 in Teilzeit 80/85/90 %),
+  11 und 12 Azubis (keine Hilfskraft, die ID 10 ist frei). Monate: nur **2026 und 2027**.
 - Schichten: Früh F 05:55–13:25 (7:00 h), Zwischen Z 08:30–14:15 (5:45 h), Spät S 13:15–21:00 (7:15 h),
   Nacht N 20:10–06:10 (9:15 h). Soll: 38,5 h/Woche, Teilzeit anteilig.
-- Vorgabe Mindestbesetzung je Monat: werktags Fachkraft F3/S2/N1, Hilfskraft F1, Azubi F1/S1; Wochenende und
+- Vorgabe Mindestbesetzung je Monat: werktags Fachkraft F3/S2/N1, Azubi F1/S1; Wochenende und
   Feiertag Fachkraft F2/S1/N1. Jeder Monat startet mit Beispieleinträgen (eine Urlaubswoche, ein Fortbildungstag,
   zwei Wünsche).
 - **Feste Regeln:** ein Dienst pro Tag; Einschränkungen gelten immer; keine Nacht vor einem Abwesenheitstag, kein
@@ -37,7 +37,7 @@ Pflegedienstleitung seltsam vorkäme.
   (nur mit Vormonat) · 3 wenige Lücken · 4 Lücken verteilen · 5 Tage gleichmäßig besetzen · 6 Samstage je
   Qualifikation gleich verteilen · 7 Wünsche · 8 Rotation (jede Schichtart in jedem 28-Tage-Fenster) ·
   9 Schichten gleichmäßig · 10 wenige Spät→Früh-Wechsel · 11 gleiche Schicht wie am Vortag (`cons`).
-  Rechenzeit fest 30 s.
+  Rechenzeit fest 40 s.
 - Danach prüft ein **unabhängiges Prüfprogramm** den Plan: *angenommen* oder *abgelehnt* (mit Regel, Person,
   Datum). Spät→Früh ist erlaubt und wird nur gezählt.
 
@@ -62,7 +62,7 @@ Pflegedienstleitung seltsam vorkäme.
     `free_day` (wird nicht gutgeschrieben), `available_only` mit 1–3 erlaubten Schichten. Höchstens eine je Tag
     und Person. Zeiträume wie per ⇧-Klick mit `availability_range` (schließt Wochenenden ein).
   - Wünsche: `free_day`, `free_shift` (mit Schicht), `preferred_day`, `preferred_shift` (mit Schicht).
-  - Mindestbesetzung: je Tag, Schicht und Qualifikation 0–5, nur `professional`, `assistant`, `trainee`.
+  - Mindestbesetzung: je Tag, Schicht und Qualifikation 0–5, nur `professional` und `trainee`.
   - Vormonat: nur der mit `save_plan` gespeicherte Plan genau des Vormonats (`load_history`); Laden eines Plans
     auf der Prüfseite (`load_plan`).
 - Immer nur **eine Berechnung gleichzeitig** (`generate` wartet von selbst). Eine Berechnung dauert ~32 s, du
@@ -91,7 +91,7 @@ Pflegedienstleitung seltsam vorkäme.
    mit `show_plan` einige Personen an und beurteile den Plan wie eine Leitung.
 3. **Monate verketten (~25 %):** deine fett markierte Kette: Monat rechnen, wenn angenommen `save_plan`, im
    Folgemonat `load_history`, rechnen. Achte auf den Monatswechsel (gleiche Schicht am Wochenende, Nächte,
-   Lücken bei Hilfskraft/Azubis).
+   Lücken bei Azubis).
 4. **Arzt klickt herum (~25 %):** leicht zufällige Eingaben mit festem Seed (`random.Random(100*N + k)`):
    10–30 Einschränkungen, 10–30 Wünsche, 5–20 Bedarfszellen, zufällige Personen und Tage.
 5. **IT-Person (~10 %, 2–3 Läufe):** Grenzfälle, z. B. Bedarf an einem Tag überall 5, eine Person den halben
@@ -105,12 +105,12 @@ Gib während der Arbeit nach jedem Lauf die Zeile von `generate` aus. **Sofort h
 1. **kein Plan** entsteht, der Plan leer ist oder ein HTTP-Fehler / eine unklare Meldung auftritt,
 2. der Plan die **Prüfung nicht besteht** (Regel, Person, Datum notieren und die vermutete Ursache),
 3. die letzte Stufe **`cons` nicht erreicht** wird (die Auswertung sagt es dir),
-4. sonst etwas auffällt: viele Spät→Früh-Wechsel (> 10), Lücken trotz Standardbedarf, Laufzeit > 40 s,
+4. sonst etwas auffällt: viele Spät→Früh-Wechsel (> 10), Lücken trotz Standardbedarf, Laufzeit > 50 s,
    unplausible Pläne (z. B. jemand im Dienst ohne Bedarf, während Bedarf offen bleibt; deutlich ungleiche
    Wochenenden; leicht erfüllbare Wünsche nicht erfüllt).
 
 **Bekannte Grenzen des Prototyps** – zählen, aber nicht als neu melden:
-- Mit geladenem Vormonat können bei Hilfskraft und Azubis Lücken im Frühdienst entstehen, während sie Spätdienste
+- Mit geladenem Vormonat können bei Azubis Lücken im Frühdienst entstehen, während sie Spätdienste
   ohne Bedarf haben (der Saldo ±5 h hat Vorrang).
 - Eine Person nur Nachtdienst („Dauernachtwache“) oder mit sehr vielen freien Tagen erreicht ihr Soll nicht und
   der Plan wird wegen des Saldos abgelehnt.

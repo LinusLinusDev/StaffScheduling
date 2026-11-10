@@ -1,6 +1,6 @@
 """A small fictional station for demonstrations: the planning source without TimeOffice.
 
-It serves the interface of `TimeOfficeService` that the webapp uses, for every month: one station, twelve
+It serves the interface of `TimeOfficeService` that the webapp uses, for every month: one station, eleven
 employees, the reference shifts and a weekly minimum staffing. What the webapp enters (availability, wishes,
 staffing) is kept in memory, so a restart brings back the starting state. A few entries of every month are
 prefilled, so that a first schedule already shows vacation, training and wishes; they can be removed like any
@@ -88,7 +88,7 @@ class TeamMember:
     """Share of full time."""
 
 
-PROFESSIONAL, ASSISTANT, TRAINEE = StaffLevel.PROFESSIONAL, StaffLevel.ASSISTANT, StaffLevel.TRAINEE
+PROFESSIONAL, TRAINEE = StaffLevel.PROFESSIONAL, StaffLevel.TRAINEE
 TEAM = (
     TeamMember(1, "Becker Anna", PROFESSIONAL, 1.0),
     TeamMember(2, "Schmitz Jonas", PROFESSIONAL, 1.0),
@@ -99,7 +99,6 @@ TEAM = (
     TeamMember(7, "Neumann Julia", PROFESSIONAL, 0.8),
     TeamMember(8, "Brandt Katharina", PROFESSIONAL, 0.85),
     TeamMember(9, "Lorenz Michael", PROFESSIONAL, 0.9),
-    TeamMember(10, "Schulz Peter", ASSISTANT, 1.0),
     TeamMember(11, "Fischer Mia", TRAINEE, 1.0),
     TeamMember(12, "Weber Leon", TRAINEE, 1.0),
 )
@@ -116,7 +115,6 @@ DEFAULT_PATTERN: tuple[tuple[tuple[DayType, ...], Shift, StaffLevel, int], ...] 
     (DAYS_OFF, EARLY, PROFESSIONAL, 2),
     (DAYS_OFF, LATE, PROFESSIONAL, 1),
     (DAYS_OFF, NIGHT, PROFESSIONAL, 1),
-    (WORKDAYS, EARLY, ASSISTANT, 1),
     (WORKDAYS, EARLY, TRAINEE, 1),
     (WORKDAYS, LATE, TRAINEE, 1),
 )
@@ -162,14 +160,16 @@ def prefilled(month: PlanningMonth) -> tuple[list[Availability], list[Wish]]:
     return availability, wishes
 
 
+DEFAULT_PATTERN_CELLS = tuple(
+    PatternRequirement(day_type=day_type, shift_id=shift.shift_id, staff_level=level, required_count=count)
+    for day_types, shift, level, count in DEFAULT_PATTERN
+    for day_type in day_types
+)
+
+
 def default_demand(month: PlanningMonth) -> MonthlyDemand:
     """The month of the default weekly pattern; NRW public holidays take the holiday row."""
-    cells = tuple(
-        PatternRequirement(day_type=day_type, shift_id=shift.shift_id, staff_level=level, required_count=count)
-        for day_types, shift, level, count in DEFAULT_PATTERN
-        for day_type in day_types
-    )
-    return expand_pattern(DemandPattern(planning_unit_id=STATION_ID, planning_month=month, cells=cells))
+    return expand_pattern(DemandPattern(planning_unit_id=STATION_ID, planning_month=month, cells=DEFAULT_PATTERN_CELLS))
 
 
 class HistorySummary(SchedulingBaseModel):
@@ -346,6 +346,7 @@ class DemoPlanningSource:
             demand=self._monthly_demand(planning_month),
             calendar=month_calendar(planning_month),
             shifts=SHIFT_OPTIONS,
+            default_pattern=DEFAULT_PATTERN_CELLS,
         )
 
     def save_demand(self, demand: MonthlyDemand) -> None:

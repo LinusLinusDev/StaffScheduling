@@ -121,6 +121,8 @@ export interface DemandConfiguration {
   demand: MonthlyDemand | null;
   calendar: CalendarDay[];
   shifts: ShiftOption[];
+  /** The weekly pattern a new month starts with; the starting values of the pattern editor. */
+  default_pattern: PatternRequirement[];
 }
 
 export type DayType = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday" | "holiday";
