@@ -48,7 +48,7 @@ in dieser Rangfolge, wobei ein späteres Ziel ein früheres nicht verschlechtern
 \hline
 Rang & Ziel & Code & Abschnitt \\
 \hline
-1 & Monatssaldo innerhalb $\pm 4$\,h & \code{balance\_violation} & \ref{sec:z:saldo} \\
+1 & Monatssaldo innerhalb $\pm 5$\,h & \code{balance\_violation} & \ref{sec:z:saldo} \\
 2 & Wochenende über den Monatswechsel fortführen & \code{weekend\_start} & \ref{sec:z:wochenende} \\
 3 & möglichst wenige Lücken & \code{gaps} & \ref{sec:z:luecken} \\
 4 & Lücken gleichmäßig auf die Tage verteilen & \code{gap\_spread} & \ref{sec:z:lueckenverteilung} \\
@@ -169,7 +169,7 @@ Bedarf haben. $I_{udl}$ (\code{staff\_for}) sind die Personen, die an $d$ auf $u
 \hline
 Symbol & Code & Wert & Bedeutung \\
 \hline
-$\tau$ & \code{POLICY.balance\_tolerance\_minutes} & 240 & erlaubte Saldoabweichung in Minuten (4\,h) \\
+$\tau$ & \code{POLICY.balance\_tolerance\_minutes} & 300 & erlaubte Saldoabweichung in Minuten (5\,h) \\
 $K^{S}$ & \code{POLICY.max\_consecutive\_work\_days} & 10 & höchstens so viele Arbeitstage in Folge \\
 $N^{max}$ & \code{POLICY.max\_consecutive\_nights} & 3 & höchstens so viele Nächte in Folge \\
 $L^{N}$ & \code{L\_n} & $\lfloor 2880/1440 \rfloor = 2$ & ganz freie Tage nach einem Nachtblock \\
@@ -378,7 +378,7 @@ Rangfolge, in der Gurobi sie optimiert (Abschnitt~\ref{sec:lex}).
 \eqref{con:balance} (\code{workhours}): $\eta_i$ ist der Saldo in Minuten: geplante Minuten im Monat plus
 Gutschriften minus Soll, genau wie das Monatskonto im Projekt. Ein mitgeplanter Sonntag zählt nicht mit.
 \eqref{con:over} (\code{over\_up}, \code{over\_down}): $o_i$ misst, um wie viele Minuten der Saldo außerhalb von
-$\pm\tau = \pm 240$ liegt; im Optimum ist $o_i = \max(0, |\eta_i| - \tau)$.
+$\pm\tau = \pm 300$ liegt; im Optimum ist $o_i = \max(0, |\eta_i| - \tau)$.
 \eqref{obj:balance}: Dieses Ziel steht ganz oben, noch vor den Lücken. Können alle Salden im Band liegen, ist
 $\hat f_1 = 0$, und jede spätere Stufe muss $f_1 = 0$ halten \eqref{obj:lex}: Das Band wirkt dann wie eine feste
 Regel, auch wenn dafür eine Lücke offen bleibt. Ist es für jemanden unerreichbar (z.\,B.\ den halben Monat frei,

@@ -26,10 +26,11 @@ class RulePolicy(SchedulingBaseModel):
 
     Every run reports the policy it used. Sources: ArbZG §§3-6 and 11 for work, breaks, rest and
     replacement rest; BAuA night-work guidance, adopted as project policy, for nights and recovery;
-    the demo version for the monthly balance of ±4 hours (the problem statement allows ±7.67).
+    the demo version for the monthly balance of ±5 hours (the problem statement allows ±7.67; a ward lead
+    finds even -7 too much, since sick leave is then covered by staff who step in for a bonus).
     """
 
-    balance_tolerance_minutes: int = 240
+    balance_tolerance_minutes: int = 300
     min_rest_minutes: int = 11 * 60
     max_consecutive_nights: int = 3
     # Project policy: at most this many dates in a row with a duty or training.

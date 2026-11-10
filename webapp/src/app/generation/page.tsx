@@ -26,7 +26,7 @@ const jobMonth = (job: GenerationJob) =>
 const USED = [
   "Mindestbesetzung je Schicht und Qualifikation; was fehlt, wird als Lücke ausgewiesen",
   "Urlaub, Fortbildung, freie Tage und Einschränkungen werden immer eingehalten; vor Urlaub und Fortbildung kein Spät- oder Nachtdienst",
-  "Monatskonten: Sollzeit und Gutschriften, Saldo innerhalb ±4 Std.",
+  "Monatskonten: Sollzeit und Gutschriften, Saldo innerhalb ±5 Std.",
   "Wünsche, so weit möglich",
   "Rotation: jede Person in jedem 28-Tage-Zeitraum möglichst in allen ihren Schichtarten",
   "Nachtdienste in Blöcken von 2–3 Nächten, danach 2 Tage ganz frei",
