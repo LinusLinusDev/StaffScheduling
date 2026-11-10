@@ -275,15 +275,17 @@ class GurobiSolverService:
 
             # rotation: in every window of Rot_w days that ends in the month and starts on a known day (the month and
             # the days before it, the whole month before when it is loaded), every person works each shift type
-            # (early, late, night; not intermediate, which is a short extra rather than a rotation shift) at least once
-            # if possible. rotation[i, w, k] can be 1 only if i works a shift of type k in the window starting on w.
-            # Only types i can work this month count, those with a duty variable: a trainee is not pushed into nights
-            # nobody asks of trainees, and "only certain shifts" leaves the other types out. A type worked already on
-            # the window's days before the month needs nothing more.
+            # at least once if possible. An intermediate shift counts as an early one here (and only here; cons keeps
+            # it apart), so nobody needs an extra early shift beside intermediate ones. rotation[i, w, k] can be 1
+            # only if i works a shift of type k in the window starting on w. Only types i can work this month count,
+            # those with a duty variable: a trainee is not pushed into nights nobody asks of trainees, and "only
+            # certain shifts" leaves the other types out. A type worked already on the window's days before the month
+            # needs nothing more.
+            rotation_type = {shift.shift_id: ShiftType.EARLY if shift.type == ShiftType.INTERMEDIATE else shift.type
+                             for shift in dataset.shifts}
             shift_types = defaultdict(list)
-            for shift in dataset.shifts:
-                if shift.type != ShiftType.INTERMEDIATE:
-                    shift_types[shift.type].append(shift.shift_id)
+            for shift_id, kind in rotation_type.items():
+                shift_types[kind].append(shift_id)
             window_starts = [w for w in D_prev + D
                              if D[0] <= w + timedelta(days=Rot_w - 1) <= D[-1]]
             worked_type = {}
@@ -597,8 +599,7 @@ class GurobiSolverService:
                     abs(staff_count[u, d] - required_ud.get((u, d), 0) / required_month * month_staff) for d in D
                 )
             # rotation: the (person, window, type) of the stage whose type the schedule has in the window
-            type_of = {shift.shift_id: shift.type for shift in dataset.shifts}
-            worked_on = {(a.employee_id, a.date): type_of[a.shift_id] for a in assignments}
+            worked_on = {(a.employee_id, a.date): rotation_type[a.shift_id] for a in assignments}
             rotation_value = sum(
                 any(worked_on.get((i, w + timedelta(days=j))) == k for j in range(Rot_w))
                 for (i, w, k) in worked_type
