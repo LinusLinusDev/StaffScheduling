@@ -17,7 +17,7 @@
 \assistent{Linus Palm}
 \contact{palm@combi.rwth-aachen.de}
 \title{Modell -- Kurzfassung}
-\date{09. November 2026}
+\date{11. November 2026}
 \maketitle
 
 Der Schichtplan Manager erstellt für einen Monat und eine Station automatisch einen Dienstplan. In der Demo ist
@@ -136,10 +136,12 @@ besetzte Schichten) ist ein kleiner Spielraum erlaubt, damit die folgenden Ziele
   \item \textbf{Samstage gerecht verteilen}: Alle mit derselben Qualifikation arbeiten möglichst gleich viele
         Samstage, und damit Wochenenden; die Zahlen unterscheiden sich höchstens um eins, soweit Urlaub und
         Einschränkungen es zulassen.
-  \item \textbf{Wünsche erfüllen}.
+  \item \textbf{Wünsche erfüllen}: Jede Person hat für alle ihre Wünsche zusammen dasselbe Gewicht. Wer viele
+        Wünsche einträgt, bekommt pro Wunsch weniger und gewinnt so keinen größeren Einfluss auf den Plan.
   \item \textbf{Abwechslung}: In jedem Zeitraum von 28 Tagen hat jede Person möglichst jede Schichtart, die sie
         arbeiten kann (mit der Vorgabe: Fachkräfte Früh, Spät und Nacht, Hilfskraft und Azubis Früh und Spät).
-        Mit Vormonat reichen diese Zeiträume in den Vormonat zurück; was dort schon gearbeitet wurde, zählt mit.
+        Der Zwischendienst zählt dabei nicht mit. Mit Vormonat reichen diese Zeiträume in den Vormonat zurück; was
+        dort schon gearbeitet wurde, zählt mit.
   \item \textbf{Gleichmäßig besetzte Schichten}: Zusätzliches Personal eines Tages verteilt sich im Verhältnis
         der Mindestbesetzung auf die Schichten.
   \item \textbf{Möglichst wenige Wechsel vom Spät- in den Frühdienst}: Zwischen 21:00 und 05:55 liegen nur knapp

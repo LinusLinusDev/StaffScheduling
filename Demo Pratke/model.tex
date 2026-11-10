@@ -24,7 +24,7 @@
 \assistent{Linus Palm}
 \contact{palm@combi.rwth-aachen.de}
 \title{Modell}
-\date{09. November 2026}
+\date{11. November 2026}
 \maketitle
 
 Dieses Dokument beschreibt das gemischt-ganzzahlige lineare Programm (MILP), mit dem der Gurobi-Solver
@@ -54,8 +54,8 @@ Rang & Ziel & Code & Abschnitt \\
 4 & Lücken gleichmäßig auf die Tage verteilen & \code{gap\_spread} & \ref{sec:z:lueckenverteilung} \\
 5 & Tage gleichmäßig besetzen & \code{staffing\_spread} & \ref{sec:z:tage} \\
 6 & Samstage je Qualifikation gleichmäßig verteilen & \code{saturdays} & \ref{sec:z:samstage} \\
-7 & Wünsche erfüllen & \code{wishes} & \ref{sec:z:wuensche} \\
-8 & Rotation: jede Schichtart in jedem 28-Tage-Fenster & \code{rotation} & \ref{sec:z:rotation} \\
+7 & Wünsche erfüllen, je Person gleich gewichtet & \code{wishes} & \ref{sec:z:wuensche} \\
+8 & Rotation: Früh, Spät, Nacht in jedem 28-Tage-Fenster & \code{rotation} & \ref{sec:z:rotation} \\
 9 & Schichten eines Tages gleichmäßig besetzen & \code{shift\_balance} & \ref{sec:z:schichten} \\
 10 & möglichst wenige Wechsel Spät $\to$ Früh & \code{Min\_L\_to\_E} & \ref{sec:z:spaetfrueh} \\
 11 & möglichst oft dieselbe Schicht wie am Vortag & \code{cons} & \ref{sec:z:folgen} \\
@@ -175,8 +175,8 @@ $N^{max}$ & \code{POLICY.max\_consecutive\_nights} & 3 & höchstens so viele Nä
 $L^{N}$ & \code{L\_n} & $\lfloor 2880/1440 \rfloor = 2$ & ganz freie Tage nach einem Nachtblock \\
 $\Delta^{N}$ & \code{Dist\_n} & 7 & Tage zwischen Ende eines Nachtblocks und Beginn des nächsten \\
 $\Delta^{R}$ & \code{Rot\_w} & 28 & Tage eines Rotationsfensters \\
-$\pi$ & \code{transfer\_penalty} & 10 & Strafe für einen Dienst auf fremder Station \\
-$\omega$ & \code{wish\_reward} & 30 & Gewicht eines Wunsches \\
+$\omega$ & \code{wish\_budget} & 840 & Gewicht aller Wünsche einer Person zusammen \\
+$\pi$ & \code{transfer\_penalty} & 280 & Strafe für einen Dienst auf fremder Station ($\omega/3$) \\
 \hline
 \end{tabular}
 \end{center}
@@ -471,30 +471,40 @@ schon der ganzzahlige Wert, sodass Gurobi die Stufe schnell exakt löst.
 \subsection{Rang 7: Wünsche}\label{sec:z:wuensche}
 
 \begin{align}
+  \omega_i = {} & \operatorname{round}(\omega / n_i),\qquad n_i = \text{Zahl der Wünsche von } i \text{ im Monat}
+                 \label{par:omega}\\
   p_{isdu} = {} & - \pi \cdot \ind{\operatorname{home}(i,d) \in U^{St},\ \operatorname{home}(i,d) \neq u}
                  \label{par:p}\\
-  & - \omega \cdot \ind{\text{Wunsch „freier Tag“ für } (i,d)}
-    - \omega \cdot \ind{s \in S^{N},\ \text{Wunsch „freier Tag“ für } (i,d+1)} \notag\\
-  & - \omega \cdot \ind{\text{Wunsch „Schicht } s \text{ frei“ für } (i,d)} \notag\\
-  & + \omega \cdot \ind{\text{Wunsch „Wunschtag“ für } (i,d)}
-    + \omega \cdot \ind{\text{Wunsch „Wunschschicht } s\text{“ für } (i,d)} \notag\\
+  & - \omega_i \cdot \ind{\text{Wunsch „freier Tag“ für } (i,d)}
+    - \omega_i \cdot \ind{s \in S^{N},\ \text{Wunsch „freier Tag“ für } (i,d+1)} \notag\\
+  & - \omega_i \cdot \ind{\text{Wunsch „Schicht } s \text{ frei“ für } (i,d)} \notag\\
+  & + \omega_i \cdot \ind{\text{Wunsch „Wunschtag“ für } (i,d)}
+    + \omega_i \cdot \ind{\text{Wunsch „Wunschschicht } s\text{“ für } (i,d)} \notag\\
   f_7 = {} & \textstyle\sum_{(i,s,d,u) \in A} p_{isdu}\, x_{isdu} \to \max \qquad \text{(\code{wishes})} \label{obj:wishes}
 \end{align}
 
 \textbf{Erklärung.}
+\eqref{par:omega} (\code{wish\_reward}): Jede Person hat für alle ihre Wünsche des Monats zusammen dasselbe Gewicht
+$\omega = 840$, und jeder ihrer $n_i$ Wünsche zählt $\omega / n_i$. Wer viele Wünsche einträgt, bekommt also pro
+Wunsch weniger und gewinnt dadurch keinen größeren Einfluss auf den Plan: Der einzige Wunsch einer Person wiegt so
+viel wie alle zehn Wünsche einer anderen zusammen. $840$ ist durch $1$ bis $8$ teilbar; ab neun Wünschen wird auf
+ganze Zahlen gerundet, damit die Stufe ganzzahlige Werte behält (Abschnitt~\ref{sec:lex}).
 \eqref{par:p} (\code{pref}): Jeder zulässige Dienst bekommt einen Präferenzwert. Ein erfüllter Dienstwunsch bringt
-$+\omega$, ein Dienst gegen einen Freiwunsch kostet $\omega$. Beim freien Tag zählt auch ein Nachtdienst am
+$+\omega_i$, ein Dienst gegen einen Freiwunsch kostet $\omega_i$. Beim freien Tag zählt auch ein Nachtdienst am
 Vorabend, weil er bis 06:10 in den Wunschtag hineinreicht; so bewertet es auch die Prüfung. Ein Dienst auf einer
-fremden Station kostet $\pi$, aber nur, wenn die Person eine Station als Stammeinheit hat; Springer (Stammeinheit
-ist ein Pool) dürfen überall gleich gut arbeiten. In der Demo mit nur einer Station kommt das nicht vor.
+fremden Station kostet $\pi$, ein Drittel des einzigen Wunsches einer Person, aber nur, wenn die Person eine
+Station als Stammeinheit hat; Springer (Stammeinheit ist ein Pool) dürfen überall gleich gut arbeiten. In der Demo
+mit nur einer Station kommt das nicht vor.
 \eqref{obj:wishes}: Die Summe der Präferenzwerte aller Dienste wird maximiert.
 
 \subsection{Rang 8: Rotation}\label{sec:z:rotation}
 
 \begin{align}
   & \Wr = \{w \in \Db : 1 \le w + \Delta^{R} - 1 \le n\},\qquad [w] = \{w,\dots,w + \Delta^{R} - 1\} \label{set:Wr}\\
-  & \Psi = \bigl\{(i,w,\theta) : w \in \Wr,\ \ y^{0}_{isd} = 0\ \forall s \in S^{\theta},\ d \in [w] \cap \Dm,
+  & \Psi = \bigl\{(i,w,\theta) : w \in \Wr,\ \ \theta \in \Theta \setminus \{\text{Zwischen}\},
     \label{set:Psi}\\
+  & \hphantom{\Psi = \bigl\{(i,w,\theta) :{}}
+    y^{0}_{isd} = 0\ \forall s \in S^{\theta},\ d \in [w] \cap \Dm, \notag\\
   & \hphantom{\Psi = \bigl\{(i,w,\theta) :{}}
     \exists\,(i,s,d,u) \in A \text{ mit } s \in S^{\theta},\ d \in [w] \cap D\bigr\} \notag\\
   & \psi_{iw\theta} \le \textstyle\sum_{d \in [w] \cap D} \sum_{s \in S^{\theta}} X_{isd} && \forall (i,w,\theta) \in \Psi \label{con:rotation}\\
@@ -503,7 +513,8 @@ ist ein Pool) dürfen überall gleich gut arbeiten. In der Demo mit nur einer St
 
 \textbf{Erklärung.}
 Niemand soll wochenlang nur dieselbe Schicht haben: In jedem Fenster von $\Delta^{R} = 28$ Tagen soll jede Person
-möglichst jede Schichtart haben, die sie arbeiten kann.
+möglichst jede Schichtart haben, die sie arbeiten kann. Gezählt werden nur Früh, Spät und Nacht; der
+Zwischendienst ist ein kurzer Zusatzdienst, in den niemand der Abwechslung wegen gedrängt werden soll.
 \eqref{set:Wr} (\code{window\_starts}): $\Wr$ sind die ersten Tage aller Fenster, die im Monat enden und an
 einem bekannten Tag beginnen. Mit geladenem Vormonat reichen sie bis zu 27 Tage in ihn zurück, sodass die
 Rotation über den Monatswechsel weiterläuft; ohne ihn beginnen sie frühestens $m = 5$ Tage vor dem Monat (ein

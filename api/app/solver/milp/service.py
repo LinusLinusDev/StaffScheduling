@@ -160,8 +160,14 @@ class GurobiSolverService:
                             or (i, next_day) in training_days and (i, d) not in training_days):
                         for s in S_late:
                             not_allowed.add((i, s, d))
-            transfer_penalty = 10
-            wish_reward = 30
+            # wishes: every person has the same weight wish_budget for all their wishes of the month together, and each
+            # of their n wishes is worth wish_budget / n. The more wishes a person enters, the less each one weighs, so
+            # entering many does not buy more say in the schedule. 840 divides by 1 to 8; beyond that the weight is
+            # rounded, so the stage keeps whole values. A transfer costs a third of a person's only wish.
+            wish_budget = 840
+            transfer_penalty = 280
+            wish_count = Counter(entry.employee_id for entry in dataset.wishes)
+            wish_reward = {i: max(1, round(wish_budget / n)) for i, n in wish_count.items()}
 
             # (employee, shift, day, unit) -> preference score; entries not listed are 0
             pref = defaultdict(int)
@@ -180,24 +186,25 @@ class GurobiSolverService:
                     for s in S:
                         pref[i, s, d, u] -= transfer_penalty
             for entry in dataset.wishes:
+                reward = wish_reward[entry.employee_id]
                 if entry.type == "free_day":
                     previous = entry.date - timedelta(days=1)
                     for u in U:
                         for s in S:
-                            pref[entry.employee_id,s,entry.date,u] -= wish_reward
+                            pref[entry.employee_id,s,entry.date,u] -= reward
                         # a night from the evening before reaches into the free day, as the schedule check counts it
                         for s in S_night:
-                            pref[entry.employee_id,s,previous,u] -= wish_reward
+                            pref[entry.employee_id,s,previous,u] -= reward
                 elif entry.type == "free_shift":
                     for u in U:
-                        pref[entry.employee_id,entry.shift_id,entry.date,u] -= wish_reward
+                        pref[entry.employee_id,entry.shift_id,entry.date,u] -= reward
                 elif entry.type == "preferred_day":
                     for u in U:
                         for s in S:
-                            pref[entry.employee_id,s,entry.date,u] += wish_reward
+                            pref[entry.employee_id,s,entry.date,u] += reward
                 elif entry.type == "preferred_shift":
                     for u in U:
-                        pref[entry.employee_id,entry.shift_id,entry.date,u] += wish_reward
+                        pref[entry.employee_id,entry.shift_id,entry.date,u] += reward
 
             # minimum demand: (shift, day, station, qualification) -> required count, only rows with demand
             R_min = {(r.shift_id, r.date, r.planning_unit_id, r.staff_level): r.required_count for r in dataset.demand_requirements}
@@ -275,13 +282,14 @@ class GurobiSolverService:
 
             # rotation: in every window of Rot_w days that ends in the month and starts on a known day (the month and
             # the days before it, the whole month before when it is loaded), every person works each shift type
-            # (early, intermediate, late, night) at least once if possible. rotation[i, w, k] can be 1 only if i works
-            # a shift of type k in the window starting on w. Only types i can work this month count, those with a duty
-            # variable: a trainee is not pushed into nights nobody asks of trainees, and "only certain shifts" leaves
-            # the other types out. A type worked already on the window's days before the month needs nothing more.
+            # (early, late, night; not intermediate, which is a short extra rather than a rotation shift) at least once
+            # if possible. rotation[i, w, k] can be 1 only if i works a shift of type k in the window starting on w.
+            # Only types i can work this month count, those with a duty variable: a trainee is not pushed into nights
+            # nobody asks of trainees, and "only certain shifts" leaves the other types out. A type worked already on the window's days before the month needs nothing more.
             shift_types = defaultdict(list)
             for shift in dataset.shifts:
-                shift_types[shift.type].append(shift.shift_id)
+                if shift.type != ShiftType.INTERMEDIATE:
+                    shift_types[shift.type].append(shift.shift_id)
             window_starts = [w for w in D_prev + D
                              if D[0] <= w + timedelta(days=Rot_w - 1) <= D[-1]]
             worked_type = {}
