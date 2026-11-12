@@ -105,7 +105,10 @@ class TimeOfficeService:
         with self._engine.connect() as connection:
             _, _, employee_ids = self._selection_scope(connection, selected, planning_month)
             employees = queries.read_employees(connection, self._facts, employee_ids)
-        return tuple(EmployeeSummary(employee_id=row.employee_id, display_name=row.display_name) for row in employees)
+        return tuple(
+            EmployeeSummary(employee_id=row.employee_id, display_name=row.display_name, staff_level=row.staff_level)
+            for row in employees
+        )
 
     def get_employee_calendar(self, *, employee_id: int, planning_month: PlanningMonth) -> EmployeeCalendar:
         """One employee's native absences, project availability and wishes in the month."""

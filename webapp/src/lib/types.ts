@@ -80,6 +80,7 @@ export interface ShiftOption {
 export interface EmployeeSummary {
   employee_id: number;
   display_name: string;
+  staff_level: StaffLevel;
 }
 
 export interface EmployeeCalendar {

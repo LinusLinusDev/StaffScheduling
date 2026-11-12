@@ -302,7 +302,9 @@ class DemoPlanningSource:
         self, *, planning_unit_ids: tuple[int, ...], planning_month: PlanningMonth
     ) -> tuple[EmployeeSummary, ...]:
         _require_station(planning_unit_ids)
-        return tuple(EmployeeSummary(employee_id=row.employee_id, display_name=row.name) for row in TEAM)
+        return tuple(
+            EmployeeSummary(employee_id=row.employee_id, display_name=row.name, staff_level=row.level) for row in TEAM
+        )
 
     def get_employee_calendar(self, *, employee_id: int, planning_month: PlanningMonth) -> EmployeeCalendar:
         _require_employee(employee_id)

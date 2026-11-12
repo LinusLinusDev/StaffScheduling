@@ -53,3 +53,5 @@ class EmployeeSummary(SchedulingBaseModel):
 
     employee_id: EmployeeId
     display_name: NonEmptyStr
+    # The qualification of the master data; a membership may count the employee as another one on a station.
+    staff_level: StaffLevel
